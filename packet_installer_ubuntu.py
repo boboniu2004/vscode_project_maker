@@ -140,77 +140,26 @@ def ConfigGolang():
     if False == os.path.exists("./go1.13.3.linux-amd64.tar.gz"):
         if 0 != os.system("wget https://studygolang.com/dl/golang/go1.13.3.linux-amd64.tar.gz"):
             return "Failed to download golang1.13.3"
-    os.system("rm -Rf /usr/local/go")
-    if 0 != os.system("tar -C /usr/local -zxvf ./go1.13.3.linux-amd64.tar.gz"):
-        return "Failed to uncompress golang1.13.3"
-    #设置环境变量
-    szConfig,szErr = maker_public.readTxtFile("/etc/profile")
+    if -1 == maker_public.execCmdAndGetOutput(\
+        "su -c \"/usr/local/go/bin/go version\"").find("go1.13.3"):
+        os.system("rm -Rf /usr/local/go")
+        if 0 != os.system("tar -C /usr/local -zxvf ./go1.13.3.linux-amd64.tar.gz"):
+            return "Failed to uncompress golang1.13.3"
+        #设置环境变量
+        szConfig,szErr = maker_public.readTxtFile("/etc/profile")
+        if 0 < len(szErr):
+            return szErr
+        if None == re.search("\\nexport[ \\t]+GOPATH[ \\t]*=[ \\t]*\\/root/go", szConfig):
+            szConfig += "\nexport GOPATH=/root/go"
+        if None == re.search("\\nexport[ \\t]+PATH[ \\t]*=[ \\t]*\\$PATH:\\$GOPATH/bin:/usr/local/go/bin", szConfig):
+            szConfig += "\nexport PATH=$PATH:$GOPATH/bin:/usr/local/go/bin"
+        szErr = maker_public.writeTxtFile("/etc/profile", szConfig)
+        if 0 < len(szErr):
+            return szErr
+    #安装工具
+    szErr = maker_public.installGolangTools("/usr/local/go/bin/go")
     if 0 < len(szErr):
         return szErr
-    if None == re.search("\\nexport[ \\t]+GOPATH[ \\t]*=[ \\t]*\\/root/go", szConfig):
-        szConfig += "\nexport GOPATH=/root/go"
-    if None == re.search("\\nexport[ \\t]+PATH[ \\t]*=[ \\t]*\\$PATH:\\$GOPATH/bin:/usr/local/go/bin", szConfig):
-        szConfig += "\nexport PATH=$PATH:$GOPATH/bin:/usr/local/go/bin"
-    szErr = maker_public.writeTxtFile("/etc/profile", szConfig)
-    if 0 < len(szErr):
-        return szErr
-    #在gopath下安装x/tools
-    os.system("su -c \"mkdir -p ~/go/bin\"")
-    os.system("su -c \"mkdir -p ~/go/src/golang.org/x\"")
-    os.system("su -c \"mkdir -p ~/go/pkg\"")
-    os.system("su -c \"rm -Rf ~/go/src/golang.org/x/tools\"")
-    os.system("su -c \"rm -Rf ~/go/src/golang.org/x/lint\"")
-    os.system("su -c \"rm -Rf ~/go/src/golang.org/x/mod\"")
-    os.system("su -c \"rm -Rf ~/go/src/golang.org/x/xerrors\"")
-    os.system("su -c \"rm -Rf ~/go/src/golang.org/x/sync\"")
-    if 0 != os.system("su -c \"git clone https://github.com/golang/tools.git ~/go/src/golang.org/x/tools\""):
-        return "Failed to download tools"
-    if 0 != os.system("su -c \"git clone https://github.com/golang/lint.git ~/go/src/golang.org/x/lint\""):
-        return "Failed to download lint"
-    if 0 != os.system("su -c \"git clone https://github.com/golang/mod.git ~/go/src/golang.org/x/mod\""):
-        return "Failed to download mod"
-    if 0 != os.system("su -c \"git clone https://github.com/golang/xerrors.git ~/go/src/golang.org/x/xerrors\""):
-        return "Failed to download xerrors"
-    if 0 != os.system("su -c \"git clone https://github.com/golang/sync.git ~/go/src/golang.org/x/sync\""):
-        return "Failed to download sync"
-    #安装go-outline
-    os.system("su -c \"/usr/local/go/bin/go get -v github.com/ramya-rao-a/go-outline\"")
-    #安装go-find-references
-    os.system("su -c \"/usr/local/go/bin/go get -v github.com/lukehoban/go-find-references\"")
-    #安装gocode
-    os.system("su -c \"/usr/local/go/bin/go get -v github.com/mdempsky/gocode\"")
-    #安装gopkgs
-    os.system("su -c \"/usr/local/go/bin/go get -v github.com/uudashr/gopkgs/cmd/gopkgs\"")
-    #安装godef
-    os.system("su -c \"/usr/local/go/bin/go get -v github.com/rogpeppe/godef\"")
-    #安装goreturns
-    os.system("su -c \"/usr/local/go/bin/go get -v sourcegraph.com/sqs/goreturns\"")
-    #安装gorename
-    os.system("su -c \"/usr/local/go/bin/go get -v golang.org/x/tools/cmd/gorename\"")
-    #安装go-symbols
-    os.system("su -c \"/usr/local/go/bin/go get -v github.com/newhook/go-symbols\"")
-    #安装gopls
-    os.system("su -c \"/usr/local/go/bin/go get -v golang.org/x/tools/gopls\"")
-    #安装dlv
-    os.system("su -c \"/usr/local/go/bin/go get -v github.com/go-delve/delve/cmd/dlv\"")
-    #安装goimports
-    os.system("su -c \"/usr/local/go/bin/go get -v golang.org/x/tools/cmd/goimports\"")
-    #安装guru
-    os.system("su -c \"/usr/local/go/bin/go get -v golang.org/x/tools/cmd/guru\"")
-    #安装golint
-    os.system("su -c \"/usr/local/go/bin/go get -v golang.org/x/lint/golint\"")
-    #安装gotests
-    os.system("su -c \"/usr/local/go/bin/go get -v github.com/cweill/gotests\"")
-    #安装gomodifytags
-    os.system("su -c \"/usr/local/go/bin/go get -v github.com/fatih/gomodifytags\"")
-    #安装impl
-    os.system("su -c \"/usr/local/go/bin/go get -v github.com/josharian/impl\"")
-    #安装fillstruct
-    os.system("su -c \"/usr/local/go/bin/go get -v github.com/davidrjenni/reftools/cmd/fillstruct\"")
-    #安装goplay
-    os.system("su -c \"/usr/local/go/bin/go get -v github.com/haya14busa/goplay/cmd/goplay\"")
-    #安装godoctor
-    os.system("su -c \"/usr/local/go/bin/go get -v github.com/godoctor/godoctor\"")
     #
     return ""
 
@@ -222,19 +171,11 @@ def ConfigPython():
     if 0 != os.system("apt-get -y install python3"):
         return "Install python3 failed"
     if 0 != os.system("apt-get -y install python3-pip"):
-        return "Install python3 failed"
-    #添加网易源
-    if 0 != os.system("mkdir -p /root/.pip"):
-        return "Add PIP source failed"
-    os.system("rm -rf /root/.pip/pip.conf")
-    if 0 != os.system("echo \"[global]\ntimeout = 6000\nindex-url = https://mirrors.163.com/pypi/simple/\ntrusted-host =mirrors.163.com\" >> /root/.pip/pip.conf"):
+        return "Install  python3-pip failed"
+    #配置PIP
+    szErr = maker_public.configPip("python3", "pip3")
+    if 0 < len(szErr):
         return szErr
-    #安装pylint
-    if 0 != os.system("su -c \"python3 -m pip install -U \\\"pylint<2.0.0\\\" --user\""):
-        return "Update Pylint failed"
-    #升级PIP
-    if 0 != os.system("su -c \"pip3 install --upgrade pip\""):
-        return "Update PIP failed"
     return ""
 
 
@@ -242,21 +183,6 @@ def ConfigPython():
 #函数参数：无
 #函数返回：错误描述
 def ConfigJava():
-    #szCurWorkPath = os.path.dirname(os.path.realpath(sys.argv[0]))
-    #print("First：Please download JDK for https://www.oracle.com/java/technologies/javase-downloads.html.")
-    #print("Second: Move the RPM filr to %s." %(szCurWorkPath))
-    #raw_input("Last: Press any key to continue...")
-    #获取JDKRPM包的名称
-    #szJdkRpm = ""
-    #szJdkName = ""
-    #FileList = os.listdir(os.path.dirname(os.path.realpath(sys.argv[0])))
-    #for szCurFile in FileList:
-    #    if None != re.search("jdk\\-.+_linux\\-x64_bin\\.rpm", szCurFile):
-    #        szJdkRpm = str(os.path.dirname(os.path.realpath(sys.argv[0]))+"/"+szCurFile)
-    #        szJdkName = str(re.sub("_linux\\-x64_bin\\.rpm", "", szCurFile))
-    #        break
-    #if 0 >= len(szJdkRpm):
-    #    return "Can not find any file like jdk_xx.xx.xx_linux-x64_bin.rpm"
     #安装JDK
     if 0 != os.system("apt-get -y install openjdk-11-jdk-headless"):
         return "Install openjdk-11 failed"
@@ -346,7 +272,7 @@ if __name__ == "__main__":
         print("Config Ubuntu failed:%s" %(szErr))
         exit(-1)
     #配置SSHD
-    szErr = ConfigSshd()
+    szErr = maker_public.ConfigSshd()
     if 0 < len(szErr):
         print("Config Ubuntu failed:%s" %(szErr))
         exit(-1)
