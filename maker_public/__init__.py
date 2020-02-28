@@ -157,7 +157,7 @@ def configPip(szPython, szPip):
 #函数返回：错误描述
 def ConfigSshd():
     #读取配置文件
-    szSshdConf,szErr = maker_public.readTxtFile("/etc/ssh/sshd_config")
+    szSshdConf,szErr = readTxtFile("/etc/ssh/sshd_config")
     if 0 < len(szErr):
         return szErr
     #修正配置文件内容
@@ -177,7 +177,7 @@ def ConfigSshd():
     szSshdConf = re.sub("\\n[ \\t]*#[ \\t]*AuthorizedKeysFile.+", \
         "\nAuthorizedKeysFile .ssh/authorized_keys", szSshdConf)
     #写入配置文件
-    szErr = maker_public.writeTxtFile("/etc/ssh/sshd_config", szSshdConf)
+    szErr = writeTxtFile("/etc/ssh/sshd_config", szSshdConf)
     if 0 < len(szErr):
         return szErr
     #重启服务
