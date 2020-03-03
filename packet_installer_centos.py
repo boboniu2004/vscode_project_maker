@@ -64,6 +64,11 @@ def UpdateSystem():
     szErr = maker_public.writeTxtFile("/etc/selinux/config", szSelinux)
     if 0 < len(szErr):
         return "Disable SELINUX failed"
+    #配置时钟同步
+    os.system("systemctl enable ntpd.service")
+    os.system("systemctl stop ntpd.service")
+    os.system("systemctl start ntpd.service")
+    os.system("systemctl status ntpd.service")
     return ""
 
 
