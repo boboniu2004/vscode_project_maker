@@ -117,13 +117,13 @@ def UpdateSystem():
 #函数参数：无
 #函数返回：错误描述
 def ConfigGit():
-    if 0 != os.system("add-apt-repository ppa:git-core/ppa"):
-        return "Install git failed"
-    if 0 != os.system("apt-get update"):
-        return "Install git failed"
+    #if 0 != os.system("add-apt-repository ppa:git-core/ppa"):
+    #    return "Install git failed"
+    #if 0 != os.system("apt-get update"):
+    #    return "Install git failed"
     if 0 != os.system("apt-get -y install git"):
         return "Install git failed"
-    #
+    
     return ""
 
 
@@ -270,13 +270,13 @@ if __name__ == "__main__":
     if 0 < len(szErr):
         print("Config Ubuntu failed:%s" %(szErr))
         exit(-1)
-    #安装JAVA
-    szErr = ConfigJava()
+    #配置SSHD
+    szErr = maker_public.ConfigSshd()
     if 0 < len(szErr):
         print("Config Ubuntu failed:%s" %(szErr))
         exit(-1)
-    #配置SSHD
-    szErr = maker_public.ConfigSshd()
+    #安装JAVA
+    szErr = ConfigJava()
     if 0 < len(szErr):
         print("Config Ubuntu failed:%s" %(szErr))
         exit(-1)
