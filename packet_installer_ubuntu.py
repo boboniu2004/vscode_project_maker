@@ -202,33 +202,7 @@ def ConfigSshd():
     if 0 != os.system("apt-get -y install openssh-server"):
         return "Install openssh-server failed"
     #读取配置文件
-    szSshdConf,szErr = maker_public.readTxtFile("/etc/ssh/sshd_config")
-    if 0 < len(szErr):
-        return szErr
-    #修正配置文件内容
-    #
-    szSshdConf = re.sub("\\n[ \\t]*PubkeyAuthentication.+", \
-        "\nPubkeyAuthentication yes", szSshdConf)
-    szSshdConf = re.sub("\\n[ \\t]*#[ \\t]*PubkeyAuthentication.+", \
-        "\nPubkeyAuthentication yes", szSshdConf)
-    #
-    szSshdConf = re.sub("\\n[ \\t]*AllowTcpForwarding.+", \
-        "\nAllowTcpForwarding yes", szSshdConf)        
-    szSshdConf = re.sub("\\n[ \\t]*#[ \\t]*AllowTcpForwarding.+", \
-        "\nAllowTcpForwarding yes", szSshdConf)
-    #
-    szSshdConf = re.sub("\\n[ \\t]*AuthorizedKeysFile.+", \
-        "\nAuthorizedKeysFile .ssh/authorized_keys", szSshdConf)
-    szSshdConf = re.sub("\\n[ \\t]*#[ \\t]*AuthorizedKeysFile.+", \
-        "\nAuthorizedKeysFile .ssh/authorized_keys", szSshdConf)
-    #写入配置文件
-    szErr = maker_public.writeTxtFile("/etc/ssh/sshd_config", szSshdConf)
-    if 0 < len(szErr):
-        return szErr
-    #重启服务
-    if 0 != os.system("systemctl restart sshd"):
-        return "restart sshd failed"
-    return ""
+    return maker_public.ConfigSshd()
 
 
 #函数功能：主函数
@@ -250,6 +224,11 @@ if __name__ == "__main__":
     if 0 < len(szErr):
         print("Config Ubuntu failed:%s" %(szErr))
         exit(-1)
+    #配置SSHD
+    szErr = ConfigSshd()
+    if 0 < len(szErr):
+        print("Config Ubuntu failed:%s" %(szErr))
+        exit(-1)
     #安装GIT
     szErr = ConfigGit()
     if 0 < len(szErr):
@@ -267,11 +246,6 @@ if __name__ == "__main__":
         exit(-1)
     #安装PYTHON和PIP
     szErr = ConfigPython()
-    if 0 < len(szErr):
-        print("Config Ubuntu failed:%s" %(szErr))
-        exit(-1)
-    #配置SSHD
-    szErr = maker_public.ConfigSshd()
     if 0 < len(szErr):
         print("Config Ubuntu failed:%s" %(szErr))
         exit(-1)

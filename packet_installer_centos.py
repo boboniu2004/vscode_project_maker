@@ -45,33 +45,6 @@ def installOrUpdateRpm(szRpmName, szMacVer, szRpmPath):
     return ""
 
 
-#函数功能：将系统升级到
-#函数参数：无
-#函数返回：错误描述
-def UpdateSystem():
-    os.system("yum clean all")
-    if 0 != os.system("yum -y update"):
-        return "Update CentOS failed"
-    #关闭防火墙
-    os.system("systemctl stop firewalld.service")
-    if 0 != os.system("systemctl disable firewalld.service"):
-        return "Disable firewalld failed"
-    #关闭SELINUX
-    szSelinux,szErr = maker_public.readTxtFile("/etc/selinux/config")
-    if 0 < len(szErr):
-        return "Disable SELINUX failed"
-    szSelinux = re.sub("\\n[ \\t]*SELINUX[ \\t]*=[ \\t]*.+", "\nSELINUX=disabled", szSelinux)
-    szErr = maker_public.writeTxtFile("/etc/selinux/config", szSelinux)
-    if 0 < len(szErr):
-        return "Disable SELINUX failed"
-    #配置时钟同步
-    os.system("systemctl enable ntpd.service")
-    os.system("systemctl stop ntpd.service")
-    os.system("systemctl start ntpd.service")
-    os.system("systemctl status ntpd.service")
-    return ""
-
-
 #函数功能：配置扩展源
 #函数参数：无
 #函数返回：错误描述
@@ -100,6 +73,46 @@ def ConfigRepo():
         return szErr
     #
     return ""
+
+
+#函数功能：将系统升级到
+#函数参数：无
+#函数返回：错误描述
+def UpdateSystem():
+    os.system("yum clean all")
+    if 0 != os.system("yum -y update"):
+        return "Update CentOS failed"
+    #关闭防火墙
+    os.system("systemctl stop firewalld.service")
+    if 0 != os.system("systemctl disable firewalld.service"):
+        return "Disable firewalld failed"
+    #关闭SELINUX
+    szSelinux,szErr = maker_public.readTxtFile("/etc/selinux/config")
+    if 0 < len(szErr):
+        return "Disable SELINUX failed"
+    szSelinux = re.sub("\\n[ \\t]*SELINUX[ \\t]*=[ \\t]*.+", "\nSELINUX=disabled", szSelinux)
+    szErr = maker_public.writeTxtFile("/etc/selinux/config", szSelinux)
+    if 0 < len(szErr):
+        return "Disable SELINUX failed"
+    #配置时钟同步
+    os.system("systemctl enable ntpd.service")
+    os.system("systemctl stop ntpd.service")
+    os.system("systemctl start ntpd.service")
+    os.system("systemctl status ntpd.service")
+    return ""
+
+
+#函数功能：配置SSHD
+#函数参数：无
+#函数返回：错误描述
+def ConfigSshd():
+    #安装
+    szErr = installOrUpdateRpm("openssh-server", "x86_64", "")
+    if 0 < len(szErr):
+        return szErr
+    #读取配置文件
+    return maker_public.ConfigSshd()
+
 
 #函数功能：配置GCC
 #函数参数：无
@@ -201,6 +214,16 @@ if __name__ == "__main__":
     if 0 < len(szErr):
         print("Config CentOS failed:%s" %(szErr))
         exit(-1)
+    #配置SSHD
+    szErr = ConfigSshd()
+    if 0 < len(szErr):
+        print("Config CentOS failed:%s" %(szErr))
+        exit(-1)
+    #安装GIT
+    szErr = ConfigGit()
+    if 0 < len(szErr):
+        print("Config CentOS failed:%s" %(szErr))
+        exit(-1)
     #安装GCC
     szErr = ConfigGcc()
     if 0 < len(szErr):
@@ -218,16 +241,6 @@ if __name__ == "__main__":
         exit(-1)
     #安装JAVA
     szErr = ConfigJava()
-    if 0 < len(szErr):
-        print("Config CentOS failed:%s" %(szErr))
-        exit(-1)
-    #安装GIT
-    szErr = ConfigGit()
-    if 0 < len(szErr):
-        print("Config CentOS failed:%s" %(szErr))
-        exit(-1)
-    #配置SSHD
-    szErr = maker_public.ConfigSshd()
     if 0 < len(szErr):
         print("Config CentOS failed:%s" %(szErr))
         exit(-1)
