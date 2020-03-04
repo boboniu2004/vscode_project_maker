@@ -158,35 +158,11 @@ def ConfigPython():
 #函数参数：无
 #函数返回：错误描述
 def ConfigJava():
-    szCurWorkPath = os.path.dirname(os.path.realpath(sys.argv[0]))
-    print("First：Please download JDK for https://www.oracle.com/java/technologies/javase-downloads.html.")
-    print("Second: Move the RPM filr to %s." %(szCurWorkPath))
-    raw_input("Last: Press any key to continue...")
-    #获取JDKRPM包的名称
-    szJdkRpm = ""
-    szJdkName = ""
-    FileList = os.listdir(os.path.dirname(os.path.realpath(sys.argv[0])))
-    for szCurFile in FileList:
-        if None != re.search("jdk\\-.+_linux\\-x64_bin\\.rpm", szCurFile):
-            szJdkRpm = str(os.path.dirname(os.path.realpath(sys.argv[0]))+"/"+szCurFile)
-            szJdkName = str(re.sub("_linux\\-x64_bin\\.rpm", "", szCurFile))
-            break
-    if 0 >= len(szJdkRpm):
-        return "Can not find any file like jdk_xx.xx.xx_linux-x64_bin.rpm"
     #安装RPM包
-    szErr = installOrUpdateRpm(szJdkName, "x86_64", szJdkRpm)
+    szErr = installOrUpdateRpm("java-11-openjdk", "x86_64", szJdkRpm)
     if 0 < len(szErr):
         return szErr
-    #设置配置文件
-    szProFileConf,szErr = maker_public.readTxtFile("/etc/profile")
-    if 0 < len(szErr):
-        return szErr
-    if None == re.search("\\nexport[ \\t]+JAVA_HOME[ \\t]*=.+", szProFileConf):
-        szProFileConf += "\n\nexport JAVA_HOME=/usr/java/"+szJdkName
-    else:
-        szProFileConf = re.sub("\\nexport[ \\t]+JAVA_HOME[ \\t]*=.+", \
-            "\nexport JAVA_HOME=/usr/java/"+szJdkName, szProFileConf)
-    szErr = maker_public.writeTxtFile("/etc/profile", szProFileConf)
+    szErr = installOrUpdateRpm("java-11-openjdk-jmods", "x86_64", szJdkRpm)
     if 0 < len(szErr):
         return szErr
     #返回
