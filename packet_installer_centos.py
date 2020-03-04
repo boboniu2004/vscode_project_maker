@@ -190,6 +190,8 @@ def ConfigPlanUML():
         os.path.dirname(os.path.realpath(sys.argv[0]))+"/graphviz-2.30.1-21.el7.x86_64.rpm")
     if 0 < len(szErr):
         return szErr
+    #
+    return ""
 
 
 #函数功能：主函数
