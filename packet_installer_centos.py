@@ -180,6 +180,11 @@ def ConfigJava():
 #函数参数：无
 #函数返回：错误描述
 def ConfigPlanUML():
+    #下载
+    if False == os.path.exists(os.path.realpath(sys.argv[0]))+"/graphviz-2.30.1-21.el7.x86_64.rpm")
+        if 0 != os.system("wget http://rpmfind.net/linux/centos/7.7.1908/os/x86_64/Packages/graphviz-2.30.1-21.el7.x86_64.rpm "\
+            "-o "+os.path.realpath(sys.argv[0]))+"/graphviz-2.30.1-21.el7.x86_64.rpm"):
+            return "Failed to download graphviz"
     #安装
     szErr = installOrUpdateRpm("graphviz", "x86_64", \
         os.path.dirname(os.path.realpath(sys.argv[0]))+"/graphviz-2.30.1-21.el7.x86_64.rpm")
