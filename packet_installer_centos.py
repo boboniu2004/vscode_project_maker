@@ -113,6 +113,12 @@ def ConfigSshd():
     #读取配置文件
     return maker_public.ConfigSshd()
 
+#函数功能：配置GIT
+#函数参数：无
+#函数返回：错误描述
+def ConfigGit():
+    return installOrUpdateRpm("git", "x86_64", "")
+
 
 #函数功能：配置GCC
 #函数参数：无
@@ -168,13 +174,17 @@ def ConfigJava():
     os.system("java -version")
     #返回
     return ""
-    
-    
-#函数功能：配置GIT
+
+
+#函数功能：配置PlanUML
 #函数参数：无
 #函数返回：错误描述
-def ConfigGit():
-    return installOrUpdateRpm("git", "x86_64", "")
+def ConfigPlanUML():
+    #安装
+    szErr = installOrUpdateRpm("graphviz", "x86_64", \
+        os.path.dirname(os.path.realpath(sys.argv[0]))+"/graphviz-2.30.1-21.el7.x86_64.rpm")
+    if 0 < len(szErr):
+        return szErr
 
 
 #函数功能：主函数
@@ -218,6 +228,11 @@ if __name__ == "__main__":
         exit(-1)
     #安装JAVA
     szErr = ConfigJava()
+    if 0 < len(szErr):
+        print("Config CentOS failed:%s" %(szErr))
+        exit(-1)
+    #配置PLANUML
+    szErr = ConfigPlanUML()
     if 0 < len(szErr):
         print("Config CentOS failed:%s" %(szErr))
         exit(-1)

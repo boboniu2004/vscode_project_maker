@@ -194,6 +194,16 @@ def ConfigJava():
     return ""
 
 
+#函数功能：配置PlanUML
+#函数参数：无
+#函数返回：错误描述
+def ConfigPlanUML():
+    #安装
+    if 0 != os.system("apt-get -y install graphviz"):
+        return "Install graphviz failed"
+    return ""
+
+
 #函数功能：配置SSHD
 #函数参数：无
 #函数返回：错误描述
@@ -253,6 +263,11 @@ if __name__ == "__main__":
     szErr = ConfigJava()
     if 0 < len(szErr):
         print("Config Ubuntu failed:%s" %(szErr))
+        exit(-1)
+    #配置PLANUML
+    szErr = ConfigPlanUML()
+    if 0 < len(szErr):
+        print("Config CentOS failed:%s" %(szErr))
         exit(-1)
     #关闭图形界面
     if 0 != os.system("systemctl set-default multi-user.target"):
