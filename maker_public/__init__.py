@@ -176,6 +176,9 @@ def ConfigSshd():
         "\nAuthorizedKeysFile .ssh/authorized_keys", szSshdConf)
     szSshdConf = re.sub("\\n[ \\t]*#[ \\t]*AuthorizedKeysFile.+", \
         "\nAuthorizedKeysFile .ssh/authorized_keys", szSshdConf)
+    #打开root登陆
+    szSshdConf = re.sub("\\n[ \\t]*#[ \\t]*PermitRootLogin[ \\t]+", \
+        "\nPermitRootLogin ", szSshdConf)
     #写入配置文件
     szErr = writeTxtFile("/etc/ssh/sshd_config", szSshdConf)
     if 0 < len(szErr):
