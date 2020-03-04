@@ -16,7 +16,7 @@ def makeMakefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
     if "app"!=szAppType and "shared"!=szAppType and "static"!=szAppType:
         return ("Invalid output(%s)" %(szAppType))
     #读取基础的makefile文件
-    szMakeCont,szErr = maker_public.readTxtFile( os.path.dirname(sys.argv[0])+"/cxx_maker/makefile.conf" )
+    szMakeCont,szErr = maker_public.readTxtFile( os.path.dirname(os.path.realpath(sys.argv[0]))+"/cxx_maker/makefile.conf" )
     if 0 < len(szErr):
         return szErr
     #替换编译器
