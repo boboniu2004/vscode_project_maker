@@ -159,12 +159,13 @@ def ConfigPython():
 #函数返回：错误描述
 def ConfigJava():
     #安装RPM包
-    szErr = installOrUpdateRpm("java-11-openjdk", "x86_64", szJdkRpm)
+    szErr = installOrUpdateRpm("java-11-openjdk", "x86_64", "")
     if 0 < len(szErr):
         return szErr
-    szErr = installOrUpdateRpm("java-11-openjdk-jmods", "x86_64", szJdkRpm)
+    szErr = installOrUpdateRpm("java-11-openjdk-jmods", "x86_64", "")
     if 0 < len(szErr):
         return szErr
+    os.system("java -version")
     #返回
     return ""
     
