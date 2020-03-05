@@ -134,7 +134,6 @@ def makeDebugfile(szProjPath):
     "                \"mode\": \"debug\",\n"\
     "                \"program\": \"${workspaceFolder}/src/main/main.go\",\n"\
     "                \"env\": {\n"\
-    "                    \"GOPATH\":\"${workspaceFolder}:"+os.environ["HOME"]+"/go"+"\"\n"\
     "                },\n"\
     "                \"args\": []\n"\
     "            }\n"\
