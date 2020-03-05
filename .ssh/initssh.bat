@@ -7,7 +7,7 @@ IF NOT EXIST .\id_rsa.pub (echo Have no public key && pause && exit)
 
 set /p User=Please input username of LINUX:
 set /p Host=Please input IP of LINUX:
-set /P PubkeyContent=<id_rsa.pub
+set /P PubkeyContent=<.\id_rsa.pub
 
 echo "%User%@^%Host%"
 ssh %User%^@%Host% "rm -Rf .ssh; mkdir -p .ssh; echo \"%PubkeyContent%\" >>.ssh/authorized_keys; chmod 700 .ssh; chmod 600 .ssh/authorized_keys"
