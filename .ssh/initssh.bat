@@ -1,19 +1,15 @@
-set User=%1
-set Host=%2
-
-echo "%User%@^%Host%"
+echo off
 
 IF NOT EXIST .\id_rsa (ssh-keygen -b 2048 -V +520w -f .\id_rsa)
 IF NOT EXIST .\id_rsa.pub (ssh-keygen -b 2048 -V +520w -f .\id_rsa)
+IF NOT EXIST .\id_rsa (echo Have no private key && pause && exit)
+IF NOT EXIST .\id_rsa.pub (echo Have no public key && pause && exit)
 
-IF NOT EXIST .\id_rsa (echo "Have no private key")
-IF NOT EXIST .\id_rsa.pub (echo "Have no public key")
+set /p User=Please input username of LINUX:
+set /p Host=Please input IP of LINUX:
+set /P PubkeyContent=<.\id_rsa.pub
 
-IF EXIST .\id_rsa (ssh %User%^@%Host% "rm -Rf .ssh")
-IF EXIST .\id_rsa (ssh %User%^@%Host% "mkdir -p .ssh")
-IF EXIST .\id_rsa (ssh %User%^@%Host% "mkdir -p .ssh")
-IF EXIST .\id_rsa (scp ./id_rsa.pub %User%^@%Host%:~/.ssh/authorized_keys)
-IF EXIST .\id_rsa (ssh %User%^@%Host% "chmod 700 .ssh")
-IF EXIST .\id_rsa (ssh %User%^@%Host% "chmod 600 .ssh/authorized_keys")
+echo "%User%@^%Host%"
+ssh %User%^@%Host% "rm -Rf .ssh; mkdir -p .ssh; echo \"%PubkeyContent%\" >>.ssh/authorized_keys; chmod 700 .ssh; chmod 600 .ssh/authorized_keys"
 
 pause

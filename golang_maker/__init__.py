@@ -134,13 +134,29 @@ def makeDebugfile(szProjPath):
     "                \"mode\": \"debug\",\n"\
     "                \"program\": \"${workspaceFolder}/src/main/main.go\",\n"\
     "                \"env\": {\n"\
-    "                    \"GOPATH\":\"${workspaceFolder}:"+os.environ["HOME"]+"/go"+"\"\n"\
     "                },\n"\
     "                \"args\": []\n"\
     "            }\n"\
     "        ]\n"\
     "    }\n"
     return maker_public.writeTxtFile(szProjPath+"/.vscode/launch.json", szConfig)
+
+
+#函数功能：给golang工程创建mod文件
+#函数参数：工程路径
+#函数返回：错误描述
+def makeGomod(szProjPath):
+    #获取模块名称
+    szModName = os.path.basename(os.path.realpath(szProjPath))
+    szPwd = os.getcwd()
+    os.chdir(szProjPath)
+    if 0 != os.system("go mod init "+szModName):
+        os.chdir(szPwd)
+        return "Can not create go.mod"
+    os.chdir(szPwd)
+    #
+    return ""
+
 
 
 #函数功能：创建golang类型的工程
@@ -192,6 +208,10 @@ def MakeProject(szLangType, szAppType, szProjPath):
         "	fmt.Print(\"hello world\")\n"\
         "}"
     szErr = maker_public.writeTxtFile(szProjPath+"/src/main/main.go", szData)
+    if 0 < len(szErr):
+        return szErr
+    #创建MOD
+    szErr = makeGomod(szProjPath)
     if 0 < len(szErr):
         return szErr
     #
