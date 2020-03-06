@@ -54,7 +54,7 @@ def makeMakefile(szAppType, szProjPath):
                 szMakeCont)
     #else:
     #替换GOPATH
-    szMakeCont = re.sub("\\n[ \\t]*GOPATH[ \\t]*:=.*", ("\nGOPATH := %s:%s" %(szProjPath, os.environ["HOME"]+"/go")), szMakeCont)
+    #szMakeCont = re.sub("\\n[ \\t]*GOPATH[ \\t]*:=.*", ("\nGOPATH := %s:%s" %(szProjPath, os.environ["HOME"]+"/go")), szMakeCont)
     #写入makefile文件
     szErr = maker_public.writeTxtFile(szProjPath+"/makefile", szMakeCont)
     return szErr
@@ -148,12 +148,15 @@ def makeDebugfile(szProjPath):
 def makeGomod(szProjPath):
     #获取模块名称
     szModName = os.path.basename(os.path.realpath(szProjPath))
-    szPwd = os.getcwd()
-    os.chdir(szProjPath)
-    if 0 != os.system("go mod init "+szModName):
-        os.chdir(szPwd)
+    if True==os.path.exists(szProjPath+"/go.mod") and False==os.path.isfile(szProjPath+"/go.mod"):
         return "Can not create go.mod"
-    os.chdir(szPwd)
+    if False == os.path.exists(szProjPath+"/go.mod"):
+        szPwd = os.getcwd()
+        os.chdir(szProjPath)
+        if 0 != os.system("go mod init "+szModName):
+            os.chdir(szPwd)
+            return "Can not create go.mod"
+        os.chdir(szPwd)
     #
     return ""
 
