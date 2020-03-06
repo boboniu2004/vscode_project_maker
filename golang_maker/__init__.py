@@ -36,24 +36,22 @@ def makeMakefile(szAppType, szProjPath):
         szMakeCont = re.sub("\\n[ \\t]*GOFLAGS_DBG[ \\t]*:=.*", \
             "\nGOFLAGS_DBG := -i -v -gcflags \"-N -l\" -buildmode=archive", szMakeCont)
     #替换编译命令
-    if "app" == szAppType:
-        szMakeCont = re.sub("\\n\\t\\$\\(GO\\)[ \\t]*\\$\\(GOFLAGS\\)[ \\t]*\\$\\(LIBS\\).*", \
-            "\n\t$(GO) $(GOFLAGS) $(LIBS) ./...;\\\n\tcp -f $(TOP_DIR)/bin/main $(TOP_DIR)/bin/"+os.path.basename(szProjPath), \
-                szMakeCont)
-        szMakeCont = re.sub("\\n\\t\\$\\(GO\\)[ \\t]*\\$\\(GOFLAGS_DBG\\)[ \\t]*\\$\\(LIBS\\).*", \
-            "\n\t$(GO) $(GOFLAGS_DBG) $(LIBS) ./...;\\\n\tcp -f $(TOP_DIR)/bin/main $(TOP_DIR)/bin/"+os.path.basename(szProjPath), \
-                szMakeCont)   
-    elif "shared" == szAppType:
-        szMakeCont = re.sub("\\n\\t\\$\\(GO\\)[ \\t]*\\$\\(GOFLAGS\\)[ \\t]*\\$\\(LIBS\\).*", \
-            "\n\t$(GO) $(GOFLAGS) $(LIBS) main;\\\n\tcp -f $(TOP_DIR)/pkg/linux_amd64_dynlink/main.a "\
-                "$(TOP_DIR)/pkg/linux_amd64_dynlink/"+os.path.basename(szProjPath)+".a", \
-                szMakeCont)
-        szMakeCont = re.sub("\\n\\t\\$\\(GO\\)[ \\t]*\\$\\(GOFLAGS_DBG\\)[ \\t]*\\$\\(LIBS\\).*", \
-            "\n\t$(GO) $(GOFLAGS_DBG) $(LIBS) main;\\\n\tcp -f $(TOP_DIR)/pkg/linux_amd64_dynlink/main.a "\
-                "$(TOP_DIR)/pkg/linux_amd64_dynlink/"+os.path.basename(szProjPath)+".a", \
-                szMakeCont)
-    #else:
-    #替换GOPATH
+    #获取模块名称
+    szModName = os.path.basename(os.path.realpath(szProjPath))
+    szSuffix = ""
+    szSrc = szModName+"/src/main"
+    if "shared" == szAppType:
+         szSuffix = ".so"
+    elif "static" == szAppType:
+        szSuffix = ".a"
+        szSrc = "./..."
+    szMakeCont = re.sub("\\n\\t\\$\\(GO\\)[ \\t]*.+[ \\t]*\\$\\(GOFLAGS\\)[ \\t]*\\$\\(LIBS\\).*", \
+        "\n\t$(GO) -o $(TOP_DIR)/bin/"+szModName+szSuffix+" $(GOFLAGS) $(LIBS) "+szSrc,\
+        szMakeCont)
+    szMakeCont = re.sub("\\n\\t\\$\\(GO\\)[ \\t]*.+[ \\t]*\\$\\(GOFLAGS_DBG\\)[ \\t]*\\$\\(LIBS\\).*", \
+        "\n\t$(GO) -o $(TOP_DIR)/bin/"+szModName+".debug"+szSuffix+" $(GOFLAGS_DBG) $(LIBS) "+szSrc, \
+        szMakeCont)   
+    #替换GOPATH(该功能在go1.8以上不需要了)
     #szMakeCont = re.sub("\\n[ \\t]*GOPATH[ \\t]*:=.*", ("\nGOPATH := %s:%s" %(szProjPath, os.environ["HOME"]+"/go")), szMakeCont)
     #写入makefile文件
     szErr = maker_public.writeTxtFile(szProjPath+"/makefile", szMakeCont)
