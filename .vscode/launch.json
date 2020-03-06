@@ -8,13 +8,11 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/packet_installer_ubuntu.py",
+            "program": "${workspaceFolder}/__init__.py",
             "args": [
-                "kong",
-                "register",
-                "localhost",
-                "100",
-                "10"
+                "golang",
+                "app",
+                "/root/gotest",
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"
