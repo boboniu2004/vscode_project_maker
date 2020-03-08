@@ -10,26 +10,23 @@ import python_maker
 import java_maker
 
 
-#函数功能：给工程中每个空目录增加一个.gitignore防止git无法添加该目录
+#函数功能：给工程中每个目录增加一个.gitignore防止git无法添加该目录
 #函数参数：工程路径
-#函数返回：是否有文件，错误描述
+#函数返回：错误描述
 def addGitignore(szProjPath):
     PathList = os.listdir(szProjPath)
-    HaveFile = False
     for CurPath in PathList:
         if False == os.path.isdir(szProjPath+"/"+CurPath):
             HaveFile = True
             continue
         if "."==CurPath or ".."==CurPath:
             continue
-        HaveFileTmp, szErr = addGitignore(szProjPath+"/"+CurPath)
-        if True == HaveFileTmp:
-            HaveFile = True
+        szErr = addGitignore(szProjPath+"/"+CurPath)
         if 0 < len(szErr):
-            return HaveFile, szErr
-    if False==HaveFile and 0!=os.system("touch "+szProjPath+"/.gitignore"):
-        return HaveFile, "Can not add .gitignore for "+szProjPath
-    return True, ""
+            return szErr
+    if 0 != os.system("touch "+szProjPath+"/.gitignore"):
+        return "Can not add .gitignore for "+szProjPath
+    return ""
 
 
 #函数功能：主函数
@@ -69,7 +66,7 @@ if __name__ == "__main__":
         print("vs_progject_maker: %s" %(szErrRet))
         exit(-1)
     #扫描工程沐目录下的所有目录，如果是空目录则增加一个.gitignore防止git无法添加该目录
-    _, szErrRet = addGitignore(szProjPath)
+    szErrRet = addGitignore(szProjPath)
     if 0 < len(szErrRet):
         print("vs_progject_maker: %s" %(szErrRet))
         exit(-1)    
