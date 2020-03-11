@@ -251,6 +251,12 @@ if __name__ == "__main__":
     if 0 != os.system("pip install --upgrade pip"):
         print ("Update PIP failed")
         exit(-1)
+    #配置内部网络
+    if 1 < len(sys.argv):
+        szErr = maker_public.configInternalNet("eth1", sys.argv[1])
+        if 0 < len(szErr):
+            print("Config CentOS failed:%s" %(szErr))
+            exit(-1)
     #提示关机
     raw_input("Config CentOS success.Please any key to reboot")
     os.system("reboot")
