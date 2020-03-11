@@ -194,13 +194,16 @@ def ConfigSshd():
 #函数功能：配置内部网络
 #函数参数：szEthDevName内部网卡的名称，szIpAddr本机的IP地址
 #函数返回：错误描述
-def configInternalNet(szEthDevName, szIpAddr):
+def configInternalNet(szEthChName, szEthEnName, szIpAddr):
     #获取设备对应的UUID
     szDevConf = execCmdAndGetOutput("nmcli con")
-    MatchList = re.match(".*"+szEthDevName+"[ \\t]+([\\S]+)[ \\t]+[\\S]+[ \\t]+"+szEthDevName+".*", \
+    MatchList = re.match(".*"+szEthChName+"[ \\t]+([\\S]+)[ \\t]+[\\S]+[ \\t]+.*", \
         szDevConf, re.DOTALL)
     if None == MatchList:
-        return "Can not find "+szEthDevName
+        MatchList = re.match(".*"+szEthEnName+"[ \\t]+([\\S]+)[ \\t]+[\\S]+[ \\t]+.*", \
+            szDevConf, re.DOTALL)
+    if None == MatchList:
+        return "Can not find "+szEthEnName
     szConfig = \
         "TYPE=\"Ethernet\"\n"+\
         "PROXY_METHOD=\"none\"\n"+\
@@ -213,16 +216,16 @@ def configInternalNet(szEthDevName, szIpAddr):
         "IPV6_DEFROUTE=\"yes\"\n"+\
         "IPV6_FAILURE_FATAL=\"no\"\n"+\
         "IPV6_ADDR_GEN_MODE=\"stable-privacy\"\n"+\
-        "NAME=\""+szEthDevName+"\"\n"+\
+        "NAME=\""+szEthEnName+"\"\n"+\
         "UUID=\""+MatchList.group(1)+"\"\n"+\
-        "DEVICE=\""+szEthDevName+"\"\n"+\
+        "DEVICE=\""+szEthEnName+"\"\n"+\
         "ONBOOT=\"yes\"\n"+\
         "IPADDR="+szIpAddr+"\n"+\
         "NETMASK=255.255.255.0\n"+\
         "GATEWAY=192.168.137.1\n"+\
         "DNS1=192.168.137.1\n"
     #写入配置
-    szErr = writeTxtFile("/etc/sysconfig/network-scripts/ifcfg-"+szEthDevName, szConfig)
+    szErr = writeTxtFile("/etc/sysconfig/network-scripts/ifcfg-"+szEthEnName, szConfig)
     if 0 < len(szErr):
         return szErr
     #重启服务

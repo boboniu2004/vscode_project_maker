@@ -253,7 +253,7 @@ if __name__ == "__main__":
         exit(-1)
     #配置内部网络
     if 1 < len(sys.argv):
-        szErr = maker_public.configInternalNet("eth1", sys.argv[1])
+        szErr = maker_public.configInternalNet("有线连接 1", "eth1", sys.argv[1])
         if 0 < len(szErr):
             print("Config CentOS failed:%s" %(szErr))
             exit(-1)
