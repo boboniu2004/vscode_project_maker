@@ -200,7 +200,7 @@ def ConfigPlanUML():
 #函数返回：错误描述
 def configInternalNet(szEthChName, szEthEnName, szIpAddr):
     #获取设备对应的UUID
-    szDevConf = execCmdAndGetOutput("nmcli con")
+    szDevConf = maker_public.execCmdAndGetOutput("nmcli con")
     MatchList = re.match(".*"+szEthChName+"[ \\t]+([\\S]+)[ \\t]+[\\S]+[ \\t]+.*", \
         szDevConf, re.DOTALL)
     if None == MatchList:
@@ -229,7 +229,7 @@ def configInternalNet(szEthChName, szEthEnName, szIpAddr):
         "GATEWAY=192.168.137.1\n"+\
         "DNS1=192.168.137.1\n"
     #写入配置
-    szErr = writeTxtFile("/etc/sysconfig/network-scripts/ifcfg-"+szEthEnName, szConfig)
+    szErr = maker_public.writeTxtFile("/etc/sysconfig/network-scripts/ifcfg-"+szEthEnName, szConfig)
     if 0 < len(szErr):
         return szErr
     #重启服务
@@ -243,6 +243,12 @@ def configInternalNet(szEthChName, szEthEnName, szIpAddr):
 #函数参数：可执行文件全路径，启动时加入的参数
 #函数返回：执行成功返回0，否则返回负值的错误码
 if __name__ == "__main__":
+    if 2<len(sys.argv) and "config_IP"==sys.argv[1]:
+        szErr = configInternalNet("有线连接 1", "eth1", sys.argv[2])
+        if 0 < len(szErr):
+            print("Config IP failed:%s" %(szErr))
+            exit(-1)
+        exit(0)
     #安装扩展库
     szErr = ConfigRepo()
     if 0 < len(szErr):
