@@ -95,6 +95,7 @@ def UpdateSystem():
     if 0 < len(szErr):
         return "Disable SELINUX failed"
     #配置时钟同步
+    os.system("systemctl disable chronyd.service")
     os.system("systemctl enable ntpd.service")
     os.system("systemctl stop ntpd.service")
     os.system("systemctl start ntpd.service")
