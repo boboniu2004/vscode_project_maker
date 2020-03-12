@@ -50,5 +50,11 @@ if ([String]::IsNullOrEmpty($VMSwitchInfo))
 {
     New-VMSwitch -SwitchName "HYPER-V-NAT-Network" -SwitchType Internal -Notes "Internal network,use 192.168,137.0/24"
 }
+$VMSwitchInfo = Get-NetAdapter -Name "*HYPER-V-NAT-Network*"
+if ($VMSwitchInfo)
+{
+    Remove-NetIPAddress -InterfaceIndex $VMSwitchInfo.ifIndex
+    New-NetIPAddress -InterfaceIndex $VMSwitchInfo.ifIndex -IpAddress 192.168.137.1 -PrefixLength 24
+}
 New-NetNat -Name "HYPER-V-NAT-Network" -InternalIPInterfaceAddressPrefix "192.168.137.0/24"
 "Create NAT network finish"
