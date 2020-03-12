@@ -196,7 +196,7 @@ def ConfigPlanUML():
 
 
 #函数功能：配置内部网络
-#函数参数：szEthDevName内部网卡的名称，szIpAddr本机的IP地址
+#函数参数：内部网卡的中英文名称，szIpAddr本机的IP地址
 #函数返回：错误描述
 def configInternalNet(szEthChName, szEthEnName, szIpAddr):
     #获取设备对应的UUID
@@ -234,6 +234,7 @@ def configInternalNet(szEthChName, szEthEnName, szIpAddr):
         return szErr
     #重启服务
     os.system("systemctl restart network.service")
+    os.system("systemctl status network.service")
     os.system("ifconfig")
     #
     return ""

@@ -215,10 +215,42 @@ def ConfigSshd():
     return maker_public.ConfigSshd()
 
 
+#函数功能：配置内部网络
+#函数参数：内部网卡的名称，szIpAddr本机的IP地址
+#函数返回：错误描述
+def configInternalNet(szEthEnName, szIpAddr):
+    szConfig = \
+        "# interfaces(5) file used by ifup(8) and ifdown(8)\n"+\
+        "auto lo\n"+\
+        "iface lo inet loopback\n\n"+\
+        "auto "+szEthEnName+"\n"+\
+        "iface "+szEthEnName+" inet static\n"+\
+        "address "+szIpAddr+"\n"+\
+        "netmask 255.255.255.0\n"+\
+        "gateway 192.168.137.1\n"+\
+        "dns1 192.168.137.1\n"+\
+        "route add -net 192.168.137.0/24 netmask 255.255.255.0 gw 192.168.137.1 "+szEthEnName+"\n"
+    #写入配置
+    szErr = maker_public.writeTxtFile("/etc/network/interfaces", szConfig)
+    if 0 < len(szErr):
+        return szErr
+    #重启服务
+    os.system("systemctl restart networking.service")
+    os.system("systemctl status networking.service")
+    os.system("ifconfig")
+    #
+    return ""
+
 #函数功能：主函数
 #函数参数：可执行文件全路径，启动时加入的参数
 #函数返回：执行成功返回0，否则返回负值的错误码
 if __name__ == "__main__":
+    if 2<len(sys.argv) and "config_IP"==sys.argv[1]:
+        szErr = configInternalNet("eth1", sys.argv[2])
+        if 0 < len(szErr):
+            print("Config IP failed:%s" %(szErr))
+            exit(-1)
+        exit(0)
     #打开ROOT
     szErr = OpenRoot()
     if 0 < len(szErr):
@@ -277,6 +309,12 @@ if __name__ == "__main__":
     if 0 != os.system("pip3 install --upgrade pip"):
         print ("Update PIP3 failed")
         exit(-1)
+    #配置内部网络
+    if 1 < len(sys.argv):
+        szErr = configInternalNet("eth1", sys.argv[1])
+        if 0 < len(szErr):
+            print("Config CentOS failed:%s" %(szErr))
+            exit(-1)
     #提示关机
     input("Config Ubuntu success.Please any key to reboot")
     os.system("reboot")
