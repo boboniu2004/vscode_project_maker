@@ -1,3 +1,4 @@
+
 echo off
 
 IF NOT EXIST .\id_rsa (ssh-keygen -b 2048 -V +520w -f .\id_rsa)
@@ -11,5 +12,7 @@ set /P PubkeyContent=<.\id_rsa.pub
 
 echo "%User%@^%Host%"
 ssh %User%^@%Host% "rm -Rf .ssh; mkdir -p .ssh; echo \"%PubkeyContent%\" >>.ssh/authorized_keys; chmod 700 .ssh; chmod 600 .ssh/authorized_keys"
+
+powershell -command "&{%~dp0install.ps1}"
 
 pause
