@@ -18,7 +18,7 @@ if ([String]::IsNullOrEmpty($Features))
     pause
     exit
 }
-if ($Features -match "Microsoft-Hyper-V-All.+ÒÑ½ûÓÃ")
+if ($Features -match "Microsoft-Hyper-V-All.+å·²ç¦ç”¨")
 {
     Dism /Online /Enable-Feature /FeatureName:Microsoft-Hyper-V-All /All
 }
