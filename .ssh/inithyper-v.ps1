@@ -7,7 +7,7 @@ if ([String]::IsNullOrEmpty($OsInfo) -or $OsInfo -notmatch "OS.+Microsoft Window
     pause
     exit
 }
-"check windows version finish"
+"Check windows version finish"
 
 #start hyper-v
 $Features = dism /online  /Get-Features /Format:Table | where{$_ -match "Microsoft-Hyper-V-All.+"}
@@ -18,11 +18,11 @@ if ([String]::IsNullOrEmpty($Features))
     pause
     exit
 }
-if ($Features -match "Microsoft-Hyper-V-All.+Â∑≤Á¶ÅÁî®")
+if ($Features -match "Microsoft-Hyper-V-All.+“—Ω˚”√")
 {
     Dism /Online /Enable-Feature /FeatureName:Microsoft-Hyper-V-All /All
 }
-"start hyper-v finish"
+"Open hyper-v finish"
 
 #create Hyper-V Manager.lnk
 $Shell = New-Object -ComObject WScript.Shell
@@ -39,7 +39,7 @@ if ($HaveShortcut -like "False")
     $Shortcut.Save()
     "Create $Desktop\Hyper-V Manager.lnk"
 }
-"create Hyper-V $Desktop\Hyper-V Manager.lnk finish"
+"Create Hyper-V $Desktop\Hyper-V Manager.lnk finish"
 
 #create NAT network
 #stop all virtual machines
