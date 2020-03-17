@@ -73,6 +73,7 @@ def makeMakefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
 #函数参数：工程路径
 #函数返回：错误描述
 def makePropertiesfile(szProjPath):
+    gccVersion = maker_public.execCmdAndGetOutput("gcc -dumpversion").replace('\n', '')
     szConfig = \
         "{\n"\
         "    \"configurations\": [\n"\
@@ -82,7 +83,8 @@ def makePropertiesfile(szProjPath):
         "                \"${workspaceFolder}/**\",\n"\
         "                \"/usr/include\",\n"\
         "                \"/usr/local/include\",\n"\
-        "                \"/usr/lib/gcc/x86_64-redhat-linux/4.8.5/include\"\n"\
+        "                \"/usr/lib/gcc/x86_64-redhat-linux/%s/include\",\n"\
+        "                \"/usr/include/c++/%s/x86_64-redhat-linux\"\n"\
         "            ],\n"\
         "            \"defines\": [],\n"\
         "            \"compilerPath\": \"/usr/bin/gcc\",\n"\
@@ -92,7 +94,7 @@ def makePropertiesfile(szProjPath):
         "        }\n"\
         "    ],\n"\
         "    \"version\": 4\n"\
-        "}"
+        "}" %(gccVersion, gccVersion)
     return maker_public.writeTxtFile(szProjPath+"/.vscode/c_cpp_properties.json", szConfig)
 
 
