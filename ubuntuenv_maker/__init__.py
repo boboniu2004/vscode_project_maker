@@ -230,7 +230,8 @@ def configInternalNet(szEthEnName, szIpAddr):
         return szErr
     #重启服务
     os.system("systemctl restart networking.service")
-    os.system("systemctl status networking.service")
+    szStatus = maker_public.execCmdAndGetOutput("systemctl status networking.service")
+    print(szStatus)
     os.system("ifconfig")
     #
     return ""
