@@ -4,6 +4,7 @@
 
 import re
 import sys
+import os
 import maker_public
 import centosenv_maker
 import ubuntuenv_maker
@@ -16,6 +17,10 @@ def getOSName():
     if None != re.search("^centos\\-release\\-[\\d]+\\-[\\d]+\\.[\\d]+"+\
         "\\.[\\d]+\\.[^\\.]+\\.centos\\.[^\\.^\\s]+$", szOSName):
         return "centos"
+    #获取ubuntu版本
+    szOSName = maker_public.execCmdAndGetOutput("lsb_release -a")
+    if None != re.search("Distributor[ \\t]+ID[ \\t]*:[ \\t]+Ubuntu.*", szOSName):
+        return "ubuntu"
     return ""
 
 #函数功能：主函数
@@ -40,11 +45,11 @@ if __name__ == "__main__":
             szErr = "Invaild OS"
     if 0 < len(szErr):
         print(szErr)
+    elif 2<len(sys.argv) and "config_IP"==sys.argv[1]:
+        print("Config IP finish")
+    elif re.search("^2\\..*", sys.version):
+        raw_input("make development environment of %s finish, please any key to reboot..." %(szOSName))
+        os.system("reboot")
     else:
-        if 2<len(sys.argv) and "config_IP"==sys.argv[1]:
-            print("Config IP finish")
-        else:
-            raw_input("make development environment of %s finish, please any key to reboot..." %(szOSName))
-            os.system("reboot")
-
-    #安装扩展库
+        input("make development environment of %s finish, please any key to reboot..." %(szOSName))
+        os.system("reboot")
