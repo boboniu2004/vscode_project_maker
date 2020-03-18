@@ -8,9 +8,7 @@ import re
 import maker_public
 
 
-#函数功能：制作c语言的makefile文件
-#函数参数：工程类型，工程路径，编译器，源文件后缀，语言标准
-#函数返回：错误描述
+#makeMakefile 制作c语言的makefile文件；参数：工程类型，工程路径，编译器，源文件后缀，语言标准；返回：错误描述
 def makeMakefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
     #检测
     if "app"!=szAppType and "shared"!=szAppType and "static"!=szAppType:
@@ -41,7 +39,7 @@ def makeMakefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
             ("\nCXXFLAGS_DBG := -std=%s -Wall -m64 -O0 -g3 -fPIC -fmessage-length=0" %(szStd)), szMakeCont)
     #替换链接器
     if "app"==szAppType or "shared"==szAppType:
-        szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := gcc", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := "+szComplier, szMakeCont)
         szMakeCont = re.sub("\\n[ \\t]*LDOUTFLG[ \\t]*:=.*", "\nLDOUTFLG := -o", szMakeCont)
     else:
         szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := ar", szMakeCont)
@@ -69,11 +67,14 @@ def makeMakefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
     return szErr
 
 
-#函数功能：制作索引文件
-#函数参数：工程路径
-#函数返回：错误描述
-def makePropertiesfile(szProjPath):
-    gccVersion = maker_public.execCmdAndGetOutput("gcc -dumpversion").replace('\n', '')
+#makePropertiesfile 制作索引文件；参数：工程路径和开发语言；返回：错误描述
+def makePropertiesfile(szProjPath, szLangType):
+    #获取GCC版本
+    GccVersion = maker_public.execCmdAndGetOutput("gcc -dumpversion").replace('\n', '')
+    CppVersion = maker_public.execCmdAndGetOutput("g++ -dumpversion").replace('\n', '')
+    CppIncPath = "\n"
+    if "c++" == szLangType:
+        CppIncPath = ",\n                \"/usr/include/c++/"+CppVersion+"/x86_64-redhat-linux\"\n"
     szConfig = \
         "{\n"\
         "    \"configurations\": [\n"\
@@ -83,8 +84,7 @@ def makePropertiesfile(szProjPath):
         "                \"${workspaceFolder}/**\",\n"\
         "                \"/usr/include\",\n"\
         "                \"/usr/local/include\",\n"\
-        "                \"/usr/lib/gcc/x86_64-redhat-linux/%s/include\",\n"\
-        "                \"/usr/include/c++/%s/x86_64-redhat-linux\"\n"\
+        "                \"/usr/lib/gcc/x86_64-redhat-linux/"+GccVersion+"/include\""+CppIncPath+\
         "            ],\n"\
         "            \"defines\": [],\n"\
         "            \"compilerPath\": \"/usr/bin/gcc\",\n"\
@@ -94,14 +94,12 @@ def makePropertiesfile(szProjPath):
         "        }\n"\
         "    ],\n"\
         "    \"version\": 4\n"\
-        "}" %(gccVersion, gccVersion)
+        "}"
     return maker_public.writeTxtFile(szProjPath+"/.vscode/c_cpp_properties.json", szConfig)
 
 
-#函数功能：制作编译文件
-#函数参数：工程路径
-#函数返回：错误描述
-def makeBuildfile(szProjPath):
+#makeBuildfile 制作编译文件；参数：工程路径和编译器；返回：错误描述
+def makeBuildfile(szProjPath, szComplier):
     szConfig = \
         "{\n"\
         "    // See https://go.microsoft.com/fwlink/?LinkId=733558\n"\
@@ -110,7 +108,7 @@ def makeBuildfile(szProjPath):
         "    \"tasks\": [\n"\
         "        {\n"\
         "            \"type\": \"shell\",\n"\
-        "            \"label\": \"gcc build active file\",\n"\
+        "            \"label\": \""+szComplier+" build active file\",\n"\
         "            \"command\": \"/usr/bin/make\",\n"\
         "            \"args\": [\n"\
         "                \"-f\",\n"\
@@ -130,7 +128,7 @@ def makeBuildfile(szProjPath):
         "        },\n"\
         "        {\n"\
         "            \"type\": \"shell\",\n"\
-        "            \"label\": \"gcc clean active file\",\n"\
+        "            \"label\": \""+szComplier+" clean active file\",\n"\
         "            \"command\": \"/usr/bin/make\",\n"\
         "            \"args\": [\n"\
         "                \"-f\",\n"\
@@ -153,10 +151,8 @@ def makeBuildfile(szProjPath):
     return maker_public.writeTxtFile(szProjPath+"/.vscode/tasks.json", szConfig)
 
 
-#函数功能：制作调试文件
-#函数参数：工程路径
-#函数返回：错误描述
-def makeDebugfile(szProjPath):
+#makeDebugfile 制作编译文件；参数：工程路径和编译器；返回：错误描述
+def makeDebugfile(szProjPath, szComplier):
     szConfig = \
         "{\n"\
         "    // Use IntelliSense to learn about possible attributes.\n"\
@@ -165,7 +161,7 @@ def makeDebugfile(szProjPath):
         "    \"version\": \"0.2.0\",\n"\
         "    \"configurations\": [\n"\
         "        {\n"\
-        "            \"name\": \"gcc build and debug active file\",\n"\
+        "            \"name\": \""+szComplier+" build and debug active file\",\n"\
         "            \"type\": \"cppdbg\",\n"\
         "            \"request\": \"launch\",\n"\
         "            \"program\": \"${workspaceFolder}/debug/"+os.path.basename(szProjPath)+"\",\n"\
@@ -182,7 +178,7 @@ def makeDebugfile(szProjPath):
         "                    \"ignoreFailures\": true\n"\
         "                }\n"\
         "            ],\n"\
-        "            \"preLaunchTask\": \"gcc build active file\",\n"\
+        "            \"preLaunchTask\": \""+szComplier+" build active file\",\n"\
         "            \"miDebuggerPath\": \"/usr/bin/gdb\"\n"\
         "        }\n"\
         "    ]\n"\
@@ -190,10 +186,13 @@ def makeDebugfile(szProjPath):
     return maker_public.writeTxtFile(szProjPath+"/.vscode/launch.json", szConfig)
 
 
-#函数功能：创建C/C++类型的工程
-#函数参数：开发语言，工程类型，工程路径
-#函数返回：错误描述
+#MakeProject 创建C/C++类型的工程；参数：开发语言，工程类型，工程路径；返回：错误描述
 def MakeProject(szLangType, szAppType, szProjPath):
+    #获取开发语言
+    if "c" == szLangType:
+        szComplier = "gcc"
+    else:
+        szComplier = "g++"
     #建立include目录
     szErr = maker_public.makeDirs(szProjPath+"/include")
     if 0 < len(szErr):
@@ -208,21 +207,21 @@ def MakeProject(szLangType, szAppType, szProjPath):
         return szErr
     #建立makefile
     if "c" == szLangType:
-        szErr = makeMakefile(szAppType, szProjPath, "gcc", ".c", "c11")
+        szErr = makeMakefile(szAppType, szProjPath, szComplier, ".c", "c11")
     else: 
-        szErr = makeMakefile(szAppType, szProjPath, "g++", ".cpp", "c++11")
+        szErr = makeMakefile(szAppType, szProjPath, szComplier, ".cpp", "c++11")
     if 0 < len(szErr):
         return szErr
     #建立配置索引配置目录
-    szErr = makePropertiesfile(szProjPath)
+    szErr = makePropertiesfile(szProjPath, szLangType)
     if 0 < len(szErr):
         return szErr
     #建立编译任务
-    szErr = makeBuildfile(szProjPath)
+    szErr = makeBuildfile(szProjPath, szComplier)
     if 0 < len(szErr):
         return szErr
     #建立调试任务
-    szErr = makeDebugfile(szProjPath)
+    szErr = makeDebugfile(szProjPath, szComplier)
     if 0 < len(szErr):
         return szErr
     #建立主文件
