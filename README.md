@@ -36,11 +36,13 @@
 
 最后就可以在界面上看见新建的虚拟机了，此时可以选中虚拟机，然后点击**连接**进入虚拟机界面，再点击**启动**开始安装linux。![create-vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/create-vm.jpg) ![set-vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/set-vm.jpg) ![start-vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/start-vm.jpg)
 
+--------------------------------------------------------------------------------------------------------------------------------------------
 
-
+## 初始化虚拟机
 
 
 ## 安装vscode
+从( https://code.visualstudio.com )中下载最新的vscode进行安装，安装完毕后，打开vscode，在
 
 # 新建工程
 
