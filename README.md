@@ -14,13 +14,13 @@
 3 可以连接互联网。
 
 
-对于满足该条件的机器：
+对于满足上述条件的机器：
 
 第一步，重启机器，进入BIOS，开启intel硬件虚拟化支持。具体的开启方法根据BIOS厂商而异，请自行百度。
 
-第二步，下载vscode_project_maker(https://github.com/boboniu2004/vscode_project_maker)，并且解压缩。
+第二步，下载vscode_project_maker(https://github.com/boboniu2004/vscode_project_maker)。
 
-第三步，进入vscode_project_maker\\.ssh目录，选中**inithyper-v.bat**脚本，单击右键以管理员权限运行，如果执行权限不对或者不是windows10专业版，脚本会报错。
+第三步，解压缩vscode_project_maker，进入vscode_project_maker\\.ssh目录，选中**inithyper-v.bat**脚本，单击右键以管理员权限运行，如果执行权限不对或者不是windows10专业版，脚本会报错。
 
 第四步，如果正确开启了hyper-v，则会要求重启，重新启动后进入vscode_project_maker\\.ssh目录，以管理员权限再次运行**inithyper-v.bat**脚本，会创建虚拟网卡共后续的虚拟机进行通信。
 
