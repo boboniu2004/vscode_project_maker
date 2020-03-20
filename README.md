@@ -28,7 +28,7 @@
 
 
 ## 安装linux虚拟机
-首先是双击桌面**hyper-v管理器快捷方式**，在弹出的界面中选中**Hyper-V设置**，在弹出的界面中修改虚拟硬盘，虚拟机配置文件的存储位置，最好不要存储在C盘，因为会占用大量的存储空间。如：https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/set_hyper-v.png 。
+首先是双击桌面**hyper-v管理器快捷方式**，在弹出的界面中选中**Hyper-V设置**，在弹出的界面中修改虚拟硬盘，虚拟机配置文件的存储位置，最好不要存储在C盘，因为会占用大量的存储空间。如：![set_hyper-v](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/set_hyper-v.jpg) 。
 
 ## 安装vscode
 
