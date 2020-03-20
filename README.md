@@ -20,14 +20,16 @@
 
 第二步，下载vscode_project_maker( https://github.com/boboniu2004/vscode_project_maker )。
 
-第三步，解压缩vscode_project_maker，进入vscode_project_maker\\.ssh目录，选中**inithyper-v.bat**脚本，单击右键以管理员权限运行，如果执行权限不对或者不是windows10专业版，脚本会报错。
+第三步，解压缩vscode_project_maker，进入**vscode_project_maker\\.ssh**目录，选中**inithyper-v.bat**脚本，单击右键以管理员权限运行，如果执行权限不对或者不是windows10专业版，脚本会报错。
 
-第四步，如果正确开启了hyper-v，则会要求重启，重新启动后进入vscode_project_maker\\.ssh目录，以管理员权限再次运行**inithyper-v.bat**脚本，会创建虚拟网卡共后续的虚拟机进行通信。
+第四步，如果正确开启了hyper-v，则会要求重启，重新启动后进入**vscode_project_maker\\.ssh**目录，以管理员权限再次运行**inithyper-v.bat**脚本，会创建虚拟网卡供后续安装的虚拟机进行通信，同时也会在桌面创建一个**hyper-v管理器快捷方式**。
 
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 
 ## 安装linux虚拟机
+首先是双击桌面**hyper-v管理器快捷方式**，在弹出的界面中选中**Hyper-V设置**，在弹出的界面中修改虚拟硬盘，虚拟机配置文件的存储位置，最好不要存储在C盘，因为会占用大量的存储空间。如：https://github.com/boboniu2004/vscode_project_maker/set_hyper-v.png 。
+
 ## 安装vscode
 
 # 新建工程
