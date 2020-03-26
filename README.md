@@ -39,7 +39,21 @@
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 ## 初始化虚拟机
+centos和ubuntu的详细安装步骤请自行百度，不在本文讨论范围。安装centos7时要关闭内核调试，选择GNOME桌面版。安装ubuntu18.04时**强烈建议**关闭主机的网络连接，否则在下载deb包时卡死。安装完毕重启后，以图形界面的方式登录进系统，使用firefox从 https://github.com/boboniu2004/vscode_project_maker 下载zip或者tar.gz格式的代码，然后解压缩：
 
+    zip格式解压缩命令：unzip ./vscode_project_maker.zip
+
+    tar.gz格式解压缩命令：tar -xvf ./vscode_project_maker.tar.gz
+
+进入**vscode_project_maker/**目录后，打开终端，在其中运行命令，其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段：
+
+    centos下：sudo python osenv_maker.py 192.168.137.xx
+
+    ubuntu下：sudo python3 osenv_maker.py 192.168.137.xx
+
+安装脚本会自动升级系统到最新版；系统安装配置GCC，PYTHON，JAVA，GO，GIT，SSHD等软件；配置网络；关闭图形界面；还会给ubuntu系统开启root账号并设置密码。*注意：因为网络原因，在安装GO和GIT时可能会因为网络问题而失败，此时只需要多试几次即可*。安装完毕重启系统后即可用字符界面登录。[init_linux](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/init_linux.jpg)
+
+--------------------------------------------------------------------------------------------------------------------------------------------
 
 ## 安装vscode
 从( https://code.visualstudio.com )中下载最新的vscode进行安装，安装完毕后，打开vscode，在
