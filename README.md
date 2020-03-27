@@ -20,7 +20,7 @@
 
 第二步，下载vscode_project_maker( https://github.com/boboniu2004/vscode_project_maker )。
 
-第三步，解压缩vscode_project_maker，进入**vscode_project_maker\\.ssh**目录，选中**inithyper-v.bat**脚本，单击右键以管理员权限运行，如果执行权限不对或者不是windows10专业版，脚本会报错。
+第三步，解压缩vscode_project_maker，把**vscode_project_maker\\.ssh**目录拷贝到当前用户的主目录下，进入.ssh目录后选中**inithyper-v.bat**脚本，单击右键以管理员权限运行，如果执行权限不对或者不是windows10专业版，脚本会报错。
 
 第四步，如果正确开启了hyper-v，则会要求重启，重新启动后进入**vscode_project_maker\\.ssh**目录，以管理员权限再次运行**inithyper-v.bat**脚本，会创建虚拟网卡供后续安装的虚拟机进行通信，同时也会在桌面创建一个**hyper-v管理器快捷方式**。
 
@@ -56,7 +56,9 @@ centos和ubuntu的详细安装步骤请自行百度，不在本文讨论范围�
 --------------------------------------------------------------------------------------------------------------------------------------------
 
 ## 安装vscode
-从( https://code.visualstudio.com )中下载最新的vscode进行安装，安装完毕后，打开vscode，在
+从( https://code.visualstudio.com )中下载最新的vscode进行安装，安装完毕后，打开vscode，在**Extensions**(扩展插件市场)中检索并安装Remote-SSH插件(Microsoft)。接着进入windows 10当前用户主目录下的.ssh目录，以管理员权限运行**initssh.bat**，输入前面安装的虚拟机的IP地址(192.168.137.00/24网段)，root账号，root密码后会初始化虚拟机的ssh免密连接，以后vscode就可以打开**Remote Explorer**->**Configure**->**用户主目录\\.ssh\\config**，编辑连接信息即可使用该免密连接操作虚拟机了。其中**IdentityFile**为前面的initssh.bat脚本生成的ssh连接私钥，连接上去后就可以在vscode的TERMINAL中执行各种shell命令。
+
+连接上虚拟机后，就可以在**Extensions**中安装**C/C++(Microsoft)**，**Python(Microsoft)**，**Go(Microsoft)**，**Java Extension Pack(Microsoft)**，**PlantUML(Microsoft)**。注意：这些扩展插件会安装在虚拟机中。![connetc_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/connetc_vm.jpg)
 
 # 新建工程
 
