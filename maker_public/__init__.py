@@ -60,35 +60,11 @@ def execCmdAndGetOutput(szCmd):
 #函数参数：GO可执行程序位置
 #函数返回：错误描述
 def installGolangTools(szGo):
-    #在gopath下安装x/tools
-    os.system("su -c \"mkdir -p ~/go/bin\"")
-    os.system("su -c \"mkdir -p ~/go/src/golang.org/x\"")
-    os.system("su -c \"mkdir -p ~/go/pkg\"")
-    if False == os.path.isdir(os.environ["HOME"]+"/go/src/golang.org/x/tools"):
-        os.system("su -c \"rm -Rf ~/go/src/golang.org/x/tools\"")
-        if 0 != os.system("su -c \"git clone https://github.com/golang/tools.git "\
-            "~/go/src/golang.org/x/tools\""):
-            return "Failed to download tools"
-    if False == os.path.isdir(os.environ["HOME"]+"/go/src/golang.org/x/lint"):
-        os.system("su -c \"rm -Rf ~/go/src/golang.org/x/lint\"")
-        if 0 != os.system("su -c \"git clone https://github.com/golang/lint.git "\
-            "~/go/src/golang.org/x/lint\""):
-            return "Failed to download lint"
-    if False == os.path.isdir(os.environ["HOME"]+"/go/src/golang.org/x/mod"):
-        os.system("su -c \"rm -Rf ~/go/src/golang.org/x/mod\"")
-        if 0 != os.system("su -c \"git clone https://github.com/golang/mod.git "\
-            "~/go/src/golang.org/x/mod\""):
-            return "Failed to download mod"
-    if False == os.path.isdir(os.environ["HOME"]+"/go/src/golang.org/x/xerrors"):
-        os.system("su -c \"rm -Rf ~/go/src/golang.org/x/xerrors\"")
-        if 0 != os.system("su -c \"git clone https://github.com/golang/xerrors.git "\
-            "~/go/src/golang.org/x/xerrors\""):
-            return "Failed to download xerrors"
-    if False == os.path.isdir(os.environ["HOME"]+"/go/src/golang.org/x/sync"):
-        os.system("su -c \"rm -Rf ~/go/src/golang.org/x/sync\"")
-        if 0 != os.system("su -c \"git clone https://github.com/golang/sync.git "\
-            "~/go/src/golang.org/x/sync\""):
-            return "Failed to download sync"
+    #设置GO模块代理
+    if 0 != os.system("go env -w GO111MODULE=on"):
+        return "Set GO111MODULE=on failed"
+    if 0 != os.system("go env -w GOPROXY=\"https://goproxy.io,direct\""):
+        return "Set GOPROXY failed"
     #安装go-outline
     os.system("su -c \""+szGo+" get -v github.com/ramya-rao-a/go-outline\"")
     #安装go-find-references
