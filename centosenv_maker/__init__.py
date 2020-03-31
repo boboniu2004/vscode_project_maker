@@ -43,16 +43,19 @@ def installOrUpdateRpm(szRpmName, szMacVer, szRpmPath):
 
 #configRepo 配置扩展源；参数：无；返回：错误描述
 def configRepo():
-    #安装epel扩展库
-    szErr = installOrUpdateRpm("epel-release", "noarch", "")
-    if 0 < len(szErr):
-        return szErr
-    #安装WANGdisco
+    #获取centos版本
     szCentOSVer = maker_public.execCmdAndGetOutput("rpm -q centos-release")
     MatchList = re.match("^centos\\-release\\-([\\d]+)\\-[\\d]+\\.[\\d]+"+\
         "\\.[\\d]+\\.[^\\.]+\\.centos\\.[^\\.^\\s]+$", szCentOSVer)
     if None == MatchList:
         return ("Unknow OS:%s" %szCentOSVer)
+    #安装epel扩展库(阿里源)
+    os.system("yum erase -y epel-release.noarch")
+    if 0 != os.system( ("wget -O /etc/yum.repos.d/epel-%s.repo http://mirrors.aliyun.com/repo/epel-%s.repo" \
+        %(MatchList.group(1),MatchList.group(1))) ):
+        return "Download epel failed"
+    os.system("yum clean all; yum makecache")
+    #安装WANGdisco
     szRpmPath = ("http://opensource.wandisco.com/centos/%s"\
         "/git/x86_64/wandisco-git-release-%s-2.noarch.rpm" %(MatchList.group(1),MatchList.group(1)))
     szErr = installOrUpdateRpm("wandisco-git-release", "noarch", szRpmPath)
