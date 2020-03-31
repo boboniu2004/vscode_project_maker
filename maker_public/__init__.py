@@ -65,6 +65,7 @@ def installGolangTools(szGo):
         return "Set GO111MODULE=on failed"
     if 0 != os.system("go env -w GOPROXY=\"https://goproxy.io,direct\""):
         return "Set GOPROXY failed"
+    os.system("go env")
     #安装go-outline
     os.system("su -c \""+szGo+" get -v github.com/ramya-rao-a/go-outline\"")
     #安装go-find-references
