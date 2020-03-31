@@ -67,43 +67,43 @@ def installGolangTools(szGo):
         return "Set GOPROXY failed"
     os.system("go env")
     #安装go-outline
-    os.system("su -c \""+szGo+" get -v github.com/ramya-rao-a/go-outline\"")
+    os.system("su -c \""+szGo+" get -v -u github.com/ramya-rao-a/go-outline\"")
     #安装go-find-references
-    os.system("su -c \""+szGo+" get -v github.com/lukehoban/go-find-references\"")
+    os.system("su -c \""+szGo+" get -v -u github.com/lukehoban/go-find-references\"")
     #安装gocode
-    os.system("su -c \""+szGo+" get -v github.com/mdempsky/gocode\"")
+    os.system("su -c \""+szGo+" get -v -u github.com/mdempsky/gocode\"")
     #安装gopkgs
-    os.system("su -c \""+szGo+" get -v github.com/uudashr/gopkgs/cmd/gopkgs\"")
+    os.system("su -c \""+szGo+" get -v -u github.com/uudashr/gopkgs/cmd/gopkgs\"")
     #安装godef
-    os.system("su -c \""+szGo+" get -v github.com/rogpeppe/godef\"")
+    os.system("su -c \""+szGo+" get -v -u github.com/rogpeppe/godef\"")
     #安装goreturns
-    os.system("su -c \""+szGo+" get -v sourcegraph.com/sqs/goreturns\"")
+    os.system("su -c \""+szGo+" get -v -u sourcegraph.com/sqs/goreturns\"")
     #安装gorename
-    os.system("su -c \""+szGo+" get -v golang.org/x/tools/cmd/gorename\"")
+    os.system("su -c \""+szGo+" get -v -u golang.org/x/tools/cmd/gorename\"")
     #安装go-symbols
-    os.system("su -c \""+szGo+" get -v github.com/newhook/go-symbols\"")
+    os.system("su -c \""+szGo+" get -v -u github.com/newhook/go-symbols\"")
     #安装gopls
-    os.system("su -c \""+szGo+" get -v golang.org/x/tools/gopls\"")
+    os.system("su -c \""+szGo+" get -v -u golang.org/x/tools/gopls\"")
     #安装dlv
-    os.system("su -c \""+szGo+" get -v github.com/go-delve/delve/cmd/dlv\"")
+    os.system("su -c \""+szGo+" get -v -u github.com/go-delve/delve/cmd/dlv\"")
     #安装goimports
-    os.system("su -c \""+szGo+" get -v golang.org/x/tools/cmd/goimports\"")
+    os.system("su -c \""+szGo+" get -v -u golang.org/x/tools/cmd/goimports\"")
     #安装guru
-    os.system("su -c \""+szGo+" get -v golang.org/x/tools/cmd/guru\"")
+    os.system("su -c \""+szGo+" get -v -u golang.org/x/tools/cmd/guru\"")
     #安装golint
-    os.system("su -c \""+szGo+" get -v golang.org/x/lint/golint\"")
+    os.system("su -c \""+szGo+" get -v -u golang.org/x/lint/golint\"")
     #安装gotests
-    os.system("su -c \""+szGo+" get -v github.com/cweill/gotests\"")
+    os.system("su -c \""+szGo+" get -v -u github.com/cweill/gotests\"")
     #安装gomodifytags
-    os.system("su -c \""+szGo+" get -v github.com/fatih/gomodifytags\"")
+    os.system("su -c \""+szGo+" get -v -u github.com/fatih/gomodifytags\"")
     #安装impl
-    os.system("su -c \""+szGo+" get -v github.com/josharian/impl\"")
+    os.system("su -c \""+szGo+" get -v -u github.com/josharian/impl\"")
     #安装fillstruct
-    os.system("su -c \""+szGo+" get -v github.com/davidrjenni/reftools/cmd/fillstruct\"")
+    os.system("su -c \""+szGo+" get -v -u github.com/davidrjenni/reftools/cmd/fillstruct\"")
     #安装goplay
-    os.system("su -c \""+szGo+" get -v github.com/haya14busa/goplay/cmd/goplay\"")
+    os.system("su -c \""+szGo+" get -v -u github.com/haya14busa/goplay/cmd/goplay\"")
     #安装godoctor
-    os.system("su -c \""+szGo+" get -v github.com/godoctor/godoctor\"")
+    os.system("su -c \""+szGo+" get -v -u github.com/godoctor/godoctor\"")
     #
     return ""
     
