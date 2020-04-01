@@ -49,9 +49,19 @@ def configRepo():
         "\\.[\\d]+\\.[^\\.]+\\.centos\\.[^\\.^\\s]+$", szCentOSVer)
     if None == MatchList:
         return ("Unknow OS:%s" %szCentOSVer)
+    #更新基础源为阿里源rue
+    if True == os.path.exists("/etc/yum.repos.d/CentOS-Base.repo"):
+        os.system("rm -Rf /etc/yum.repos.d/CentOS-Base.repo.bark")
+        os.system("mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.bark")
+    if False==os.path.exists( ("/etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))) ) and \
+        0!=os.system( ("wget -O /etc/yum.repos.d/Centos-%s.repo http://mirrors.aliyun.com/repo/Centos-%s.repo" \
+            %(MatchList.group(1), MatchList.group(1))) ):
+        os.system( ("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))) )
+        os.system("mv /etc/yum.repos.d/CentOS-Base.repo.bark /etc/yum.repos.d/CentOS-Base.repo")
+        return "Download aliyun.repo failed"    
     #安装epel源
     os.system("yum erase -y epel-release.noarch")
-    if False==os.path.exists( ("http://mirrors.aliyun.com/repo/epel-%s.repo" %(MatchList.group(1))) ) and \
+    if False==os.path.exists( ("/etc/yum.repos.d/epel-%s.repo" %(MatchList.group(1))) ) and \
         0!=os.system( ("wget -O /etc/yum.repos.d/epel-%s.repo http://mirrors.aliyun.com/repo/epel-%s.repo" \
             %(MatchList.group(1), MatchList.group(1))) ):
         return "Download epel.repo failed"
