@@ -51,14 +51,10 @@ def configRepo():
         return ("Unknow OS:%s" %szCentOSVer)
     #安装epel源
     os.system("yum erase -y epel-release.noarch")
-    os.system( ("rm -Rf /etc/yum.repos.d/epel-%s.repo" %(MatchList.group(1))) )
-    if False==os.path.exists("/etc/yum.repos.d/epel.repo") and \
-        0!=os.system("wget -O /etc/yum.repos.d/epel.repo http://mirrors.aliyun.com/repo/epel.repo"):
+    if False==os.path.exists( ("http://mirrors.aliyun.com/repo/epel-%s.repo" %(MatchList.group(1))) ) and \
+        0!=os.system( ("wget -O /etc/yum.repos.d/epel-%s.repo http://mirrors.aliyun.com/repo/epel-%s.repo" \
+            %(MatchList.group(1), MatchList.group(1))) ):
         return "Download epel.repo failed"
-    if False==os.path.exists("/etc/yum.repos.d/epel-testing.repo") and \
-        0 != os.system("wget -O /etc/yum.repos.d/epel-testing.repo "\
-            "http://mirrors.aliyun.com/repo/epel-testing.repo"):
-        return "Download epel-testing.repo failed"
     os.system("yum clean all; yum makecache")
     #安装WANGdisco
     szRpmPath = ("http://opensource.wandisco.com/centos/%s"\
