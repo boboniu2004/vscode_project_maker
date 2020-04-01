@@ -117,7 +117,7 @@ def configPip(szPython, szPip):
         return "Add PIP source failed"
     os.system("su -c \"rm -rf ~/.pip/pip.conf\"")
     if 0 != os.system("su -c \" echo \\\"[global]\ntimeout = 6000\nindex-url = "\
-        "https://mirrors.163.com/pypi/simple/\ntrusted-host =mirrors.163.com\\\" >> ~/.pip/pip.conf\""):
+        "http://mirrors.aliyun.com/pypi/simple/\ntrusted-host = mirrors.aliyun.com\\\" >> ~/.pip/pip.conf\""):
         return "Failed to writr pip.conf"
     #安装pylint
     if 0 != os.system("su -c \""+szPython+" -m pip install -U \\\"pylint<2.0.0\\\" --user\""):

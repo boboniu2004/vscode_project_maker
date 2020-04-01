@@ -81,25 +81,25 @@ def configDebSource():
     szCodeName = CodeNameObj[1]
     #安装网易源
     szAptSource = \
-        "deb http://mirrors.163.com/ubuntu/ "+szCodeName+\
+        "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
             " main restricted universe multiverse\n"\
-        "deb http://mirrors.163.com/ubuntu/ "+szCodeName+\
+        "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
             "-security main restricted universe multiverse\n"\
-        "deb http://mirrors.163.com/ubuntu/ "+szCodeName+\
+        "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
             "-updates main restricted universe multiverse\n"\
-        "deb http://mirrors.163.com/ubuntu/ "+szCodeName+\
+        "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
             "-proposed main restricted universe multiverse\n"\
-        "deb http://mirrors.163.com/ubuntu/ "+szCodeName+\
+        "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
             "-backports main restricted universe multiverse\n"\
-        "deb-src http://mirrors.163.com/ubuntu/ "+szCodeName+\
+        "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
             " main restricted universe multiverse\n"\
-        "deb-src http://mirrors.163.com/ubuntu/ "+szCodeName+\
+        "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
             "-security main restricted universe multiverse\n"\
-        "deb-src http://mirrors.163.com/ubuntu/ "+szCodeName+\
+        "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
             "-updates main restricted universe multiverse\n"\
-        "deb-src http://mirrors.163.com/ubuntu/ "+szCodeName+\
+        "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
             "-proposed main restricted universe multiverse\n"\
-        "deb-src http://mirrors.163.com/ubuntu/ "+szCodeName+\
+        "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
             "-backports main restricted universe multiverse\n"
     #
     szErr = maker_public.writeTxtFile("/etc/apt/sources.list", szAptSource)
