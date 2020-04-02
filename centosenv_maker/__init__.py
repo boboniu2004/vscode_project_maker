@@ -53,19 +53,20 @@ def configRepo():
     if True == os.path.exists("/etc/yum.repos.d/CentOS-Base.repo"):
         os.system("rm -Rf /etc/yum.repos.d/CentOS-Base.repo.bark")
         os.system("mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.bark")
-    #if False==os.path.exists( ("/etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))) ) and \
-    #    0!=os.system( ("wget -O /etc/yum.repos.d/Centos-%s.repo http://mirrors.aliyun.com/repo/Centos-%s.repo" \
-    #        %(MatchList.group(1), MatchList.group(1))) ):
-    #    os.system( ("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))) )
-    #    os.system("mv /etc/yum.repos.d/CentOS-Base.repo.bark /etc/yum.repos.d/CentOS-Base.repo")
-    #    return "Download aliyun.repo failed"  
-    os.system(("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))))  
-    if False==os.path.exists( ("/etc/yum.repos.d/CentOS%s-Base-163.repo" %(MatchList.group(1))) ) and \
-        0!=os.system( ("wget -O /etc/yum.repos.d/CentOS%s-Base-163.repo http://mirrors.163.com/.help/CentOS%s-Base-163.repo" \
+    if False==os.path.exists( ("/etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))) ) and \
+        0!=os.system( ("wget -O /etc/yum.repos.d/Centos-%s.repo http://mirrors.aliyun.com/repo/Centos-%s.repo" \
             %(MatchList.group(1), MatchList.group(1))) ):
-        os.system( ("rm -Rf /etc/yum.repos.d/CentOS%s-Base-163.repo" %(MatchList.group(1))) )
+        os.system( ("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))) )
         os.system("mv /etc/yum.repos.d/CentOS-Base.repo.bark /etc/yum.repos.d/CentOS-Base.repo")
-        return "Download aliyun.repo failed"    
+        return "Download aliyun.repo failed"
+    os.system( ("rm -Rf /etc/yum.repos.d/CentOS%s-Base-163.repo" %(MatchList.group(1))) )
+    #os.system(("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))))  
+    #if False==os.path.exists( ("/etc/yum.repos.d/CentOS%s-Base-163.repo" %(MatchList.group(1))) ) and \
+    #    0!=os.system( ("wget -O /etc/yum.repos.d/CentOS%s-Base-163.repo http://mirrors.163.com/.help/CentOS%s-Base-163.repo" \
+    #        %(MatchList.group(1), MatchList.group(1))) ):
+    #    os.system( ("rm -Rf /etc/yum.repos.d/CentOS%s-Base-163.repo" %(MatchList.group(1))) )
+    #    os.system("mv /etc/yum.repos.d/CentOS-Base.repo.bark /etc/yum.repos.d/CentOS-Base.repo")
+    #    return "Download aliyun.repo failed"    
     #安装epel源
     os.system("yum erase -y epel-release.noarch")
     if False==os.path.exists( ("/etc/yum.repos.d/epel-%s.repo" %(MatchList.group(1))) ) and \
