@@ -103,6 +103,24 @@ def updateSystem():
     os.system("systemctl stop ntpd.service")
     os.system("systemctl start ntpd.service")
     os.system("systemctl status ntpd.service")
+    #将时钟同步重启加入计划任务
+    szRet = maker_public.execCmdAndGetOutput("crontab -l")
+    if None != re.search(".+systemctl[ \\t]+restart[ \\t]+ntpd\\.service", szRet):
+        szRet = re.sub(".+systemctl[ \\t]+restart[ \\t]+ntpd\\.service", \
+            "*/2 * * * * systemctl restart ntpd.service", szRet)
+    elif 0>=len(szRet) or "\n" == szRet[len(szRet)-1]:
+        szRet += "*/2 * * * * systemctl restart ntpd.service\n"
+    else:
+        szRet += "\n*/2 * * * * systemctl restart ntpd.service\n"
+    #将新的定时任务写入文件
+    szErr = maker_public.writeTxtFile("/tmp/vscode_project_maker_crontab", szRet)
+    if 0 < len(szErr):
+        os.system("rm -Rf /tmp/vscode_project_maker_crontab")
+        return szErr
+    if 0 != os.system("crontab /tmp/vscode_project_maker_crontab"):
+        os.system("rm -Rf /tmp/vscode_project_maker_crontab")
+        return "Run crontab failed"
+    os.system("rm -Rf /tmp/vscode_project_maker_crontab")
     return ""
 
 
