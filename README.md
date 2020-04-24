@@ -44,6 +44,8 @@ centos和ubuntu的详细安装步骤请自行百度，不在本文讨论范围�
     zip格式解压缩命令：unzip ./vscode_project_maker.zip
 
     tar.gz格式解压缩命令：tar -xvf ./vscode_project_maker.tar.gz
+    
+或可使用git下载，在终端下运行命令： git clone https://github.com/boboniu2004/vscode_project_maker 即可；
 
 进入**vscode_project_maker/**目录后，打开终端，在其中运行命令，其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段：
 
