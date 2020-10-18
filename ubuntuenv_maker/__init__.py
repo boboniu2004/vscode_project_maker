@@ -275,9 +275,9 @@ def InitEnv():
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #配置PLANUML
-    szErr = configPlanUML()
-    if 0 < len(szErr):
-        return("Config CentOS failed:%s" %(szErr))
+    #szErr = configPlanUML()
+    #if 0 < len(szErr):
+    #    return("Config CentOS failed:%s" %(szErr))
     #关闭图形界面
     if 0 != os.system("systemctl set-default multi-user.target"):
         return("Config Ubuntu failed: can not disable GNOME")
