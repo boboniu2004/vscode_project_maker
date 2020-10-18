@@ -195,11 +195,11 @@ def configJava():
 
 
 #configPlanUML 配置PlanUML；参数：无；返回：错误描述
-def configPlanUML():
-    #安装
-    if 0 != os.system("apt-get -y install graphviz"):
-        return "Install graphviz failed"
-    return ""
+#def configPlanUML():
+#    #安装
+#    if 0 != os.system("apt-get -y install graphviz"):
+#        return "Install graphviz failed"
+#    return ""
 
 
 #configSshd 配置SSHD；参数：无；返回：错误描述

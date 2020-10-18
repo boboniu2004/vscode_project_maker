@@ -47,10 +47,13 @@ def makeMakefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
     #替换链接选项
     if "app" == szAppType:
         szMakeCont = re.sub("\\n[ \\t]*LDFLAGS[ \\t]*:=.*", "\nLDFLAGS := -Wl,-rpath,./", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS_DBG[ \\t]*:=.*", "\nLDFLAGS_DBG := -Wl,-rpath,./", szMakeCont)
     elif "shared" == szAppType:
         szMakeCont = re.sub("\\n[ \\t]*LDFLAGS[ \\t]*:=.*", "\nLDFLAGS := -Wl,-rpath,./ -shared", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS_DBG[ \\t]*:=.*", "\nLDFLAGS_DBG := -Wl,-rpath,./ -shared", szMakeCont)
     else:
         szMakeCont = re.sub("\\n[ \\t]*LDFLAGS[ \\t]*:=.*", "\nLDFLAGS := -crv", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS_DBG[ \\t]*:=.*", "\nLDFLAGS_DBG := -crv", szMakeCont)
     #替换最终目标
     szTarget = os.path.basename(szProjPath)
     if "app" == szAppType:
