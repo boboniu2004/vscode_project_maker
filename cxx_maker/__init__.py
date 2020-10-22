@@ -24,9 +24,9 @@ def makeMakefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
     #替换编译选项
     if "app"==szAppType:
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS[ \\t]*:=.*", \
-            ("\nCXXFLAGS := -std=%s -Wall -m64 -O2 -fPIC -fmessage-length=0" %(szStd)), szMakeCont)
+            ("\nCXXFLAGS := -std=%s -Wall -m64 -O2 -fmessage-length=0" %(szStd)), szMakeCont)
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS_DBG[ \\t]*:=.*", \
-            ("\nCXXFLAGS_DBG := -std=%s -Wall -m64 -O0 -g3 -fPIC -fmessage-length=0" %(szStd)), szMakeCont)
+            ("\nCXXFLAGS_DBG := -std=%s -Wall -m64 -O0 -g3 -fmessage-length=0" %(szStd)), szMakeCont)
     elif "shared"==szAppType:
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS[ \\t]*:=.*", \
             ("\nCXXFLAGS := -std=%s -Wall -m64 -O2 -fPIC -fmessage-length=0 -fvisibility=hidden" %(szStd)), szMakeCont)
