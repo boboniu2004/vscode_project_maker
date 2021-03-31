@@ -202,6 +202,32 @@ def configJava():
 #    return ""
 
 
+#configCompletion 配置自动补齐；参数：无；返回：错误描述
+def configCompletion():
+    #配置
+    szConfig,szErr = maker_public.readTxtFile("/etc/bash.bashrc")
+    if 0 < len(szErr):
+        return szErr
+    szConfig = szConfig.replace("#if ! shopt -oq posix; then\n"
+        "#  if [ -f /usr/share/bash-completion/bash_completion ]; then\n"
+        "#    . /usr/share/bash-completion/bash_completion\n"
+        "#  elif [ -f /etc/bash_completion ]; then\n"
+        "#    . /etc/bash_completion\n"
+        "#  fi\n"
+        "#fi\n", 
+        "if ! shopt -oq posix; then\n"
+        "  if [ -f /usr/share/bash-completion/bash_completion ]; then\n"
+        "    . /usr/share/bash-completion/bash_completion\n"
+        "  elif [ -f /etc/bash_completion ]; then\n"
+        "    . /etc/bash_completion\n"
+        "  fi\n"
+        "fi\n")
+    szErr = maker_public.writeTxtFile("/etc/bash.bashrc", szConfig)
+    if 0 < len(szErr):
+        return szErr
+    return ""
+
+
 #configSshd 配置SSHD；参数：无；返回：错误描述
 def configSshd():
     #安装
@@ -277,7 +303,11 @@ def InitEnv():
     #配置PLANUML
     #szErr = configPlanUML()
     #if 0 < len(szErr):
-    #    return("Config CentOS failed:%s" %(szErr))
+    #    return("Config Ubuntu failed:%s" %(szErr))
+    #配置自动补齐
+    szErr = configCompletion()
+    if 0 < len(szErr):
+        return("Config Ubuntu failed:%s" %(szErr))
     #关闭图形界面
     if 0 != os.system("systemctl set-default multi-user.target"):
         return("Config Ubuntu failed: can not disable GNOME")
