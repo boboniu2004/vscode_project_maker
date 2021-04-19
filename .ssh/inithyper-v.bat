@@ -1,5 +1,6 @@
 echo off
 
+cd %~dp0
 for /F %%i in ('powershell -command get-executionpolicy') do ( set Executionpolicyinfo=%%i)
 echo %Executionpolicyinfo%|findstr "AllSigned"
 IF %errorlevel% equ 0 (powershell -command set-executionpolicy RemoteSigned)
