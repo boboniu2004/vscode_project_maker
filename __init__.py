@@ -41,6 +41,12 @@ if __name__ == "__main__":
     szLangType = str(sys.argv[1]).lower()
     szAppType = str(sys.argv[2]).lower()
     szProjPath = str(sys.argv[3])
+    #去掉尾巴上的"/"
+    if 0<len(szProjPath) and "/" == szProjPath[len(szProjPath)-1]:
+        szProjPath = szProjPath[0:len(szProjPath)-1]
+    if 0>=len(szProjPath) or "."==szProjPath[0]:
+        print("vs_progject_maker: Invalid workspace(%s)" %(szProjPath))
+        exit(-1)
     if True==os.path.exists(szProjPath) and False==os.path.isdir( os.path.realpath(szProjPath) ):
         print("vs_progject_maker: Invalid workspace(%s)" %(szProjPath))
         exit(-1)

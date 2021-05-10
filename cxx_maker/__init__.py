@@ -72,12 +72,20 @@ def makeMakefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
 
 #makePropertiesfile 制作索引文件；参数：工程路径和开发语言；返回：错误描述
 def makePropertiesfile(szProjPath, szLangType):
-    #获取GCC版本
+    #获取GCC
     GccVersion = maker_public.execCmdAndGetOutput("gcc -dumpversion").replace('\n', '')
     CppVersion = maker_public.execCmdAndGetOutput("g++ -dumpversion").replace('\n', '')
+    #获取GCC的include路径
+    GccIncPath = ""
     CppIncPath = "\n"
-    if "c++" == szLangType:
-        CppIncPath = ",\n                \"/usr/include/c++/"+CppVersion+"/x86_64-redhat-linux\"\n"
+    if "centos" == maker_public.getOSName():
+        GccIncPath = "x86_64-redhat-linux/"+GccVersion+"/include"
+        if "c++" == szLangType:
+            CppIncPath = ",\n                \"/usr/include/c++/"+CppVersion+"/x86_64-redhat-linux\"\n"
+    else:
+        GccIncPath = "x86_64-linux-gnu/"+GccVersion+"/include"
+        if "c++" == szLangType:
+            CppIncPath = ",\n                \"/usr/include/c++/"+CppVersion+"\"\n"
     szConfig = \
         "{\n"\
         "    \"configurations\": [\n"\
@@ -87,7 +95,7 @@ def makePropertiesfile(szProjPath, szLangType):
         "                \"${workspaceFolder}/**\",\n"\
         "                \"/usr/include\",\n"\
         "                \"/usr/local/include\",\n"\
-        "                \"/usr/lib/gcc/x86_64-redhat-linux/"+GccVersion+"/include\""+CppIncPath+\
+        "                \"/usr/lib/gcc/"+GccIncPath+"\""+CppIncPath+\
         "            ],\n"\
         "            \"defines\": [],\n"\
         "            \"compilerPath\": \"/usr/bin/gcc\",\n"\

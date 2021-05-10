@@ -9,26 +9,12 @@ import maker_public
 import centosenv_maker
 import ubuntuenv_maker
 
-
-#getOSName 获取操作系统名称；参数：无；返回：操作系统名称
-def getOSName():
-    #获取centos版本
-    szOSName = maker_public.execCmdAndGetOutput("rpm -q centos-release")
-    if None != re.search("^centos\\-release\\-[\\d]+\\-[\\d]+\\.[\\d]+"+\
-        "\\.[\\d]+\\.[^\\.]+\\.centos\\.[^\\.^\\s]+$", szOSName):
-        return "centos"
-    #获取ubuntu版本
-    szOSName = maker_public.execCmdAndGetOutput("lsb_release -a")
-    if None != re.search("Distributor[ \\t]+ID[ \\t]*:[ \\t]+Ubuntu.*", szOSName):
-        return "ubuntu"
-    return ""
-
 #函数功能：主函数
 #函数参数：可执行文件全路径，启动时加入的参数
 #函数返回：执行成功返回0，否则返回负值的错误码
 if __name__ == "__main__":
     #获取发行版本
-    szOSName = getOSName()
+    szOSName = maker_public.getOSName()
     if 2<len(sys.argv) and "config_IP"==sys.argv[1]:
         if "centos" == szOSName:
             szErr = centosenv_maker.InitInternalNet()

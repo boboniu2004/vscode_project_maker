@@ -166,3 +166,17 @@ def ConfigSshd():
     if 0 != os.system("systemctl restart sshd"):
         return "restart sshd failed"
     return ""
+
+
+    #getOSName 获取操作系统名称；参数：无；返回：操作系统名称
+def getOSName():
+    #获取centos版本
+    szOSName = execCmdAndGetOutput("rpm -q centos-release")
+    if None != re.search("^centos\\-release\\-[\\d]+\\-[\\d]+\\.[\\d]+"+\
+        "\\.[\\d]+\\.[^\\.]+\\.centos\\.[^\\.^\\s]+$", szOSName):
+        return "centos"
+    #获取ubuntu版本
+    szOSName = execCmdAndGetOutput("lsb_release -a")
+    if None != re.search("Distributor[ \\t]+ID[ \\t]*:[ \\t]+Ubuntu.*", szOSName):
+        return "ubuntu"
+    return ""
