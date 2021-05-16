@@ -35,7 +35,7 @@
 ### 安装virtual box
 第一步，从( https://www.virtualbox.org/wiki/Downloads )下载virtu box 6.1及以上版本。
 
-第二步，双击安装包进入安装界面，需要自己选择一下安装路径!，在安装过程中会提示新增通用串行总线，此时要点击**安装**。注意安装过程可能会暂时断网！[virtualbox_path_select](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_path_select.jpg) ![virtualbox_install_bus](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_install_bus.jpg)
+第二步，双击安装包进入安装界面，需要自己选择一下安装路径!，在安装过程中会提示新增通用串行总线，此时要点击**安装**。注意安装过程可能会暂时断网！ [virtualbox_path_select](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_path_select.jpg) ![virtualbox_install_bus](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_install_bus.jpg)
 
 第三步，双击桌面**Oracle VM VirtualBox**，在弹出的界面中点击**新建**，此时会再次弹出界面，点击**专家模式**，依次设置虚拟机的类型、内存大小、硬盘(注意：硬盘要设置为**动态分配**)，然后创建虚拟机。
 
@@ -43,7 +43,7 @@
 
 最后就可以可以选中虚拟机，然后点击**启动**开始安装linux。 ![virtualbox_create_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_create_vm.jpg) ![virtualbox_create_vm_hd](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_create_vm_hd.jpg) ![virtualbox_set_vm_cpu](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vm_cpu.jpg) ![virtualbox_set_vm_net](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vm_net.jpg) ![virtualbox_set_vm_iso](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vm_iso.jpg)
 
-注意：如果需要在后台启动virtualbox虚拟机，则需要选中虚拟机，点击右键，选中**启动**->**后台启动**。
+注意：如果需要在后台启动virtualbox虚拟机，则需要选中虚拟机，点击右键，选中**启动**->**无界面启动**。
 
 ## 安装linux
 目前支持的linux系统为centos和ubuntu，详细安装步骤请自行百度，不在本文讨论范围。安装centos7时要关闭内核调试，选择GNOME桌面版。安装ubuntu18.04时**强烈建议**关闭主机的网络连接，否则在下载deb包时卡死。安装完毕重启后，以图形界面的方式登录进系统，使用firefox从 https://github.com/boboniu2004/vscode_project_maker 下载zip或者tar.gz格式的代码，然后解压缩：
