@@ -7,17 +7,11 @@
 ## 硬件要求
 硬件平台为intel x86_64，需要开启硬件虚拟化技术vt-x，具体的开启方法根据BIOS厂商而异，请自行百度。
 
---------------------------------------------------------------------------------------------------------------------------------------------
-
 ## 系统要求
 宿主操作系统目前支持windows 10专业版(据说windows 10家庭版也可以，但是未进行测试)。
 
---------------------------------------------------------------------------------------------------------------------------------------------
-
 ## 网络要求
 需要连接互联网。
-
---------------------------------------------------------------------------------------------------------------------------------------------
 
 ## 安装虚拟机软件
 目前支持hyper-v和virtual box 6.1以上版本。
@@ -41,48 +35,38 @@
 ### 安装virtual box
 第一步，从( https://www.virtualbox.org/wiki/Downloads )下载virtu box 6.1及以上版本。
 
-第二步，双击安装包进入安装界面，需要自己选择一下安装路径![virtualbox_path_select](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_path_select.jpg)，在安装过程中会提示新增通用串行总线，此时要点击**安装**![virtualbox_install_bus](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_install_bus.jpg)。注意安装过程可能会暂时断网！
+第二步，双击安装包进入安装界面，需要自己选择一下安装路径!，在安装过程中会提示新增通用串行总线，此时要点击**安装**。注意安装过程可能会暂时断网！
 
 第三步，双击桌面**Oracle VM VirtualBox**，在弹出的界面中点击**新建**，此时会再次弹出界面，点击**专家模式**，依次设置虚拟机的类型、内存大小、硬盘(注意：硬盘要设置为**动态分配**)，然后创建虚拟机。
 
 第四步，选中界面上新创建的虚拟机，右键进入设置界面，依次修改虚拟机的可用CPU，开启第二网卡，并且网络类型设置为**host only**)，在**存储**分界面中设置接下来要安装的操作系统的ISO镜像，然后保存设置。
 
-最后就可以可以选中虚拟机，然后点击**启动**开始安装linux。![virtualbox_create_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_create_vm.jpg) ![virtualbox_create_vm_hd](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_create_vm_hd.jpg) ![virtualbox_set_vm_cpu](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vm_cpu.jpg) ![virtualbox_set_vm_net](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vm_net.jpg) ![virtualbox_set_vm_iso](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vm_iso.jpg)
+最后就可以可以选中虚拟机，然后点击**启动**开始安装linux。 [virtualbox_path_select](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_path_select.jpg) ![virtualbox_install_bus](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_install_bus.jpg) ![virtualbox_create_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_create_vm.jpg) ![virtualbox_create_vm_hd](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_create_vm_hd.jpg) ![virtualbox_set_vm_cpu](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vm_cpu.jpg) ![virtualbox_set_vm_net](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vm_net.jpg) ![virtualbox_set_vm_iso](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vm_iso.jpg)
 
 注意：如果需要在后台启动virtualbox虚拟机，则需要选中虚拟机，点击右键，选中**启动**->**后台启动**。
 
-
-
-
-## 安装linux虚拟机
-首先是双击桌面**hyper-v管理器快捷方式**，在弹出的界面中选中**Hyper-V设置**，修改虚拟硬盘，虚拟机配置文件的存储位置，最好不要存储在C盘，因为会占用大量的存储空间。![set_hyper-v](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/set_hyper-v.jpg) 
-
-在虚拟机管理界面中选中**快速创建...**：在弹出的对话框中点击**更改安装源(I)...**，选择centos7_x86-64或者ubuntu18.04_x86-64镜像；取消**此虚拟机将运行Windows(启用Windows Secure Boot)**；点击**更多选项(R)**修改虚拟机的名称。上面三步做好后就可以点击**创建虚拟机(V)**按钮来创建虚拟机。这里需要说明一下，因为网络的原因，可能出现一直无法点击**创建虚拟机(V)**的情况，此时只需要断开windows 10的网络，重新创建虚拟机即可。
-
-接着在创建成功的页面上点击**编辑设置(S)**。在弹出的界面中依次点击**添加硬件**->**网络适配器**->**添加(D)**，为虚拟机新建一个网卡，网卡的虚拟交换机设置为**HYPER-V-NAT-Network**；点击**检查点**，取消**启用检查点(E)**；点击**处理器**，设置处理器为物理CPU的一半(推荐)，点击**内存**，将**RAM(R)**设置为2048MB，动态内存区间设置为512M~2048M(推荐)；最后点击**确定**完成虚拟机的配置。
-
-最后就可以在界面上看见新建的虚拟机了，此时可以选中虚拟机，然后点击**连接**进入虚拟机界面，再点击**启动**开始安装linux。![create_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/create_vm.jpg) ![set_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/set_vm.jpg) ![start_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/start_vm.jpg)
-
---------------------------------------------------------------------------------------------------------------------------------------------
-
-## 初始化虚拟机
-centos和ubuntu的详细安装步骤请自行百度，不在本文讨论范围。安装centos7时要关闭内核调试，选择GNOME桌面版。安装ubuntu18.04时**强烈建议**关闭主机的网络连接，否则在下载deb包时卡死。安装完毕重启后，以图形界面的方式登录进系统，使用firefox从 https://github.com/boboniu2004/vscode_project_maker 下载zip或者tar.gz格式的代码，然后解压缩：
+## 安装linux
+目前支持的linux系统为centos和ubuntu，详细安装步骤请自行百度，不在本文讨论范围。安装centos7时要关闭内核调试，选择GNOME桌面版。安装ubuntu18.04时**强烈建议**关闭主机的网络连接，否则在下载deb包时卡死。安装完毕重启后，以图形界面的方式登录进系统，使用firefox从 https://github.com/boboniu2004/vscode_project_maker 下载zip或者tar.gz格式的代码，然后解压缩：
 
     zip格式解压缩命令：unzip ./vscode_project_maker.zip
 
     tar.gz格式解压缩命令：tar -xvf ./vscode_project_maker.tar.gz
     
-或可使用git下载，在终端下运行命令： git clone https://github.com/boboniu2004/vscode_project_maker 即可；
+或可使用git下载，在终端下运行命令： git clone https://github.com/boboniu2004/vscode_project_maker 即可(ubuntu系统下默认不安装git)；
 
-进入**vscode_project_maker/**目录后，打开终端，在其中运行命令，其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段：
+进入**vscode_project_maker/**目录后，打开终端，运行命令(注意：ubuntu环境下，**vscode_project_maker**文件夹必须放置在/root目录下)。
 
-    centos下：sudo python osenv_maker.py 192.168.137.xx
+    在hyper-v环境下：
+        centos下：sudo python osenv_maker.py 192.168.137.xx
+        ubuntu下：sudo python3 osenv_maker.py 192.168.137.xx
+    其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。
 
-    ubuntu下：sudo python3 osenv_maker.py 192.168.137.xx
+    在virtualbox环境下：
+        centos下：sudo python osenv_maker.py
+        ubuntu下：sudo python3 osenv_maker.py
+    系统会自动将第二张网卡设置为192.168.56.101/24。
 
 安装脚本会自动升级系统到最新版；系统安装配置GCC，PYTHON，JAVA，GO，GIT，SSHD等软件；配置网络；关闭图形界面；还会给ubuntu系统开启root账号并设置密码。注意：因为网络原因，在安装GO和GIT时可能会因为网络问题而失败，此时只需要多试几次即可。安装完毕重启系统后即可用字符界面登录。![init_linux](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/init_linux.jpg)
-
---------------------------------------------------------------------------------------------------------------------------------------------
 
 ## 安装vscode
 从( https://code.visualstudio.com )中下载最新的vscode进行安装，安装完毕后，打开vscode，在**Extensions**(扩展插件市场)中检索并安装Remote-SSH插件(Microsoft)。接着进入windows 10当前用户主目录下的.ssh目录，以管理员权限运行**initssh.bat**，输入前面安装的虚拟机的IP地址(192.168.137.00/24网段)，root账号，root密码后会初始化虚拟机的ssh免密连接，以后vscode就可以打开**Remote Explorer**->**Configure**->**用户主目录\\.ssh\\config**，编辑连接信息即可使用该免密连接操作虚拟机了。其中**IdentityFile**为前面的initssh.bat脚本生成的ssh连接私钥，连接上去后就可以在vscode的TERMINAL中执行各种shell命令。注意：有些情况下，会因为IP复用的情况连接不上虚拟机，此时只需要删除用户主目录\\.ssh\\hosts文件即可。
