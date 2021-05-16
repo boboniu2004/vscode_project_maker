@@ -247,9 +247,9 @@ def configInternalNet(szEthEnName, szIpAddr):
         "iface "+szEthEnName+" inet static\n"+\
         "address "+szIpAddr+"\n"+\
         "netmask 255.255.255.0\n"+\
-        "gateway 192.168.56.1\n"+\
-        "dns1 192.168.56.1\n"+\
-        "route add -net 192.168.56.0/24 netmask 255.255.255.0 gw 192.168.56.1 "+szEthEnName+"\n"
+        "gateway 192.168.137.1\n"+\
+        "dns1 192.168.137.1\n"+\
+        "route add -net 192.168.137.0/24 netmask 255.255.255.0 gw 192.168.137.1 "+szEthEnName+"\n"
     #写入配置
     szErr = maker_public.writeTxtFile("/etc/network/interfaces", szConfig)
     if 0 < len(szErr):
