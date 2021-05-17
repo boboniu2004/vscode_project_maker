@@ -120,7 +120,7 @@ def configPip(szPython, szPip):
         "http://mirrors.aliyun.com/pypi/simple/\ntrusted-host = mirrors.aliyun.com\\\" >> ~/.pip/pip.conf\""):
         return "Failed to writr pip.conf"
     #安装pylint
-    if 0 != os.system("su -c \""+szPython+" -m pip install -U \\\"pylint<2.0.0\\\" --user\""):
+    if 0 != os.system("su -c \""+szPython+" -m pip install -U \\\"pylint\\\" --user\""):
         return "Update Pylint failed"
     #升级PIP
     if 0 != os.system("su -c \""+szPip+" install --upgrade pip\""):

@@ -69,10 +69,11 @@ def configRepo():
         return "Download aliyun.repo failed"    
     #安装epel源
     os.system("yum erase -y epel-release.noarch")
-    if False==os.path.exists( ("/etc/yum.repos.d/epel-%s.repo" %(MatchList.group(1))) ) and \
-        0!=os.system( ("wget -O /etc/yum.repos.d/epel-%s.repo http://mirrors.aliyun.com/repo/epel-%s.repo" \
+    if False==os.path.exists( ("/etc/yum.repos.d/epel-%s.repo" %(MatchList.group(1))) ) or \
+        0==os.path.getsize( ("/etc/yum.repos.d/epel-%s.repo" %(MatchList.group(1))) ):
+        if 0!=os.system( ("wget -O /etc/yum.repos.d/epel-%s.repo http://mirrors.aliyun.com/repo/epel-%s.repo" \
             %(MatchList.group(1), MatchList.group(1))) ):
-        return "Download epel.repo failed"
+            return "Download epel.repo failed"
     os.system("yum clean all; yum makecache")
     #安装WANGdisco
     szRpmPath = ("http://opensource.wandisco.com/centos/%s"\
@@ -168,14 +169,14 @@ def configGolang():
 
 #configPython 配置PYTHON；参数：无；返回：错误描述
 def configPython():
-    szErr = installOrUpdateRpm("python", "x86_64", "")
+    szErr = installOrUpdateRpm("python3", "x86_64", "")
     if 0 < len(szErr):
         return szErr
-    szErr = installOrUpdateRpm("python2-pip", "noarch", "")
+    szErr = installOrUpdateRpm("python3-pip", "noarch", "")
     if 0 < len(szErr):
         return szErr
     #配置PIP
-    szErr = maker_public.configPip("python", "pip")
+    szErr = maker_public.configPip("python3", "pip3")
     if 0 < len(szErr):
         return szErr
     return ""
@@ -298,7 +299,7 @@ def InitEnv():
     if 0 != os.system("systemctl set-default multi-user.target"):
         return("Config CentOS failed: can not disable GNOME")
     #升级PIP
-    if 0 != os.system("pip install --upgrade pip"):
+    if 0 != os.system("pip3 install --upgrade pip"):
         return("Update PIP failed")
     #配置内部网络
     if 1 < len(sys.argv):
