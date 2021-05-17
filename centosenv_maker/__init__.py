@@ -176,7 +176,7 @@ def configPython():
     if 0 < len(szErr):
         return szErr
     #配置PIP
-    szErr = maker_public.configPip("python3", "pip3")
+    szErr = maker_public.configPip("python3", "pip")
     if 0 < len(szErr):
         return szErr
     return ""
@@ -299,8 +299,8 @@ def InitEnv():
     if 0 != os.system("systemctl set-default multi-user.target"):
         return("Config CentOS failed: can not disable GNOME")
     #升级PIP
-    if 0 != os.system("pip3 install --upgrade pip"):
-        return("Update PIP failed")
+    #if 0 != os.system("pip3 install --upgrade pip"):
+    #    return("Update PIP failed")
     #配置内部网络
     if 1 < len(sys.argv):
         szErr = configInternalNet("有线连接 1", "eth1", sys.argv[1])

@@ -123,8 +123,8 @@ def configPip(szPython, szPip):
     if 0 != os.system("su -c \""+szPython+" -m pip install -U \\\"pylint\\\" --user\""):
         return "Update Pylint failed"
     #升级PIP
-    if 0 != os.system("su -c \""+szPip+" install --upgrade pip\""):
-        return "Update PIP failed"
+    #if 0 != os.system("su -c \""+szPip+" install --upgrade pip\""):
+    #    return "Update PIP failed"
     #
     return ""
 
