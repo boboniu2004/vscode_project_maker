@@ -41,6 +41,15 @@ def installOrUpdateRpm(szRpmName, szMacVer, szRpmPath):
     return ""
 
 
+#releaseYum 杀死当前占有yum资源的进程，释放资源；参数：无；返回：错误描述
+def releaseYum():
+    szOtherProc,szErr = maker_public.readTxtFile("/var/run/yum.pid")
+    if ""!=szErr:
+        return
+    if True == szOtherProc.isdigit():
+        os.system("kill -9 "+szOtherProc)
+    os.system("rm -rf /var/run/yum.pid")
+
 #configRepo 配置扩展源；参数：无；返回：错误描述
 def configRepo():
     #获取centos版本
@@ -259,6 +268,8 @@ def configInternalNet(szEthChName, szEthEnName, szIpAddr):
 
 #InitEnv 初始化环境；参数：无；返回：错误描述
 def InitEnv():
+    #释放yum资源
+    releaseYum()
     #安装扩展库
     szErr = configRepo()
     if 0 < len(szErr):
