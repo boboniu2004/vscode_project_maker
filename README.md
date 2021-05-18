@@ -57,8 +57,9 @@
 ### Ubuntu安装注意事项
 1 安装ubuntu18.04时**强烈建议**关闭主机的网络连接，否则在下载deb包时会卡死。
 
-### 设置centoS开发环境
+### 设置centos开发环境
 以root账号进入系统，打开终端，运行一下命令：
+
     cd /root/
     wget https://github.com/boboniu2004/vscode_project_maker/archive/refs/heads/master.zip -O ./vscode_project_maker.zip
     unzip ./vscode_project_maker.zip
@@ -73,6 +74,7 @@
 
 ### 设置ubuntu开发环境
 ubuntu安装时默认不开启root账号，所以只能已普通账号进入系统，打开终端，运行一下命令：
+
     sudo bash
     cd /root/
     wget https://github.com/boboniu2004/vscode_project_maker/archive/refs/heads/master.zip -O ./vscode_project_maker.zip
