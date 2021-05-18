@@ -144,14 +144,15 @@ def configGcc():
 #configGolang配置GOLANG；参数：无；返回：错误描述
 def configGolang():
     #安装 golang
-    if False == os.path.exists("./go1.13.6.linux-amd64.tar.gz"):
-        if 0 != os.system("wget https://studygolang.com/dl/golang/go1.13.6.linux-amd64.tar.gz"):
+    if False == os.path.exists("./go1.16.4.linux-amd64.tar.gz"):
+        if 0 != os.system("wget https://studygolang.com/dl/golang/go1.16.4.linux-amd64.tar.gz"):
             return "Failed to download golang1.13.6"
     if -1 == maker_public.execCmdAndGetOutput(\
-        "su -c \"/usr/local/go/bin/go version\"").find("go1.13.6"):
+        "su -c \"/usr/local/go/bin/go version\"").find("go1.16.4"):
         os.system("rm -Rf /usr/local/go")
-        if 0 != os.system("tar -C /usr/local -zxvf ./go1.13.6.linux-amd64.tar.gz"):
-            return "Failed to uncompress golang1.13.6"
+        os.system("rm -Rf /root/go")
+        if 0 != os.system("tar -C /usr/local -zxvf ./go1.16.4.linux-amd64.tar.gz"):
+            return "Failed to uncompress go1.16.4"
         #设置环境变量
         szConfig,szErr = maker_public.readTxtFile("/etc/profile")
         if 0 < len(szErr):
