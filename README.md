@@ -47,15 +47,26 @@
 注意：如果需要在后台启动virtualbox虚拟机，则需要选中虚拟机，点击右键，选中**启动**->**无界面启动**。
 
 ## 安装linux
-目前支持的linux系统为centos和ubuntu，详细安装步骤请自行百度，不在本文讨论范围。安装centos7时要关闭内核调试，选择GNOME桌面版。安装ubuntu18.04时**强烈建议**关闭主机的网络连接，否则在下载deb包时卡死。安装完毕重启后，以图形界面的方式登录进系统，使用firefox从 https://github.com/boboniu2004/vscode_project_maker 下载zip或者tar.gz格式的代码，然后解压缩：
+目前支持的linux系统为centos和ubuntu，详细安装步骤请自行百度，不在本文讨论范围。
+### Centos安装注意事项
+1 安装centos7时要关闭内核调试，选择GNOME桌面版。
+2 安装完毕第一次进入系统时，会有一个初始化界面，此时需要将网络连接中设置的网卡全部打开，虚拟机软件会自动给它们配置固定IP，否则后续就没法联网。
+3 初始化完毕后，注销当前用户，重新登录到root用户，然后进入**系统设置**-**网络设置**，将所有网卡都设置为**自动连接**
+![VirtualBox_centos7_17_05_2021_16_58_43](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/VirtualBox_centos7_17_05_2021_16_58_43.jpg) ![VirtualBox_centos7_17_05_2021_16_59_12](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/VirtualBox_centos7_17_05_2021_16_59_12.jpg) ![VirtualBox_centos7_17_05_2021_21_27_50](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/VirtualBox_centos7_17_05_2021_21_27_50.jpg) ![VirtualBox_centos7_17_05_2021_21_28_17](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/VirtualBox_centos7_17_05_2021_21_28_17.jpg)
+
+### Ubuntu安装注意事项
+1 安装ubuntu18.04时**强烈建议**关闭主机的网络连接，否则在下载deb包时会卡死。
+
+### 设置开发环境
+以图形界面的方式登录进系统，使用firefox从 https://github.com/boboniu2004/vscode_project_maker 下载zip或者tar.gz格式的代码，然后解压缩：
 
     zip格式解压缩命令：unzip ./vscode_project_maker.zip
 
     tar.gz格式解压缩命令：tar -xvf ./vscode_project_maker.tar.gz
     
-或可使用git下载，在终端下运行命令： git clone https://github.com/boboniu2004/vscode_project_maker 即可(ubuntu系统下默认不安装git)；
+或可使用git下载，在终端下运行命令： git clone https://github.com/boboniu2004/vscode_project_maker 即可(ubuntu系统下默认不安装git)。
 
-进入**vscode_project_maker/**目录后，打开终端，运行命令(注意：ubuntu环境下，**vscode_project_maker**文件夹必须放置在/root目录下)。
+进入**vscode_project_maker**目录后，打开终端，运行命令(注意：ubuntu环境下，**vscode_project_maker**文件夹必须放置在/root目录下)。
 
     在hyper-v环境下：
         centos下：sudo python osenv_maker.py 192.168.137.xx
@@ -65,7 +76,7 @@
     在virtualbox环境下：
         centos下：sudo python osenv_maker.py
         ubuntu下：sudo python3 osenv_maker.py
-    系统会自动将第二张网卡设置为192.168.56.101/24。
+    系统会自动将第一张网卡设置为10.0.2.15/24，第二张网卡设置为192.168.56.101/24。
 
 安装脚本会自动升级系统到最新版；系统安装配置GCC，PYTHON，JAVA，GO，GIT，SSHD等软件；配置网络；关闭图形界面；还会给ubuntu系统开启root账号并设置密码。注意：因为网络原因，在安装GO和GIT时可能会因为网络问题而失败，此时只需要多试几次即可。安装完毕重启系统后即可用字符界面登录。![init_linux](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/init_linux.jpg)
 
@@ -74,7 +85,9 @@
 
 连接上虚拟机后，就可以在**Extensions**中安装**C/C++(Microsoft)**，**Python(Microsoft)**，**Go(Microsoft)**，**Java Extension Pack(Microsoft)**，**PlantUML(Microsoft)**。注意：这些扩展插件会安装在虚拟机中。![connetc_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/connetc_vm.jpg)
 
---------------------------------------------------------------------------------------------------------------------------------------------
+## 设置虚拟机自启动
+hyper-v可以在管理界面设置开机自启动；virtualbox需要修改**vscode_project_maker/.ssh/autostarts-vm.bat**脚本的**虚拟机安装目录**和**自启动虚拟机名称**，然后放置到**C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp**目录下。
+![hyper-v_set_start](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/hyper-v_set_start.jpg) ![virtualbox_set_start](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_start.jpg)
 
 # 新建工程
 
