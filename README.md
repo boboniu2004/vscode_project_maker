@@ -63,7 +63,7 @@
     cd /root/
     wget https://github.com/boboniu2004/vscode_project_maker/archive/refs/heads/master.zip -O ./vscode_project_maker.zip
     unzip ./vscode_project_maker.zip
-    cd ./vscode_project_maker
+    cd ./vscode_project_maker-master
 
     在hyper-v环境下：
         python osenv_maker.py 192.168.137.xx/24
@@ -79,7 +79,7 @@ ubuntu安装时默认不开启root账号，所以只能已普通账号进入系�
     cd /root/
     wget https://github.com/boboniu2004/vscode_project_maker/archive/refs/heads/master.zip -O ./vscode_project_maker.zip
     unzip ./vscode_project_maker.zip
-    cd ./vscode_project_maker
+    cd ./vscode_project_maker-master
 
     在hyper-v环境下：
         python3 osenv_maker.py 192.168.137.xx/24
