@@ -146,7 +146,7 @@ def configGolang():
     #安装 golang
     if False == os.path.exists("./go1.16.4.linux-amd64.tar.gz"):
         if 0 != os.system("wget https://studygolang.com/dl/golang/go1.16.4.linux-amd64.tar.gz"):
-            return "Failed to download golang1.13.6"
+            return "Failed to download go1.16.4"
     if -1 == maker_public.execCmdAndGetOutput(\
         "su -c \"/usr/local/go/bin/go version\"").find("go1.16.4"):
         os.system("rm -Rf /usr/local/go")
