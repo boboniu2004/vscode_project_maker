@@ -10,6 +10,7 @@ import maker_public
 
 #openRoot 打开root用户；参数：无；返回：错误描述
 def releaseApt():
+    os.system("killall -9 /usr/lib/apt/methods/http")
     return
 
 #openRoot 打开root用户；参数：无；返回：错误描述
