@@ -61,11 +61,11 @@ def execCmdAndGetOutput(szCmd):
 #函数返回：错误描述
 def installGolangTools(szGo):
     #设置GO模块代理
-    if 0 != os.system("go env -w GO111MODULE=on"):
+    if 0 != os.system("su -c \""+szGo+" env -w GO111MODULE=on\""):
         return "Set GO111MODULE=on failed"
-    if 0 != os.system("go env -w GOPROXY=\"https://goproxy.io,direct\""):
+    if 0 != os.system("su -c \""+szGo+" env -w GOPROXY=\\\"https://goproxy.io,direct\\\"\""):
         return "Set GOPROXY failed"
-    os.system("go env")
+    os.system("su -c \""+szGo+" env\"")
     #安装go-outline
     os.system("su -c \""+szGo+" get -v -u github.com/ramya-rao-a/go-outline\"")
     #安装go-find-references
