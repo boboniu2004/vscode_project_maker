@@ -57,33 +57,41 @@
 ### Ubuntu安装注意事项
 1 安装ubuntu18.04时**强烈建议**关闭主机的网络连接，否则在下载deb包时会卡死。
 
-### 设置开发环境
-以图形界面的方式登录进系统，使用firefox从 https://github.com/boboniu2004/vscode_project_maker 下载zip或者tar.gz格式的代码，然后解压缩：
-
-    zip格式解压缩命令：unzip ./vscode_project_maker.zip
-
-    tar.gz格式解压缩命令：tar -xvf ./vscode_project_maker.tar.gz
-    
-或可使用git下载，在终端下运行命令： git clone https://github.com/boboniu2004/vscode_project_maker 即可(ubuntu系统下默认不安装git)。
-
-进入**vscode_project_maker**目录后，打开终端，运行命令。**注意：ubuntu环境下，vscode_project_maker文件夹必须放置在/root目录下**。
+### 设置centoS开发环境
+以root账号进入系统，打开终端，运行一下命令：
+    cd /root/
+    wget https://github.com/boboniu2004/vscode_project_maker/archive/refs/heads/master.zip -O ./vscode_project_maker.zip
+    unzip ./vscode_project_maker.zip
+    cd ./vscode_project_maker
 
     在hyper-v环境下：
-        centos下：sudo python osenv_maker.py 192.168.137.xx
-        ubuntu下：sudo python3 osenv_maker.py 192.168.137.xx
+        python osenv_maker.py 192.168.137.xx/24
     其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。
-
     在virtualbox环境下：
-        centos下：sudo python osenv_maker.py
-        ubuntu下：sudo python3 osenv_maker.py
-    系统会自动将第一张网卡设置为10.0.2.15/24，第二张网卡设置为192.168.56.101/24。
+        python osenv_maker.py
+    系统会自动将第一张网卡设置为10.0.2.15/24，第二张网卡设置为192.168.56.xx/24。
+
+### 设置ubuntu开发环境
+ubuntu安装时默认不开启root账号，所以只能已普通账号进入系统，打开终端，运行一下命令：
+    sudo bash
+    cd /root/
+    wget https://github.com/boboniu2004/vscode_project_maker/archive/refs/heads/master.zip -O ./vscode_project_maker.zip
+    unzip ./vscode_project_maker.zip
+    cd ./vscode_project_maker
+
+    在hyper-v环境下：
+        python3 osenv_maker.py 192.168.137.xx/24
+    其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。
+    在virtualbox环境下：
+        python3 osenv_maker.py
+    系统会自动将第一张网卡设置为10.0.2.15/24，第二张网卡设置为192.168.56.xx/24。
 
 安装脚本会自动升级系统到最新版；系统安装配置GCC，PYTHON，JAVA，GO，GIT，SSHD等软件；配置网络；关闭图形界面；还会给ubuntu系统开启root账号并设置密码。**注意：因为网络原因，在安装GO和GIT时可能会因为网络问题而失败，此时只需要多试几次即可**。安装完毕重启系统后即可用字符界面登录。![init_linux](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/init_linux.jpg)
 
 ## 安装vscode
 从( https://code.visualstudio.com )中下载最新的vscode进行安装，安装完毕后，打开vscode，在**Extensions**(扩展插件市场)中检索并安装Remote-SSH插件(Microsoft)。接着进入windows 10当前用户主目录下的.ssh目录，以管理员权限运行**initssh.bat**，输入前面安装的虚拟机的IP地址(192.168.137.00/24网段)，root账号，root密码后会初始化虚拟机的ssh免密连接，以后vscode就可以打开**Remote Explorer**->**Configure**->**用户主目录\\.ssh\\config**，编辑连接信息即可使用该免密连接操作虚拟机了。其中**IdentityFile**为前面的initssh.bat脚本生成的ssh连接私钥，连接上去后就可以在vscode的TERMINAL中执行各种shell命令。**注意：有些情况下，会因为IP复用的情况连接不上虚拟机，此时只需要删除用户主目录\\.ssh\\hosts文件即可**。
 
-连接上虚拟机后，就可以在**Extensions**中安装**C/C++(Microsoft)**，**Python(Microsoft)**，**Go(Microsoft)**，**Java Extension Pack(Microsoft)**，**PlantUML(Microsoft)**。**注意**：这些扩展插件会安装在虚拟机中**。![connetc_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/connetc_vm.jpg)
+连接上虚拟机后，就可以在**Extensions**中安装**C/C++(Microsoft)**，**Python(Microsoft)**，**Go(Microsoft)**，**Java Extension Pack(Microsoft)**，**PlantUML(Microsoft)**。**注意：这些扩展插件会安装在虚拟机中**。![connetc_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/connetc_vm.jpg)
 
 ## 设置虚拟机自启动
 hyper-v可以在管理界面设置开机自启动；virtualbox需要修改**vscode_project_maker/.ssh/autostarts-vm.bat**脚本的**虚拟机安装目录**和**自启动虚拟机名称**，然后放置到**C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp**目录下。

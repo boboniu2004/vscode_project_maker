@@ -9,6 +9,10 @@ import maker_public
 
 
 #openRoot 打开root用户；参数：无；返回：错误描述
+def releaseApt():
+    return
+
+#openRoot 打开root用户；参数：无；返回：错误描述
 def openRoot():
     if 0 != os.system("passwd root"):
         return "Failed to change password of root"
@@ -265,6 +269,8 @@ def configInternalNet(szEthEnName, szIpAddr):
 
 #InitEnv 初始化环境；参数：无；返回：错误描述
 def InitEnv():
+    #释放apt资源
+    releaseApt()
     #打开ROOT
     szErr = openRoot()
     if 0 < len(szErr):
