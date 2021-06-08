@@ -101,20 +101,26 @@ hyper-v可以在管理界面设置开机自启动；virtualbox需要修改**vsco
 
 # 配置网络
 在hyper-v环境下，可能需要对第二块内部网卡独立配置IP，此时可以在vscode_project_maker目录下运行如下命令：
+
         python3 osenv_maker.py config_IP 192.168.137.xx/24
+        
 其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。
 
 # 配置DPDK
 在virtualbox环境下，如果网卡支持DPDK，则可以安装DPDK开发环境。此时可以在vscode_project_maker目录下运行如下命令：
+
         python3 osenv_maker.py config_DPDK install/uninstall
+
 其中的install为安装DPDK环境到/usr/local/dpdk中去，uninstall为卸载/usr/local/dpdk目录。默认会配置256个2M大小的巨页；驱动放置在/usr/local/dpdk/kernel下。
 
 # 新建工程
 目前可以通过vscode_project_maker创建c、c++、python、java、golang开发工程。可以在vscode_project_maker目录下运行如下命令创建：
+
         python3 __init__.py language[c|c++|python|java|golang] output[app|static|shared] workspace
+
 c、c++、golang可以创建可执行程序、动态库、静态库工程，python、java只能创建可执行程序工程。
 
 工程创建完毕后，使用vscode连接上虚拟机，依次点击"File"->"Open Folder"，然后远程打开该工程目录，进行相应的开发。
-![vscode_open_folder_1](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/vscode_open_folder_1.jpg.jpg) ![vscode_open_folder_2](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/vscode_open_folder_2.jpg)
+![vscode_open_folder_1](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/vscode_open_folder_1.jpg) ![vscode_open_folder_2](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/vscode_open_folder_2.jpg)
 
 # 编译调试工程
