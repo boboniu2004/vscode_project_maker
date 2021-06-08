@@ -1,7 +1,7 @@
 # vscode_project_maker
 ## 概述
 工作n年了，工作环境一直是台式机，所以整了个双硬盘分别装了windows和linux，平时的开发就在linux下，普通工作就在windows下，虽然经常切换系统感觉比较麻烦，但是凑合下也就算了。不过，在2019年12月，爱折腾的我终于给自己换了一个工作。新公司给我配了一台装好了win10专业版的笔记本，这家伙，就像刘姥姥进大观园，头一遭啊！怎么安装linux？怎么安装开发环境？没办法，经过两个月的折腾，终于使用win10+hyper-v+vscode整合出了一个开发环境，该方法在win10中开启HYPER-V，然后安装CentOS和Ubuntu虚拟机，最后安装vscode，这一切完成后，使用该工程提供的脚本初始化虚拟机，创建C/C++，GO,PYTHON,JAVA工程供主机上的vscode开发。
-接下来从**安装**，**新建工程**，**编译调试工程**这三个角度来进行说明。
+接下来从**安装**，**配置网络**，**配置DPDK**，**新建工程**，**编译调试工程**这三个角度来进行说明。
 
 # 安装
 ## 硬件要求
@@ -91,14 +91,30 @@ ubuntu安装时默认不开启root账号，所以只能已普通账号进入系�
 安装脚本会自动升级系统到最新版；系统安装配置GCC，PYTHON，JAVA，GO，GIT，SSHD等软件；配置网络；关闭图形界面；还会给ubuntu系统开启root账号并设置密码。**注意：因为网络原因，在安装GO和GIT时可能会因为网络问题而失败，此时只需要多试几次即可**。安装完毕重启系统后即可用字符界面登录。![init_linux](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/init_linux.jpg)
 
 ## 安装vscode
-从( https://code.visualstudio.com )中下载最新的vscode进行安装，安装完毕后，打开vscode，在**Extensions**(扩展插件市场)中检索并安装Remote-SSH插件(Microsoft)。接着进入windows 10当前用户主目录下的.ssh目录，以管理员权限运行**initssh.bat**，输入前面安装的虚拟机的IP地址(192.168.137.00/24网段)，root账号，root密码后会初始化虚拟机的ssh免密连接，以后vscode就可以打开**Remote Explorer**->**Configure**->**用户主目录\\.ssh\\config**，编辑连接信息即可使用该免密连接操作虚拟机了。其中**IdentityFile**为前面的initssh.bat脚本生成的ssh连接私钥，连接上去后就可以在vscode的TERMINAL中执行各种shell命令。**注意：有些情况下，会因为IP复用的情况连接不上虚拟机，此时只需要删除用户主目录\\.ssh\\hosts文件即可**。
+从( https://code.visualstudio.com )中下载最新的vscode进行安装，安装完毕后，打开vscode，在**Extensions**(扩展插件市场)中检索并安装Remote-SSH插件(Microsoft)。接着进入windows 10当前用户主目录下的.ssh目录，以管理员权限运行**initssh.bat**，输入前面安装的虚拟机的IP地址(192.168.137.00/24网段)、root账号、root密码后会初始化虚拟机的ssh免密连接，以后vscode就可以打开**Remote Explorer**->**Configure**->**用户主目录\\.ssh\\config**，编辑连接信息，然后右键点击**虚拟机图标**，选择**Connect to Host in Current Windows**或**Connect to Host in New Windows**即可免密连接操作虚拟机了。其中**IdentityFile**为前面的initssh.bat脚本生成的ssh连接私钥，连接上去后就可以在vscode的TERMINAL中执行各种shell命令。**注意：有些情况下，会因为IP复用的情况连接不上虚拟机，此时只需要删除用户主目录\\.ssh\\hosts文件即可**。
 
-连接上虚拟机后，就可以在**Extensions**中安装**C/C++(Microsoft)**，**Python(Microsoft)**，**Go(Microsoft)**，**Java Extension Pack(Microsoft)**，**PlantUML(Microsoft)**。**注意：这些扩展插件会安装在虚拟机中**。![connetc_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/connetc_vm.jpg)
+连接上虚拟机后，就可以在**Extensions**中安装**C/C++(Microsoft)**，**Python(Microsoft)**，**Go(Microsoft)**，**Java Extension Pack(Microsoft)**，**PlantUML(Microsoft)**。**注意：这些扩展插件会安装在虚拟机中**。![vscode_config_1](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/vscode_config_1.jpg) ![vscode_config_2](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/vscode_config_2.jpg)
 
 ## 设置虚拟机自启动
 hyper-v可以在管理界面设置开机自启动；virtualbox需要修改**vscode_project_maker/.ssh/autostarts-vm.bat**脚本的**虚拟机安装目录**和**自启动虚拟机名称**，然后放置到**C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp**目录下。
 ![hyper-v_set_start](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/hyper-v_set_start.jpg) ![virtualbox_set_start](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_start.jpg)
 
+# 配置网络
+在hyper-v环境下，可能需要对第二块内部网卡独立配置IP，此时可以在vscode_project_maker目录下运行如下命令：
+        python3 osenv_maker.py config_IP 192.168.137.xx/24
+其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。
+
+# 配置DPDK
+在virtualbox环境下，如果网卡支持DPDK，则可以安装DPDK开发环境。此时可以在vscode_project_maker目录下运行如下命令：
+        python3 osenv_maker.py config_DPDK install/uninstall
+其中的install为安装DPDK环境到/usr/local/dpdk中去，uninstall为卸载/usr/local/dpdk目录。默认会配置256个2M大小的巨页；驱动放置在/usr/local/dpdk/kernel下。
+
 # 新建工程
+目前可以通过vscode_project_maker创建c、c++、python、java、golang开发工程。可以在vscode_project_maker目录下运行如下命令创建：
+        python3 __init__.py language[c|c++|python|java|golang] output[app|static|shared] workspace
+c、c++、golang可以创建可执行程序、动态库、静态库工程，python、java只能创建可执行程序工程。
+
+工程创建完毕后，使用vscode连接上虚拟机，依次点击"File"->"Open Folder"，然后远程打开该工程目录，进行相应的开发。
+![vscode_open_folder_1](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/vscode_open_folder_1.jpg.jpg) ![vscode_open_folder_2](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/vscode_open_folder_2.jpg)
 
 # 编译调试工程
