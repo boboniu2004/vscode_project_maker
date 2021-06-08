@@ -16,15 +16,22 @@ if __name__ == "__main__":
     #获取发行版本
     szOSName = maker_public.getOSName()
     if 2<len(sys.argv):
-        if "config_IP"!=sys.argv[1]:
-            szErr = "Invaild operation" 
-        else:
+        if "config_IP"==sys.argv[1]:
             if "centos" == szOSName:
                 szErr = centosenv_maker.InitInternalNet()
             elif "ubuntu" == szOSName:
                 szErr = ubuntuenv_maker.InitInternalNet()
             else:
                 szErr = "Invaild OS"
+        elif "config_DPDK"==sys.argv[1]:
+            if "centos" == szOSName:
+                szErr = centosenv_maker.InitDPDK()
+            elif "ubuntu" == szOSName:
+                szErr = ubuntuenv_maker.InitDPDK()
+            else:
+                szErr = "Invaild OS"            
+        else:
+            szErr = "Invaild operation" 
     else:
         if "centos" == szOSName:
             szErr = centosenv_maker.InitEnv()
