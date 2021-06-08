@@ -15,7 +15,7 @@ import ubuntuenv_maker
 if __name__ == "__main__":
     #获取发行版本
     szOSName = maker_public.getOSName()
-    if 2<len(sys.argv):
+    if 2<len(sys.argv) and "config_IP"==sys.argv[1]:
         if "config_IP"==sys.argv[1]:
             if "centos" == szOSName:
                 szErr = centosenv_maker.InitInternalNet()
@@ -23,15 +23,15 @@ if __name__ == "__main__":
                 szErr = ubuntuenv_maker.InitInternalNet()
             else:
                 szErr = "Invaild OS"
-        elif "config_DPDK"==sys.argv[1]:
-            if "centos" == szOSName:
-                szErr = centosenv_maker.InitDPDK()
-            elif "ubuntu" == szOSName:
-                szErr = ubuntuenv_maker.InitDPDK()
-            else:
-                szErr = "Invaild OS"            
         else:
             szErr = "Invaild operation" 
+    elif 2<len(sys.argv) and "config_DPDK"==sys.argv[1]:
+        if "centos" == szOSName:
+            szErr = centosenv_maker.ConfigDPDK(sys.argv[2])
+        elif "ubuntu" == szOSName:
+            szErr = ubuntuenv_maker.ConfigDPDK(sys.argv[2])
+        else:
+            szErr = "Invaild OS"            
     else:
         if "centos" == szOSName:
             szErr = centosenv_maker.InitEnv()
@@ -43,6 +43,8 @@ if __name__ == "__main__":
         print(szErr)
     elif 2<len(sys.argv) and "config_IP"==sys.argv[1]:
         print("Config IP finish")
+    elif 2<len(sys.argv) and "config_DPDK"==sys.argv[1]:
+        print("Config DPDK finish")
     elif re.search("^2\\..*", sys.version):
         raw_input("make development environment of %s finish, please any key to reboot..." %(szOSName))
         os.system("reboot")

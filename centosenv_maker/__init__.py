@@ -266,8 +266,8 @@ def configInternalNet(szEthChName, szEthEnName, szIpAddr):
     return ""
 
 
-#configDPDK配置DPDK；参数：无；返回：错误描述
-def configDPDK():
+#installDPDK配置DPDK；参数：无；返回：错误描述
+def installDPDK():
     #安装libnuma-dev
     szErr = installOrUpdateRpm("numactl-devel", "x86_64", "")
     if 0 < len(szErr):
@@ -387,10 +387,14 @@ def InitInternalNet():
     return ""
 
 
-#InitDPDK 初始化DPDK；参数：无；返回：错误描述
-def InitDPDK():
-    szErr = configDPDK()
-    if 0 < len(szErr):
-        return("Config DPDK failed:%s" %(szErr))
+#InitDPDK 配置DPDK；参数：无；返回：错误描述
+def ConfigDPDK(szOperation):
+    if "install" == szOperation:
+        szErr = installDPDK()
+        if 0 < len(szErr):
+            return("Config DPDK failed:%s" %(szErr))
+    else:
+        if 0 != os.system("rm -rf /usr/local/dpdk"):
+            return "remove /usr/local/dpdk failed"
     #
     return ""
