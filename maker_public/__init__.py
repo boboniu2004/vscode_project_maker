@@ -168,7 +168,7 @@ def ConfigSshd():
     return ""
 
 
-    #getOSName 获取操作系统名称；参数：无；返回：操作系统名称
+#getOSName 获取操作系统名称；参数：无；返回：操作系统名称
 def getOSName():
     #获取centos版本
     szOSName = execCmdAndGetOutput("rpm -q centos-release")
@@ -179,4 +179,59 @@ def getOSName():
     szOSName = execCmdAndGetOutput("lsb_release -a")
     if None != re.search("Distributor[ \\t]+ID[ \\t]*:[ \\t]+Ubuntu.*", szOSName):
         return "ubuntu"
+    return ""
+
+
+#buildDPDK 编译DPDK；参数：无；返回：错误码
+def buildDPDK():
+    #安装 DPDK
+    if False == os.path.exists("./f-stack-1.21.zip"):
+        if 0 != os.system("wget https://github.com/F-Stack/f-stack/archive/refs/tags/v1.21.zip "+
+            "-O f-stack-1.21.zip"):
+            return "Failed to download f-stack-1.21"
+    if False == os.path.exists("/usr/local/dpdk"):
+        #解压缩
+        os.system("unzip -d /tmp/ ./f-stack-1.21.zip")
+        #修改DPDK的dpdk-setup.sh
+        dpdk_setup,sz_err = readTxtFile(
+                "/tmp/f-stack-1.21/dpdk/usertools/dpdk-setup.sh")
+        if "" != sz_err:
+            os.system("rm -Rf /tmp/f-stack-1.21")
+            return "config DPDK failed"
+        dpdk_setup = re.sub("\n\tread[ \\t]+our_entry\n\t", 
+            "\n\t#read our_entry\n\tour_entry=41\n\t", dpdk_setup)
+        dpdk_setup = re.sub("\n\t\techo[ \\t]+-n[ \\t]+\"Press[ \\t]+enter[ \\t]+"
+            "to[ \\t]+continue[ \\t]+...\";[ \\t]+read\n\t", 
+            "\n\t\tquit\n\t", dpdk_setup)
+        sz_err = writeTxtFile("/tmp/f-stack-1.21/dpdk/usertools/dpdk-setup.sh", 
+            dpdk_setup)
+        if "" != sz_err:
+            os.system("rm -Rf /tmp/f-stack-1.21")
+            return "config DPDK failed"
+        #编译安装DPDK
+        pwd_dir = os.getcwd()
+        try:
+            os.chdir("/tmp/f-stack-1.21/dpdk/usertools")
+            if 0 != os.system("./dpdk-setup.sh"):
+                os.chdir(pwd_dir)
+                os.system("rm -Rf /tmp/f-stack-1.21")
+                return "config DPDK failed"
+            os.chdir("/tmp/f-stack-1.21/dpdk/x86_64-native-linuxapp-gcc")
+            if 0 != os.system("make install prefix=/usr/local/dpdk"):
+                os.chdir(pwd_dir)
+                os.system("rm -Rf /tmp/f-stack-1.21")
+                return "config DPDK failed"    
+        finally:
+            os.chdir(pwd_dir)
+        os.system("rm -Rf /tmp/f-stack-1.21")
+    #设置巨页
+    node_info = execCmdAndGetOutput("ls /sys/devices/system/node/"
+        " | grep -P \"^node\\d+$\" | sort -u").split("\n")
+    if 2 >= len(node_info):#这里2的原因是最后结束行是空行
+        os.system("echo 256 > /sys/kernel/mm/hugepages/hugepages-2048kB/"
+            "nr_hugepages")
+    else:
+        for cur_nd in node_info:
+            os.system("echo 256 > /sys/devices/system/node/"+cur_nd+"/"
+                "hugepages/hugepages-2048kB/nr_hugepages")
     return ""

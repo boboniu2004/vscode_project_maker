@@ -286,48 +286,7 @@ def installDPDK():
     if 0 != os.system("pip3 install meson"):
         return "Install meson failed"
     #安装 DPDK
-    if False == os.path.exists("./dpdk-19.11.zip"):
-        if 0 != os.system("wget https://github.com/DPDK/dpdk/archive/refs/tags/v19.11.zip "+
-            "-O dpdk-19.11.zip"):
-            return "Failed to download dpdk-19.11"
-    if False == os.path.exists("/usr/local/dpdk"):
-        #编译安装DPDK
-        os.system("unzip -d /tmp/ ./dpdk-19.11.zip")
-        pwd_dir = os.getcwd()
-        try:
-            os.chdir("/tmp/dpdk-19.11")
-            if 0 != os.system("meson --prefix=/usr/local/dpdk "
-                "-Denable_kmods=true build"):
-                os.chdir(pwd_dir)
-                os.system("rm -Rf /tmp/dpdk-19.11")
-                return "config DPDK failed"
-            if 0 != os.system("ninja -C build"):
-                os.chdir(pwd_dir)
-                os.system("rm -Rf /tmp/dpdk-19.11")
-                return "build DPDK failed"
-            if 0 != os.system("ninja -C build install"):
-                os.chdir(pwd_dir)
-                os.system("rm -Rf /tmp/dpdk-19.11")
-                return "build DPDK failed"
-            if 0 != os.system("cp -rf /tmp/dpdk-19.11/build/kernel "
-                "/usr/local/dpdk/"):
-                os.chdir(pwd_dir)
-                os.system("rm -Rf /tmp/dpdk-19.11")
-                return "build DPDK failed"            
-        finally:
-            os.chdir(pwd_dir)
-        os.system("rm -Rf /tmp/dpdk-19.11")
-    #设置巨页
-    node_info = maker_public.execCmdAndGetOutput("ls /sys/devices/system/node/"
-        " | grep -P \"^node\\d+$\" | sort -u").split("\n")
-    if 2 >= len(node_info):#这里2的原因是最后结束行是空行
-        os.system("echo 256 > /sys/kernel/mm/hugepages/hugepages-2048kB/"
-            "nr_hugepages")
-    else:
-        for cur_nd in node_info:
-            os.system("echo 256 > /sys/devices/system/node/"+cur_nd+"/"
-                "hugepages/hugepages-2048kB/nr_hugepages")
-    return ""
+    return maker_public.buildDPDK()
 
 #InitEnv 初始化环境；参数：无；返回：错误描述
 def InitEnv():
