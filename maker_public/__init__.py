@@ -221,6 +221,10 @@ def buildDPDK():
                 os.chdir(pwd_dir)
                 os.system("rm -Rf /tmp/f-stack-1.21")
                 return "config DPDK failed"    
+            if 0 != os.system("cp -r ./kmod /usr/local/dpdk/"):
+                os.chdir(pwd_dir)
+                os.system("rm -Rf /tmp/f-stack-1.21")
+                return "config DPDK failed"   
         finally:
             os.chdir(pwd_dir)
         os.system("rm -Rf /tmp/f-stack-1.21")
