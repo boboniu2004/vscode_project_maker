@@ -220,11 +220,17 @@ def buildDPDK():
             if 0 != os.system("make install prefix=/usr/local/dpdk"):
                 os.chdir(pwd_dir)
                 os.system("rm -Rf /tmp/f-stack-1.21")
-                return "config DPDK failed"    
+                return "config DPDK failed"
             if 0 != os.system("cp -r ./kmod /usr/local/dpdk/"):
                 os.chdir(pwd_dir)
                 os.system("rm -Rf /tmp/f-stack-1.21")
-                return "config DPDK failed"   
+                return "config DPDK failed"
+            #移动头文件
+            if True == os.path.isdir("/usr/local/dpdk/include/dpdk"):
+                os.system("rm -Rf /usr/local/dpdk/include-dpdk")
+                os.rename("/usr/local/dpdk/include/dpdk", "/usr/local/dpdk/include-dpdk")
+                os.system("rm -Rf /usr/local/dpdk/include")
+                os.rename("/usr/local/dpdk/include-dpdk", "/usr/local/dpdk/include")
         finally:
             os.chdir(pwd_dir)
         os.system("rm -Rf /tmp/f-stack-1.21")
