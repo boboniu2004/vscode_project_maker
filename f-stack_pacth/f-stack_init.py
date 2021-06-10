@@ -108,35 +108,113 @@ def load_driver(dirver_name, card_lst):
     return ""
 
 
+#功能：下载胚子f-stack；参数：无；返回：错误码
+def config_fstack(fstack_ver):
+    if False == os.path.exists("./f-stack-"+fstack_ver+".zip"):
+        if 0 != os.system("wget https://github.com/F-Stack/f-stack/archive/refs/tags/"
+        "v"+fstack_ver+".zip -O f-stack-"+fstack_ver+".zip"):
+            return "Failed to download f-stack-"+fstack_ver
+    if False == os.path.exists(os.getcwd()+"/f-stack-"+fstack_ver):
+        #解压缩
+        os.system("unzip ./f-stack-"+fstack_ver+".zip")
+    #修改lib下的makefile
+    lib_make,sz_err = readTxtFile(os.getcwd()+"/f-stack-"+fstack_ver+"/lib/Makefile")
+    if "" != sz_err:
+        return "config f-stack failed"
+    if 0 >= len(re.findall("\\n#DEBUG[ \\t]*=|\\nDEBUG[ \\t]*=", lib_make)):
+        return "can not find DEBUG"
+    if 0 >= len(re.findall("\\n#FF_IPFW[ \\t]*=[ \\t]*1|\\nFF_IPFW[ \\t]*=[ \\t]*1", lib_make)):
+        return "can not find FF_IPFW"
+    lib_make = re.sub("\\n#DEBUG[ \\t]*=", "\nDEBUG=", lib_make)
+    lib_make = re.sub("\\n#FF_IPFW[ \\t]*=[ \\t]*1", "\nFF_IPFW=1", lib_make)
+    sz_err = writeTxtFile(os.getcwd()+"/f-stack-"+fstack_ver+"/lib/Makefile", lib_make)
+    if "" != sz_err:
+        return "config f-stack failed"
+    #配置nginx
+    cwd_dir = os.getcwd()
+    try:
+        os.chdir(os.getcwd()+"/f-stack-"+fstack_ver+"/app/nginx-1.16.1")
+        if 0 != os.system("./configure --prefix="+cwd_dir+"/f-stack-"+fstack_ver+"/debug "
+            "--with-debug --with-stream --with-stream_ssl_module "
+            "--with-ff_module --with-stream_ssl_preread_module "
+            "--without-stream_map_module "
+            "--with-http_v2_module --without-http_map_module "
+            "--without-http_rewrite_module --without-http_proxy_module"):
+            return "config nginx failed"    
+        if 0 != os.system("sed -i \"s/ -Os / -O0 /\" objs/Makefile"):
+            return "config nginx failed"    
+        if 0 != os.system("sed -i \"s/ -g / -g3 /\" objs/Makefile"):
+            return "config nginx failed"    
+    finally:
+        os.chdir(cwd_dir)
+    #为f-stack生成总的make文件
+    fstack_make = \
+        "all:"\
+	        "\n\tcd ./lib && make"\
+	        "\n\tcd ./tools && make"\
+            "\n\tcd ./example && make"\
+	        "\n\tcd ./app/nginx-1.16.1 && make"\
+            "\n\n"\
+        "clean:"\
+	        "\n\tcd ./lib && make clean"\
+	        "\n\tcd ./tools && make clean"\
+	        "\n\tcd ./app/nginx-1.16.1 && make clean"\
+            "\n\tcd ./app/nginx-1.16.1 && ./configure --prefix="+cwd_dir+"/f-stack-"+fstack_ver+"/debug "\
+            "--with-debug --with-stream --with-stream_ssl_module "\
+            "--with-ff_module --with-stream_ssl_preread_module "\
+            "--without-stream_map_module "\
+            "--with-http_v2_module --without-http_map_module "\
+            "--without-http_rewrite_module --without-http_proxy_module"\
+            "\n\tsed -i \"s/ -Os / -O0 /\" ./app/nginx-1.16.1/objs/Makefile"\
+            "\n\tsed -i \"s/ -g / -g3 /\" ./app/nginx-1.16.1/objs/Makefile"\
+            "\n\n"\
+        "install:"\
+	        "\n\tmkdir -p "+cwd_dir+"/f-stack-"+fstack_ver+"/debug/net-tools"\
+	        "\n\tcp -rf ./tools/sbin/* "+cwd_dir+"/f-stack-"+fstack_ver+"/debug/net-tools/"\
+	        "\n\tcd ./app/nginx-1.16.1 && make install"\
+            "\n\tcp -rf ./config.ini "+cwd_dir+"/f-stack-"+fstack_ver+"/debug/conf/f-stack.conf"\
+            "\n\n"\
+        "uninstall:"\
+	        "\n\trm -rf "+cwd_dir+"/f-stack-"+fstack_ver+"/debug/*"\
+            "\n"
+    sz_err = writeTxtFile(os.getcwd()+"/f-stack-"+fstack_ver+"/Makefile", fstack_make)
+    if "" != sz_err:
+        return "config f-stack failed"    
+    return ""
+
+
+#功能：制作f-stack工程；参数：无；返回：错误码
+def create_fstack_project(fstack_ver, vscode_project_maker):
+    if 0 != os.system("python3 "+vscode_project_maker+
+        "/__init__.py c app /tmp/nginx"):
+        os.system("rm -rf /tmp/nginx")
+        return "create f-stack project failed"
+    os.system("cp -rf /tmp/nginx/.vscode "+
+        os.getcwd()+"/f-stack-"+fstack_ver+"/")
+    os.system("rm -rf /tmp/nginx")
+    return ""
+
 #功能：导入路径参数；参数：无；返回：错误码
-def export_path():
+def export_path(fstack_ver):
     #读取
-    profile,sz_err = readTxtFile("/root/.profile")
+    profile,sz_err = readTxtFile(os.environ["HOME"]+"/.bashrc")
     if "" != sz_err:
         return sz_err
     #修改
     if 0 >= len(re.findall("\nexport[ \\t]+FF_PATH[ \\t]*=.+", profile)):
-        profile += "\nexport FF_PATH="+os.getcwd()
+        profile += "\nexport FF_PATH="+os.getcwd()+"/f-stack-"+fstack_ver
     else:
         profile = re.sub("\nexport[ \\t]+FF_PATH[ \\t]*=.+", 
-            "\nexport FF_PATH="+os.getcwd(), profile)
+            "\nexport FF_PATH="+os.getcwd()+"/f-stack-"+fstack_ver, profile)
     if 0 >= len(re.findall("\nexport[ \\t]+FF_DPDK[ \\t]*=.+", profile)):
         profile += "\nexport FF_DPDK=/usr/local/dpdk"
     else:
         profile = re.sub("\nexport[ \\t]+FF_DPDK[ \\t]*=.+", 
             "\nexport FF_DPDK=/usr/local/dpdk", profile)
     #写入
-    sz_err = writeTxtFile("/root/.profile", profile)
+    sz_err = writeTxtFile(os.environ["HOME"]+"/.bashrc", profile)
     if "" != sz_err:
         return sz_err
-    sz_err = writeTxtFile("/tmp/root_source_profile.sh", 
-        "#!/bin/bash\nsource /root/.profile\n")
-    if "" != sz_err:
-        return sz_err
-    #生效
-    os.system("bash /tmp/root_source_profile.sh")
-    os.system("rm -f /tmp/root_source_profile.sh")
-    os.system("export | grep \"FF_\"")
     return ""
 
 
@@ -159,7 +237,17 @@ if __name__ == "__main__":
         print(szErr)
     else:
         print("load driver sucess!")
-    szErr = export_path()
+    szErr = config_fstack("1.21")
+    if "" != szErr:
+        print(szErr)
+    else:
+        print("config f-stack sucess!")
+    szErr = create_fstack_project("1.21", os.environ["HOME"]+"/vscode_project_maker")
+    if "" != szErr:
+        print(szErr)
+    else:
+        print("create f-stack project sucess!")
+    szErr = export_path("1.21")
     if "" != szErr:
         print(szErr)
     else:
