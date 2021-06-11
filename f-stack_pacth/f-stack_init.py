@@ -137,9 +137,7 @@ def config_fstack(fstack_ver):
         if 0 != os.system("./configure --prefix="+cwd_dir+"/f-stack-"+fstack_ver+"/debug "
             "--with-debug --with-stream --with-stream_ssl_module "
             "--with-ff_module --with-stream_ssl_preread_module "
-            "--without-stream_map_module "
-            "--with-http_v2_module --without-http_map_module "
-            "--without-http_rewrite_module --without-http_proxy_module"):
+            "--with-http_v2_module"):
             return "config nginx failed"    
         if 0 != os.system("sed -i \"s/ -Os / -O0 /\" objs/Makefile"):
             return "config nginx failed"    
@@ -149,11 +147,10 @@ def config_fstack(fstack_ver):
         os.chdir(cwd_dir)
     #为f-stack生成总的make文件
     fstack_make = \
-        "all:"\
+        "update:"\
 	        "\n\tcd ./lib && make"\
-	        "\n\tcd ./tools && make"\
-            "\n\tcd ./example && make"\
 	        "\n\tcd ./app/nginx-1.16.1 && make"\
+            "\n\tcp -rf ./app/nginx-1.16.1/objs/nginx "+cwd_dir+"/f-stack-"+fstack_ver+"/debug/sbin/"\
             "\n\n"\
         "clean:"\
 	        "\n\tcd ./lib && make clean"\
@@ -162,13 +159,15 @@ def config_fstack(fstack_ver):
             "\n\tcd ./app/nginx-1.16.1 && ./configure --prefix="+cwd_dir+"/f-stack-"+fstack_ver+"/debug "\
             "--with-debug --with-stream --with-stream_ssl_module "\
             "--with-ff_module --with-stream_ssl_preread_module "\
-            "--without-stream_map_module "\
-            "--with-http_v2_module --without-http_map_module "\
-            "--without-http_rewrite_module --without-http_proxy_module"\
+            "--with-http_v2_module"\
             "\n\tsed -i \"s/ -Os / -O0 /\" ./app/nginx-1.16.1/objs/Makefile"\
             "\n\tsed -i \"s/ -g / -g3 /\" ./app/nginx-1.16.1/objs/Makefile"\
             "\n\n"\
         "install:"\
+	        "\n\tcd ./lib && make"\
+	        "\n\tcd ./tools && make"\
+            "\n\tcd ./example && make"\
+	        "\n\tcd ./app/nginx-1.16.1 && make"\
 	        "\n\tmkdir -p "+cwd_dir+"/f-stack-"+fstack_ver+"/debug/net-tools"\
 	        "\n\tcp -rf ./tools/sbin/* "+cwd_dir+"/f-stack-"+fstack_ver+"/debug/net-tools/"\
 	        "\n\tcd ./app/nginx-1.16.1 && make install"\
@@ -177,7 +176,7 @@ def config_fstack(fstack_ver):
         "uninstall:"\
 	        "\n\trm -rf "+cwd_dir+"/f-stack-"+fstack_ver+"/debug/*"\
             "\n"
-    sz_err = writeTxtFile(os.getcwd()+"/f-stack-"+fstack_ver+"/Makefile", fstack_make)
+    sz_err = writeTxtFile(os.getcwd()+"/f-stack-"+fstack_ver+"/makefile", fstack_make)
     if "" != sz_err:
         return "config f-stack failed"    
     return ""
@@ -192,6 +191,53 @@ def create_fstack_project(fstack_ver, vscode_project_maker):
     os.system("cp -rf /tmp/nginx/.vscode "+
         os.getcwd()+"/f-stack-"+fstack_ver+"/")
     os.system("rm -rf /tmp/nginx")
+    #替换工作目录
+    launch,sz_err = readTxtFile(os.getcwd()+"/f-stack-"+fstack_ver+"/.vscode/"
+        "launch.json")
+    if "" != sz_err:
+        return "create f-stack project failed"
+    launch = re.sub("\\$\\{workspaceFolder\\}/debug", 
+        "${workspaceFolder}/debug/sbin", launch)
+    launch = re.sub("\"\\$\\{workspaceFolder\\}\"", 
+        "\"${workspaceFolder}/debug/sbin\"", launch)
+    sz_err = writeTxtFile(os.getcwd()+"/f-stack-"+fstack_ver+"/.vscode/"
+        "launch.json", launch)
+    if "" != sz_err:
+        return "create f-stack project failed"
+    #替换编译TAG
+    tasks,sz_err = readTxtFile(os.getcwd()+"/f-stack-"+fstack_ver+"/.vscode/"
+        "tasks.json")
+    if "" != sz_err:
+        return "create f-stack project failed"
+    tasks = re.sub("\"debug\"", "\"update\"", tasks)
+    #增加安装任务
+    tasks = re.sub("\"tasks\":[ \\t]+\\[", 
+            "\"tasks\": ["\
+            "\n        {"\
+            "\n            \"type\": \"shell\","\
+            "\n            \"label\": \"gcc install active file\","\
+            "\n            \"command\": \"/usr/bin/make\","\
+            "\n            \"args\": ["\
+            "\n                \"-f\","\
+            "\n                \"${workspaceFolder}/makefile\","\
+            "\n                \"install\""\
+            "\n            ],"\
+            "\n            \"options\": {"\
+            "\n                \"cwd\": \"${workspaceFolder}\""\
+            "\n            },"\
+            "\n            \"problemMatcher\": ["\
+            "\n                \"$gcc\""\
+            "\n            ],"\
+            "\n            \"group\": {"\
+            "\n                \"kind\": \"build\","\
+            "\n                \"isDefault\": true"\
+            "\n            }"\
+            "\n        },"
+        , tasks)
+    sz_err = writeTxtFile(os.getcwd()+"/f-stack-"+fstack_ver+"/.vscode/"
+        "tasks.json", tasks)
+    if "" != sz_err:
+        return "create f-stack project failed"
     return ""
 
 #功能：导入路径参数；参数：无；返回：错误码
