@@ -279,6 +279,9 @@ def installDPDK():
     #安装libnuma-dev
     if 0 != os.system("apt-get -y install libnuma-dev"):
         return "Install libnuma-dev failed"
+    #安装libpcre3-dev
+    if 0 != os.system("apt-get -y install libpcre3-dev"):
+        return "Install libpcre3-dev failed"
     #安装ninja
     if 0 != os.system("pip3 install ninja"):
         return "Install ninja failed"
