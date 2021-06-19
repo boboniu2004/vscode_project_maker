@@ -282,6 +282,9 @@ def installDPDK():
     #安装libpcre3-dev
     if 0 != os.system("apt-get -y install libpcre3-dev"):
         return "Install libpcre3-dev failed"
+    #安装zlib
+    if 0 != os.system("apt-get -y install zlib1g-dev"):
+        return "Install libpcre3-dev failed"
     #安装ninja
     if 0 != os.system("pip3 install ninja"):
         return "Install ninja failed"
