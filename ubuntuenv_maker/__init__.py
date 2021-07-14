@@ -245,25 +245,45 @@ def configSshd():
 
 #configInternalNet 配置内部网络；参数：内部网卡的名称，szIpAddr本机的IP地址；返回：错误描述
 def configInternalNet(szEthEnName, szIpAddr):
-    szConfig = \
-        "# interfaces(5) file used by ifup(8) and ifdown(8)\n"+\
-        "auto lo\n"+\
-        "iface lo inet loopback\n\n"+\
-        "auto "+szEthEnName+"\n"+\
-        "iface "+szEthEnName+" inet static\n"+\
-        "address "+szIpAddr+"\n"+\
-        "netmask 255.255.255.0\n"+\
-        "gateway 192.168.137.1\n"+\
-        "dns1 192.168.137.1\n"+\
-        "route add -net 192.168.137.0/24 netmask 255.255.255.0 gw 192.168.137.1 "+szEthEnName+"\n"
-    #写入配置
-    szErr = maker_public.writeTxtFile("/etc/network/interfaces", szConfig)
-    if 0 < len(szErr):
-        return szErr
-    #重启服务
-    os.system("systemctl restart networking.service")
-    szStatus = maker_public.execCmdAndGetOutput("systemctl status networking.service")
-    print(szStatus)
+    if os.path.isfile("/etc/netplan/01-network-manager-all.yaml"):
+        szConfig = \
+            "# Let NetworkManager manage all devices on this system\n"+\
+            "network:\n"\
+            "  version: 2\n"\
+            "  renderer: NetworkManager\n"\
+            "  ethernets:\n"\
+            "    "+szEthEnName+":\n"\
+            "      addresses: ["+szIpAddr+"/24]\n"\
+            "      dhcp4: no\n"\
+            "      gateway4: 192.168.137.1\n"\
+            "      nameservers:\n"\
+            "        addresses: [192.168.137.1]"
+        #写入配置
+        szErr = maker_public.writeTxtFile("/etc/netplan/01-network-manager-all.yaml", szConfig)
+        if 0 < len(szErr):
+            return szErr
+        #生效配置
+        os.system("netplan apply")
+    else:
+        szConfig = \
+            "# interfaces(5) file used by ifup(8) and ifdown(8)\n"+\
+            "auto lo\n"+\
+            "iface lo inet loopback\n\n"+\
+            "auto "+szEthEnName+"\n"+\
+            "iface "+szEthEnName+" inet static\n"+\
+            "address "+szIpAddr+"\n"+\
+            "netmask 255.255.255.0\n"+\
+            "gateway 192.168.137.1\n"+\
+            "dns1 192.168.137.1\n"+\
+            "route add -net 192.168.137.0/24 netmask 255.255.255.0 gw 192.168.137.1 "+szEthEnName+"\n"
+        #写入配置
+        szErr = maker_public.writeTxtFile("/etc/network/interfaces", szConfig)
+        if 0 < len(szErr):
+            return szErr
+        #重启服务
+        os.system("systemctl restart networking.service")
+        szStatus = maker_public.execCmdAndGetOutput("systemctl status networking.service")
+        print(szStatus)
     os.system("ifconfig")
     #
     return ""
