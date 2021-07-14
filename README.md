@@ -26,7 +26,7 @@
 
 第四步，双击桌面**hyper-v管理器快捷方式**，在弹出的界面中选中**Hyper-V设置**，修改虚拟硬盘，虚拟机配置文件的存储位置，最好不要存储在C盘，因为会占用大量的存储空间。![set_hyper-v](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/set_hyper-v.jpg) 
 
-第五步，虚拟机管理界面中选中**快速创建...**：在弹出的对话框中点击**更改安装源(I)...**，选择centos7_x86-64或者ubuntu18.04_x86-64镜像；取消**此虚拟机将运行Windows(启用Windows Secure Boot)**；点击**更多选项(R)**修改虚拟机的名称。上面三步做好后就可以点击**创建虚拟机(V)**按钮来创建虚拟机。这里需要说明一下，因为网络的原因，可能出现一直无法点击**创建虚拟机(V)**的情况，此时只需要断开windows 10的网络，重新创建虚拟机即可。
+第五步，虚拟机管理界面中选中**快速创建...**：在弹出的对话框中点击**更改安装源(I)...**，选择centos7_x86-64、ubuntu18.04_x86-64/ubuntu20.04_x86-64镜像；取消**此虚拟机将运行Windows(启用Windows Secure Boot)**；点击**更多选项(R)**修改虚拟机的名称。上面三步做好后就可以点击**创建虚拟机(V)**按钮来创建虚拟机。这里需要说明一下，因为网络的原因，可能出现一直无法点击**创建虚拟机(V)**的情况，此时只需要断开windows 10的网络，重新创建虚拟机即可。
 
 第六步，创建成功的页面上点击**编辑设置(S)**。在弹出的界面中依次点击**添加硬件**->**网络适配器**->**添加(D)**，为虚拟机新建一个网卡，网卡的虚拟交换机设置为**HYPER-V-NAT-Network**；点击**检查点**，取消**启用检查点(E)**；点击**处理器**，设置处理器为物理CPU的一半(推荐)，点击**内存**，将**RAM(R)**设置为2048MB，动态内存区间设置为512M~2048M(推荐)；最后点击**确定**完成虚拟机的配置。
 
@@ -55,7 +55,7 @@
 ![VirtualBox_centos7_17_05_2021_16_58_43](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/VirtualBox_centos7_17_05_2021_16_58_43.jpg) ![VirtualBox_centos7_17_05_2021_16_59_12](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/VirtualBox_centos7_17_05_2021_16_59_12.jpg) ![VirtualBox_centos7_17_05_2021_21_27_50](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/VirtualBox_centos7_17_05_2021_21_27_50.jpg) ![VirtualBox_centos7_17_05_2021_21_28_17](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/VirtualBox_centos7_17_05_2021_21_28_17.jpg)
 
 ### Ubuntu安装注意事项
-1 安装ubuntu18.04时**强烈建议**关闭主机的网络连接，否则在下载deb包时会卡死。
+1 安装ubuntu18.04、ubuntu20.04时**强烈建议**关闭主机的网络连接，否则在下载deb包时会卡死。
 
 ### 设置centos开发环境
 以root账号进入系统，打开终端，运行一下命令：
