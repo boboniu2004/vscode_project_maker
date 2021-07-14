@@ -244,4 +244,11 @@ def buildDPDK():
         for cur_nd in node_info:
             os.system("echo 256 > /sys/devices/system/node/"+cur_nd+"/"
                 "hugepages/hugepages-2048kB/nr_hugepages")
+    #下载绑定工具
+    if ""==execCmdAndGetOutput("lspci") and \
+        True == os.path.exists("/usr/local/dpdk/sbin") and \
+        False == os.path.exists("/usr/local/dpdk/sbin/driverctl"):
+        if 0 != os.system("git clone https://gitlab.com/driverctl/driverctl.git "\
+            "/usr/local/dpdk/sbin/driverctl"):
+            return "download driverctl failed"
     return ""

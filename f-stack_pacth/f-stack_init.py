@@ -90,21 +90,29 @@ def load_driver(dirver_name, card_lst):
             os.system("rmmod "+dirver_name)
             return "insmod rte_kni failed!"
     #绑定网卡
-    for cur_card in card_lst:
-        card_name = cur_card[0]
-        card_addr = cur_card[1]
-        if ""!=card_name and "" != execCmdAndGetOutput("python3 /usr/local"
-            "/dpdk/sbin/dpdk-devbind --status-dev net | grep \"if="+
-            card_name+"\""):
-            os.system("ifconfig "+card_name+" down")
-        if "" != execCmdAndGetOutput("python3 /usr/local/dpdk/sbin/dpdk-devbind "
-            "--status-dev net | grep -P \""+card_addr+"[ \\t]+'.+'[ \\t]+drv=.+"
-            "[ \\t]unused=.+\""):
-            os.system("python3 /usr/local/dpdk/sbin/dpdk-devbind -u "
-                +card_addr)
-        os.system("python3 /usr/local/dpdk/sbin/dpdk-devbind --b "+
-            dirver_name+" "+card_addr)        
-    os.system("python3 /usr/local/dpdk/sbin/dpdk-devbind --status-dev net")
+    if False == os.path.exists("/usr/local/dpdk/sbin/driverctl"):
+        for cur_card in card_lst:
+            card_name = cur_card[0]
+            card_addr = cur_card[1]
+            if ""!=card_name and "" != execCmdAndGetOutput("python3 /usr/local"
+                "/dpdk/sbin/dpdk-devbind --status-dev net | grep \"if="+
+                card_name+"\""):
+                os.system("ifconfig "+card_name+" down")
+            if "" != execCmdAndGetOutput("python3 /usr/local/dpdk/sbin/dpdk-devbind "
+                "--status-dev net | grep -P \""+card_addr+"[ \\t]+'.+'[ \\t]+drv=.+"
+                "[ \\t]unused=.+\""):
+                os.system("python3 /usr/local/dpdk/sbin/dpdk-devbind -u "
+                    +card_addr)
+            os.system("python3 /usr/local/dpdk/sbin/dpdk-devbind --b "+
+                dirver_name+" "+card_addr)        
+        os.system("python3 /usr/local/dpdk/sbin/dpdk-devbind --status-dev net")
+    else:
+        for cur_card in card_lst:
+            card_name = cur_card[0]
+            if "" != execCmdAndGetOutput("python3 /usr/local"
+                "/dpdk/sbin/dpdk-devbind --status-dev net | grep \"if="+
+                card_name+"\""):
+        os.system("cd /usr/local/dpdk/sbin/driverctl && ./driverctl -b vmbus list-overrides")
     return ""
 
 
