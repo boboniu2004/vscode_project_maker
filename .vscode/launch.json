@@ -8,11 +8,9 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/__init__.py",
+            "program": "${workspaceFolder}/f-stack_pacth/f-stack_init.py",
             "args": [
-                "golang",
-                "app",
-                "/root/gotest",
+                "~/c_workspace",
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"

@@ -144,7 +144,7 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
     cwd_dir = os.getcwd()
     try:
         os.chdir(fstack_path+"/f-stack-"+fstack_ver+"/app/nginx-1.16.1")
-        if 0 != os.system("./configure --prefix="+cwd_dir+"/f-stack-"+fstack_ver+"/debug "
+        if 0 != os.system("./configure --prefix="+fstack_path+"/f-stack-"+fstack_ver+"/debug "
             "--with-debug --with-stream --with-stream_ssl_module "
             "--with-ff_module --with-stream_ssl_preread_module "
             "--with-http_v2_module"):
@@ -160,13 +160,13 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
         "update:"\
 	        "\n\tcd ./lib && make"\
 	        "\n\tcd ./app/nginx-1.16.1 && make"\
-            "\n\tcp -rf ./app/nginx-1.16.1/objs/nginx "+cwd_dir+"/f-stack-"+fstack_ver+"/debug/sbin/"\
+            "\n\tcp -rf ./app/nginx-1.16.1/objs/nginx "+fstack_path+"/f-stack-"+fstack_ver+"/debug/sbin/"\
             "\n\n"\
         "clean:"\
 	        "\n\tcd ./lib && make clean"\
 	        "\n\tcd ./tools && make clean"\
 	        "\n\tcd ./app/nginx-1.16.1 && make clean"\
-            "\n\tcd ./app/nginx-1.16.1 && ./configure --prefix="+cwd_dir+"/f-stack-"+fstack_ver+"/debug "\
+            "\n\tcd ./app/nginx-1.16.1 && ./configure --prefix="+fstack_path+"/f-stack-"+fstack_ver+"/debug "\
             "--with-debug --with-stream --with-stream_ssl_module "\
             "--with-ff_module --with-stream_ssl_preread_module "\
             "--with-http_v2_module"\
@@ -178,17 +178,17 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
 	        "\n\tcd ./tools && make"\
             "\n\tcd ./example && make"\
 	        "\n\tcd ./app/nginx-1.16.1 && make"\
-	        "\n\tmkdir -p "+cwd_dir+"/f-stack-"+fstack_ver+"/debug/net-tools"\
-	        "\n\tcp -rf ./tools/sbin/* "+cwd_dir+"/f-stack-"+fstack_ver+"/debug/net-tools/"\
+	        "\n\tmkdir -p "+fstack_path+"/f-stack-"+fstack_ver+"/debug/net-tools"\
+	        "\n\tcp -rf ./tools/sbin/* "+fstack_path+"/f-stack-"+fstack_ver+"/debug/net-tools/"\
 	        "\n\tcd ./app/nginx-1.16.1 && make install"\
-            "\n\tcp -rf ./config.ini "+cwd_dir+"/f-stack-"+fstack_ver+"/debug/conf/f-stack.conf"\
+            "\n\tcp -rf ./config.ini "+fstack_path+"/f-stack-"+fstack_ver+"/debug/conf/f-stack.conf"\
             "\n\n"\
         "uninstall:"\
-	        "\n\trm -rf "+cwd_dir+"/f-stack-"+fstack_ver+"/debug/*"\
+	        "\n\trm -rf "+fstack_path+"/f-stack-"+fstack_ver+"/debug/*"\
             "\n"
     sz_err = writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/makefile", fstack_make)
     if "" != sz_err:
-        return "config f-stack failed"    
+        return "config f-stack failed" 
     return ""
 
 
@@ -250,6 +250,34 @@ def create_fstack_project(fstack_ver, fstack_path, vscode_project_maker):
         return "create f-stack project failed"
     return ""
 
+#功能：制作f-stack工程；参数：无；返回：错误码
+def correct_fstack_code(fstack_ver, fstack_path):
+    #查找
+    time_path = "/usr/include/x86_64-linux-gnu/sys/time.h"
+    if False == os.path.isfile(time_path):
+        time_path = ""
+    if False == os.path.isfile(time_path):
+        return "Can not find time.h"
+    time_cont,sz_err = readTxtFile(time_path)
+    if ""!=sz_err:
+        return sz_err
+    search_ret = re.search("gettimeofday[ \\t\\n]*\\(([^\\)]+)",time_cont)
+    if None == search_ret:
+        return ""
+    search_ret = re.search(",[ \\t\\n]*void[ \\t\\n]*\\*",search_ret[1])
+    if None == search_ret:
+        return ""
+    #替换
+    ff_mod_cont,sz_err = readTxtFile(fstack_path+"/f-stack-"+fstack_ver+
+        "/app/nginx-1.16.1/src/event/modules/ngx_ff_module.c")
+    if ""!=sz_err:
+        return sz_err
+    ff_mod_cont = re.sub("gettimeofday[ \\t\\n]*\\(([^\\)]+)", 
+        "gettimeofday(struct timeval *tv, void *tz", ff_mod_cont, 1)
+    sz_err = writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+
+        "/app/nginx-1.16.1/src/event/modules/ngx_ff_module.c", ff_mod_cont)
+    return sz_err
+
 #功能：导入路径参数；参数：无；返回：错误码
 def export_path(fstack_ver):
     #读取
@@ -272,7 +300,7 @@ def export_path(fstack_ver):
     if "" != sz_err:
         return sz_err
     return ""
-
+    
 
 #函数功能：主函数
 #函数参数：可执行文件全路径，启动时加入的参数
@@ -319,6 +347,11 @@ if __name__ == "__main__":
         print(szErr)
     else:
         print("create f-stack project sucess!")
+    szErr = correct_fstack_code("1.21", fstack_path)
+    if "" != szErr:
+        print(szErr)
+    else:
+        print("correct fstack code sucess!")
     szErr = export_path("1.21")
     if "" != szErr:
         print(szErr)
