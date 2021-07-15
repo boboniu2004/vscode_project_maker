@@ -181,6 +181,14 @@ def getOSName():
         return "ubuntu"
     return ""
 
+#get_kernel_ver 获取内核版本；参数：无；返回：操作系统内核的版本
+def get_kernel_ver():
+    szOSName = execCmdAndGetOutput("uname -r")
+    match_ret = re.match("^(\\d+)\\.(\\d+)\\.(\\d+)\\-\\d+-", szOSName)
+    if None == match_ret:
+        return None, None, None
+    return int(match_ret[1]),int(match_ret[2]),int(match_ret[3])
+    
 
 #buildDPDK 编译DPDK；参数：无；返回：错误码
 def buildDPDK():
@@ -245,6 +253,9 @@ def buildDPDK():
             os.system("echo 256 > /sys/devices/system/node/"+cur_nd+"/"
                 "hugepages/hugepages-2048kB/nr_hugepages")
     #下载绑定工具
+    first_ver,second_ver,_ = get_kernel_ver()
+    if None==first_ver or first_ver<4 or (first_ver==4 and second_ver<18):
+        return "" 
     if ""==execCmdAndGetOutput("lspci") and \
         True == os.path.exists("/usr/local/dpdk/sbin") and \
         False == os.path.exists("/usr/local/dpdk/sbin/driverctl"):

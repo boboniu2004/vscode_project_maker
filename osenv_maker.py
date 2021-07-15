@@ -26,12 +26,18 @@ if __name__ == "__main__":
         else:
             szErr = "Invaild operation" 
     elif 2<len(sys.argv) and "config_DPDK"==sys.argv[1]:
-        if "centos" == szOSName:
-            szErr = centosenv_maker.ConfigDPDK(sys.argv[2])
-        elif "ubuntu" == szOSName:
-            szErr = ubuntuenv_maker.ConfigDPDK(sys.argv[2])
+        #判断是否具备运行DPDK的环境
+        first_ver,second_ver,_ = maker_public.get_kernel_ver()
+        if ""==maker_public.execCmdAndGetOutput("lspci") and (None==first_ver or \
+            first_ver<4 or (first_ver==4 and second_ver<18)):
+            szErr = "Invaild virture machine"
         else:
-            szErr = "Invaild OS"            
+            if "centos" == szOSName:
+                szErr = centosenv_maker.ConfigDPDK(sys.argv[2])
+            elif "ubuntu" == szOSName:
+                szErr = ubuntuenv_maker.ConfigDPDK(sys.argv[2])
+            else:
+                szErr = "Invaild OS"            
     else:
         if "centos" == szOSName:
             szErr = centosenv_maker.InitEnv()

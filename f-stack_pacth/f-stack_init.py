@@ -3,6 +3,7 @@
 
 import os
 import re
+import sys
 
 #功能：读取一个文本文件；参数：待读取的文件；返回：读取到的内容，错误描述
 def readTxtFile(szSrcFile):
@@ -109,24 +110,25 @@ def load_driver(dirver_name, card_lst):
     else:
         for cur_card in card_lst:
             card_name = cur_card[0]
-            if "" != execCmdAndGetOutput("python3 /usr/local"
-                "/dpdk/sbin/dpdk-devbind --status-dev net | grep \"if="+
-                card_name+"\""):
+            os.system("cd /usr/local/dpdk/sbin/driverctl && "\
+                "DEV_UUID=$(basename $(readlink /sys/class/net/"+card_name+"/device)) && "\
+                "./driverctl -b vmbus set-override $DEV_UUID uio_hv_generic")
         os.system("cd /usr/local/dpdk/sbin/driverctl && ./driverctl -b vmbus list-overrides")
     return ""
 
 
 #功能：下载胚子f-stack；参数：无；返回：错误码
-def config_fstack(fstack_ver):
-    if False == os.path.exists("./f-stack-"+fstack_ver+".zip"):
+def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
+    if False == os.path.exists(vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
         if 0 != os.system("wget https://github.com/F-Stack/f-stack/archive/refs/tags/"
-        "v"+fstack_ver+".zip -O f-stack-"+fstack_ver+".zip"):
+        "v"+fstack_ver+".zip -O "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
             return "Failed to download f-stack-"+fstack_ver
     if False == os.path.exists(os.getcwd()+"/f-stack-"+fstack_ver):
         #解压缩
-        os.system("unzip ./f-stack-"+fstack_ver+".zip")
+        os.system("unzip -d "+fstack_path+"/ "+vscode_project_maker+"/f-stack-"+
+            fstack_ver+".zip")
     #修改lib下的makefile
-    lib_make,sz_err = readTxtFile(os.getcwd()+"/f-stack-"+fstack_ver+"/lib/Makefile")
+    lib_make,sz_err = readTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/lib/Makefile")
     if "" != sz_err:
         return "config f-stack failed"
     if 0 >= len(re.findall("\\n#DEBUG[ \\t]*=|\\nDEBUG[ \\t]*=", lib_make)):
@@ -135,13 +137,13 @@ def config_fstack(fstack_ver):
         return "can not find FF_IPFW"
     lib_make = re.sub("\\n#DEBUG[ \\t]*=", "\nDEBUG=", lib_make)
     lib_make = re.sub("\\n#FF_IPFW[ \\t]*=[ \\t]*1", "\nFF_IPFW=1", lib_make)
-    sz_err = writeTxtFile(os.getcwd()+"/f-stack-"+fstack_ver+"/lib/Makefile", lib_make)
+    sz_err = writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/lib/Makefile", lib_make)
     if "" != sz_err:
         return "config f-stack failed"
     #配置nginx
     cwd_dir = os.getcwd()
     try:
-        os.chdir(os.getcwd()+"/f-stack-"+fstack_ver+"/app/nginx-1.16.1")
+        os.chdir(fstack_path+"/f-stack-"+fstack_ver+"/app/nginx-1.16.1")
         if 0 != os.system("./configure --prefix="+cwd_dir+"/f-stack-"+fstack_ver+"/debug "
             "--with-debug --with-stream --with-stream_ssl_module "
             "--with-ff_module --with-stream_ssl_preread_module "
@@ -184,23 +186,23 @@ def config_fstack(fstack_ver):
         "uninstall:"\
 	        "\n\trm -rf "+cwd_dir+"/f-stack-"+fstack_ver+"/debug/*"\
             "\n"
-    sz_err = writeTxtFile(os.getcwd()+"/f-stack-"+fstack_ver+"/makefile", fstack_make)
+    sz_err = writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/makefile", fstack_make)
     if "" != sz_err:
         return "config f-stack failed"    
     return ""
 
 
 #功能：制作f-stack工程；参数：无；返回：错误码
-def create_fstack_project(fstack_ver, vscode_project_maker):
+def create_fstack_project(fstack_ver, fstack_path, vscode_project_maker):
     if 0 != os.system("python3 "+vscode_project_maker+
         "/__init__.py c app /tmp/nginx"):
         os.system("rm -rf /tmp/nginx")
         return "create f-stack project failed"
     os.system("cp -rf /tmp/nginx/.vscode "+
-        os.getcwd()+"/f-stack-"+fstack_ver+"/")
+        fstack_path+"/f-stack-"+fstack_ver+"/")
     os.system("rm -rf /tmp/nginx")
     #替换工作目录
-    launch,sz_err = readTxtFile(os.getcwd()+"/f-stack-"+fstack_ver+"/.vscode/"
+    launch,sz_err = readTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/.vscode/"
         "launch.json")
     if "" != sz_err:
         return "create f-stack project failed"
@@ -208,12 +210,12 @@ def create_fstack_project(fstack_ver, vscode_project_maker):
         "${workspaceFolder}/debug/sbin", launch)
     launch = re.sub("\"\\$\\{workspaceFolder\\}\"", 
         "\"${workspaceFolder}/debug/sbin\"", launch)
-    sz_err = writeTxtFile(os.getcwd()+"/f-stack-"+fstack_ver+"/.vscode/"
+    sz_err = writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/.vscode/"
         "launch.json", launch)
     if "" != sz_err:
         return "create f-stack project failed"
     #替换编译TAG
-    tasks,sz_err = readTxtFile(os.getcwd()+"/f-stack-"+fstack_ver+"/.vscode/"
+    tasks,sz_err = readTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/.vscode/"
         "tasks.json")
     if "" != sz_err:
         return "create f-stack project failed"
@@ -242,7 +244,7 @@ def create_fstack_project(fstack_ver, vscode_project_maker):
             "\n            }"\
             "\n        },"
         , tasks)
-    sz_err = writeTxtFile(os.getcwd()+"/f-stack-"+fstack_ver+"/.vscode/"
+    sz_err = writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/.vscode/"
         "tasks.json", tasks)
     if "" != sz_err:
         return "create f-stack project failed"
@@ -276,6 +278,17 @@ def export_path(fstack_ver):
 #函数参数：可执行文件全路径，启动时加入的参数
 #函数返回：执行成功返回0，否则返回负值的错误码
 if __name__ == "__main__":
+    fstack_path = os.getcwd()
+    if 1<len(sys.argv):
+        fstack_path = sys.argv[1]
+    if False==os.path.isdir(fstack_path):
+        print("Invaild f-stack path")
+        exit(-1)
+    fstack_path = os.path.realpath(fstack_path)
+    #检测是否安装了DPDK
+    if False == os.path.exists("/usr/local/dpdk"):
+        print("please install DPDK")
+        exit(-1)
     szErr = using_hugepage()
     if "" != szErr:
         print(szErr)
@@ -286,17 +299,22 @@ if __name__ == "__main__":
         print(szErr)
     else:
         print("close ASLR sucess!")
-    szErr = load_driver("igb_uio", [["enp0s9","0000:00:09.0"]])
+    if False == os.path.exists("/usr/local/dpdk/sbin/driverctl"):
+        szErr = load_driver("igb_uio", [["enp0s9","0000:00:09.0"]])
+    else:
+        szErr = load_driver("igb_uio", [["eth2"]])
     if "" != szErr:
         print(szErr)
     else:
         print("load driver sucess!")
-    szErr = config_fstack("1.21")
+    szErr = config_fstack("1.21", fstack_path, 
+        os.environ["HOME"]+"/vscode_project_maker")
     if "" != szErr:
         print(szErr)
     else:
         print("config f-stack sucess!")
-    szErr = create_fstack_project("1.21", os.environ["HOME"]+"/vscode_project_maker")
+    szErr = create_fstack_project("1.21", fstack_path, 
+        os.environ["HOME"]+"/vscode_project_maker")
     if "" != szErr:
         print(szErr)
     else:
