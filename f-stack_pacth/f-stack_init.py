@@ -47,6 +47,32 @@ def execCmdAndGetOutput(szCmd):
     return str(szOutput)  
 
 
+#getOSName 获取操作系统名称；参数：无；返回：操作系统名称
+def getOSName():
+    #获取centos版本
+    szOSName = execCmdAndGetOutput("rpm -q centos-release")
+    if None != re.search("^centos\\-release\\-[\\d]+\\-[\\d]+\\.[\\d]+"+\
+        "\\.[\\d]+\\.[^\\.]+\\.centos\\.[^\\.^\\s]+$", szOSName):
+        return "centos"
+    else:
+        szOSName,sz_err = readTxtFile("/etc/redhat-release")
+        if ""==sz_err and None!=re.search(
+            "CentOS[ \\t]+Linux[ \\t]+release[ \\t]+\\d+\\.\\d+\\.\\d+", szOSName):
+            return "centos"
+    #获取ubuntu版本
+    szOSName = execCmdAndGetOutput("lsb_release -a")
+    if None != re.search("Distributor[ \\t]+ID[ \\t]*:[ \\t]+Ubuntu.*", szOSName):
+        return "ubuntu"
+    return ""
+
+
+#功能：安装必须的软件包；参数：无；返回：错误码
+def install_dep():
+    os_name = getOSName()
+    if "centos" == os_name:
+        os.system("yum -y install pcre-devel")
+        os.system("yum -y install openssl-devel")
+
 #功能：加载巨页；参数：无；返回：错误码
 def using_hugepage():
     #设置巨页
@@ -123,7 +149,7 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
         if 0 != os.system("wget https://github.com/F-Stack/f-stack/archive/refs/tags/"
         "v"+fstack_ver+".zip -O "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
             return "Failed to download f-stack-"+fstack_ver
-    if False == os.path.exists(os.getcwd()+"/f-stack-"+fstack_ver):
+    if False == os.path.exists(fstack_path+"/f-stack-"+fstack_ver):
         #解压缩
         os.system("unzip -d "+fstack_path+"/ "+vscode_project_maker+"/f-stack-"+
             fstack_ver+".zip")
@@ -252,44 +278,56 @@ def create_fstack_project(fstack_ver, fstack_path, vscode_project_maker):
 
 #功能：制作f-stack工程；参数：无；返回：错误码
 def correct_fstack_code(fstack_ver, fstack_path):
+    match_type = ""
     #查找
     time_path = "/usr/include/x86_64-linux-gnu/sys/time.h"
     if False == os.path.isfile(time_path):
-        time_path = ""
+        time_path = "/usr/include/sys/time.h"
     if False == os.path.isfile(time_path):
         return "Can not find time.h"
     time_cont,sz_err = readTxtFile(time_path)
     if ""!=sz_err:
         return sz_err
-    search_ret = re.search("gettimeofday[ \\t\\n]*\\(([^\\)]+)",time_cont)
-    if None == search_ret:
+    gettimeofday_ret = re.search("gettimeofday[ \\t\\n]*\\(([^\\)]+)",time_cont)
+    if None == gettimeofday_ret:
         return ""
-    search_ret = re.search(",[ \\t\\n]*void[ \\t\\n]*\\*",search_ret[1])
+    search_ret = re.search(",[ \\t\\n]*void[ \\t\\n]*\\*",gettimeofday_ret[1])
     if None == search_ret:
-        return ""
+        search_ret = re.search(",[ \\t\\n]*__timezone_ptr_t[ \\t\\n]*",gettimeofday_ret[1])
+        if None == search_ret:
+            return ""
+        else:
+            match_type = "centos"
+    else:
+        match_type = "ubuntu"
     #替换
     ff_mod_cont,sz_err = readTxtFile(fstack_path+"/f-stack-"+fstack_ver+
         "/app/nginx-1.16.1/src/event/modules/ngx_ff_module.c")
     if ""!=sz_err:
         return sz_err
-    ff_mod_cont = re.sub("gettimeofday[ \\t\\n]*\\(([^\\)]+)", 
-        "gettimeofday(struct timeval *tv, void *tz", ff_mod_cont, 1)
+    if "ubuntu" == match_type:
+        ff_mod_cont = re.sub("gettimeofday[ \\t\\n]*\\(([^\\)]+)", 
+            "gettimeofday(struct timeval *tv, void *tz", ff_mod_cont, 1)
+    else:
+        ff_mod_cont = re.sub("gettimeofday[ \\t\\n]*\\(([^\\)]+)", 
+            "gettimeofday(struct timeval *__restrict tv, __timezone_ptr_t tz", 
+            ff_mod_cont, 1)        
     sz_err = writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+
         "/app/nginx-1.16.1/src/event/modules/ngx_ff_module.c", ff_mod_cont)
     return sz_err
 
 #功能：导入路径参数；参数：无；返回：错误码
-def export_path(fstack_ver):
+def export_path(fstack_ver, fstack_path):
     #读取
     profile,sz_err = readTxtFile(os.environ["HOME"]+"/.bashrc")
     if "" != sz_err:
         return sz_err
     #修改
     if 0 >= len(re.findall("\nexport[ \\t]+FF_PATH[ \\t]*=.+", profile)):
-        profile += "\nexport FF_PATH="+os.getcwd()+"/f-stack-"+fstack_ver
+        profile += "\nexport FF_PATH="+fstack_path+"/f-stack-"+fstack_ver
     else:
         profile = re.sub("\nexport[ \\t]+FF_PATH[ \\t]*=.+", 
-            "\nexport FF_PATH="+os.getcwd()+"/f-stack-"+fstack_ver, profile)
+            "\nexport FF_PATH="+fstack_path+"/f-stack-"+fstack_ver, profile)
     if 0 >= len(re.findall("\nexport[ \\t]+FF_DPDK[ \\t]*=.+", profile)):
         profile += "\nexport FF_DPDK=/usr/local/dpdk"
     else:
@@ -317,6 +355,12 @@ if __name__ == "__main__":
     if False == os.path.exists("/usr/local/dpdk"):
         print("please install DPDK")
         exit(-1)
+    #安装缺失的软件包
+    szErr = install_dep()
+    if "" != szErr:
+        print(szErr)
+    else:
+        print("install sucess!")
     szErr = using_hugepage()
     if "" != szErr:
         print(szErr)
@@ -352,7 +396,7 @@ if __name__ == "__main__":
         print(szErr)
     else:
         print("correct fstack code sucess!")
-    szErr = export_path("1.21")
+    szErr = export_path("1.21", fstack_path)
     if "" != szErr:
         print(szErr)
     else:

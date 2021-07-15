@@ -57,44 +57,81 @@ def configRepo():
     MatchList = re.match("^centos\\-release\\-([\\d]+)\\-[\\d]+\\.[\\d]+"+\
         "\\.[\\d]+\\.[^\\.]+\\.centos\\.[^\\.^\\s]+$", szCentOSVer)
     if None == MatchList:
-        return ("Unknow OS:%s" %szCentOSVer)
+        szCentOSVer,sz_err = maker_public.readTxtFile("/etc/redhat-release")
+        if "" != sz_err:
+            return "can not read /etc/redhat-release"
+        MatchList = re.search("CentOS[ \\t]+Linux[ \\t]+release[ \\t]+(\\d+)\\.\\d+\\.\\d+", 
+            szCentOSVer)
+        if None == MatchList:
+            return ("Unknow OS:%s" %szCentOSVer)
     #更新基础源为阿里源rue
-    #if True == os.path.exists("/etc/yum.repos.d/CentOS-Base.repo"):
-    #    os.system("rm -Rf /etc/yum.repos.d/CentOS-Base.repo.bark")
-    #    os.system("mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.bark")
-    #if False==os.path.exists( ("/etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))) ) and \
-    #    0!=os.system( ("wget -O /etc/yum.repos.d/Centos-%s.repo http://mirrors.aliyun.com/repo/Centos-%s.repo" \
-    #        %(MatchList.group(1), MatchList.group(1))) ):
-    #    os.system( ("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))) )
-    #    os.system("mv /etc/yum.repos.d/CentOS-Base.repo.bark /etc/yum.repos.d/CentOS-Base.repo")
-    #    return "Download aliyun.repo failed"
-    #os.system( ("rm -Rf /etc/yum.repos.d/CentOS%s-Base-163.repo" %(MatchList.group(1))) )
-    os.system(("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))))  
-    if False==os.path.exists( ("/etc/yum.repos.d/CentOS%s-Base-163.repo" %(MatchList.group(1))) ) and \
-        0!=os.system( ("wget -O /etc/yum.repos.d/CentOS%s-Base-163.repo http://mirrors.163.com/.help/CentOS%s-Base-163.repo" \
-            %(MatchList.group(1), MatchList.group(1))) ):
+    if "8" == MatchList.group(1):
+        if True == os.path.exists("/etc/yum.repos.d/CentOS-Base.repo"):
+            os.system("rm -Rf /etc/yum.repos.d/CentOS-Base.repo.bark")
+            os.system("mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/"\
+                "CentOS-Base.repo.bark")
+        if False==os.path.exists( ("/etc/yum.repos.d/Centos-%s.repo" \
+            %(MatchList.group(1))) ) and \
+            0!=os.system( ("wget -O /etc/yum.repos.d/Centos-%s.repo "\
+                "http://mirrors.aliyun.com/repo/Centos-%s.repo" \
+                %(MatchList.group(1), MatchList.group(1))) ):
+            os.system( ("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))) )
+            os.system("mv /etc/yum.repos.d/CentOS-Base.repo.bark "\
+                "/etc/yum.repos.d/CentOS-Base.repo")
+            return "Download aliyun.repo failed"
+        #替换
+        if 0!=os.system("sed -i -e '/mirrors.cloud.aliyuncs.com/d' -e "\
+            "'/mirrors.aliyuncs.com/d' "\
+            "/etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))):
+            return ("replace Centos-%s.repo failed" %MatchList.group(1))
         os.system( ("rm -Rf /etc/yum.repos.d/CentOS%s-Base-163.repo" %(MatchList.group(1))) )
-        os.system("mv /etc/yum.repos.d/CentOS-Base.repo.bark /etc/yum.repos.d/CentOS-Base.repo")
-        return "Download aliyun.repo failed"    
-    #安装epel源
-    os.system("yum erase -y epel-release.noarch")
-    if False==os.path.exists( ("/etc/yum.repos.d/epel-%s.repo" %(MatchList.group(1))) ) or \
-        0==os.path.getsize( ("/etc/yum.repos.d/epel-%s.repo" %(MatchList.group(1))) ):
-        if 0!=os.system( ("wget -O /etc/yum.repos.d/epel-%s.repo http://mirrors.aliyun.com/repo/epel-%s.repo" \
-            %(MatchList.group(1), MatchList.group(1))) ):
-            return "Download epel.repo failed"
+        #安装epel源
+        os.system("yum erase -y epel-release.noarch")
+        szRpmPath = ("https://mirrors.aliyun.com/epel/epel-release-latest-%s.noarch.rpm" 
+            %(MatchList.group(1)))
+        szErr = installOrUpdateRpm("epel-release", "noarch", szRpmPath)
+        if 0 < len(szErr):
+            return "Install epel failed"
+        if 0 != os.system("sed -i 's|^[ \\t]*#[ \\t]*baseurl[ \\t]*=.*|"\
+            "baseurl=https://mirrors.aliyun.com/epel/%s/Modular/SRPMS|' "\
+            "/etc/yum.repos.d/epel* && "\
+            "sed -i 's|^metalink|#metalink|' /etc/yum.repos.d/epel*" %(MatchList.group(1))):
+            return "Install epel failed"
+    else:
+        os.system(("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))))  
+        if False==os.path.exists( ("/etc/yum.repos.d/CentOS%s-Base-163.repo" \
+            %(MatchList.group(1))) ) and \
+            0!=os.system( ("wget -O /etc/yum.repos.d/CentOS%s-Base-163.repo "\
+                "http://mirrors.163.com/.help/CentOS%s-Base-163.repo" 
+                %(MatchList.group(1), MatchList.group(1))) ):
+            os.system( ("rm -Rf /etc/yum.repos.d/CentOS%s-Base-163.repo" 
+                %(MatchList.group(1))) )
+            os.system("mv /etc/yum.repos.d/CentOS-Base.repo.bark "\
+                "/etc/yum.repos.d/CentOS-Base.repo")
+            return "Download aliyun.repo failed"    
+        #安装epel源
+        os.system("yum erase -y epel-release.noarch")
+        if False==os.path.exists( ("/etc/yum.repos.d/epel-%s.repo" %(MatchList.group(1))) ) or \
+            0==os.path.getsize( ("/etc/yum.repos.d/epel-%s.repo" %(MatchList.group(1))) ):
+            if 0!=os.system( ("wget -O /etc/yum.repos.d/epel-%s.repo "\
+                "http://mirrors.aliyun.com/repo/epel-%s.repo" 
+                %(MatchList.group(1), MatchList.group(1))) ):
+                return "Download epel.repo failed"
     os.system("yum clean all; yum makecache")
     #安装WANGdisco
-    szRpmPath = ("http://opensource.wandisco.com/centos/%s"\
-        "/git/x86_64/wandisco-git-release-%s-2.noarch.rpm" %(MatchList.group(1),MatchList.group(1)))
-    szErr = installOrUpdateRpm("wandisco-git-release", "noarch", szRpmPath)
-    if 0 >= len(szErr):
-       return ""
-    szRpmPath = ("http://opensource.wandisco.com/centos/%s"\
-        "/git/x86_64/wandisco-git-release-%s-1.noarch.rpm" %(MatchList.group(1),MatchList.group(1)))
-    szErr = installOrUpdateRpm("wandisco-git-release", "noarch", szRpmPath)
-    if 0 < len(szErr):
-        return szErr
+    if "8" != MatchList.group(1):
+        szRpmPath = ("http://opensource.wandisco.com/centos/%s"\
+            "/git/x86_64/wandisco-git-release-%s-2.noarch.rpm" 
+            %(MatchList.group(1),MatchList.group(1)))
+        szErr = installOrUpdateRpm("wandisco-git-release", "noarch", szRpmPath)
+        if 0 >= len(szErr):
+            return ""
+        szRpmPath = ("http://opensource.wandisco.com/centos/%s"\
+            "/git/x86_64/wandisco-git-release-%s-1.noarch.rpm" 
+            %(MatchList.group(1),MatchList.group(1)))
+        szErr = installOrUpdateRpm("wandisco-git-release", "noarch", szRpmPath)
+        if 0 < len(szErr):
+            return szErr
     #
     return ""
 
@@ -180,7 +217,9 @@ def configGolang():
 def configPython():
     szErr = installOrUpdateRpm("python3", "x86_64", "")
     if 0 < len(szErr):
-        return szErr
+        szErr = installOrUpdateRpm("python36", "x86_64", "")
+        if 0 < len(szErr):
+            return szErr
     szErr = installOrUpdateRpm("python3-pip", "noarch", "")
     if 0 < len(szErr):
         return szErr

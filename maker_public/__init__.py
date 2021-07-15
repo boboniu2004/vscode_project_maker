@@ -175,6 +175,11 @@ def getOSName():
     if None != re.search("^centos\\-release\\-[\\d]+\\-[\\d]+\\.[\\d]+"+\
         "\\.[\\d]+\\.[^\\.]+\\.centos\\.[^\\.^\\s]+$", szOSName):
         return "centos"
+    else:
+        szOSName,sz_err = readTxtFile("/etc/redhat-release")
+        if ""==sz_err and None!=re.search(
+            "CentOS[ \\t]+Linux[ \\t]+release[ \\t]+\\d+\\.\\d+\\.\\d+", szOSName):
+            return "centos"
     #获取ubuntu版本
     szOSName = execCmdAndGetOutput("lsb_release -a")
     if None != re.search("Distributor[ \\t]+ID[ \\t]*:[ \\t]+Ubuntu.*", szOSName):
@@ -184,7 +189,7 @@ def getOSName():
 #get_kernel_ver 获取内核版本；参数：无；返回：操作系统内核的版本
 def get_kernel_ver():
     szOSName = execCmdAndGetOutput("uname -r")
-    match_ret = re.match("^(\\d+)\\.(\\d+)\\.(\\d+)\\-\\d+-", szOSName)
+    match_ret = re.match("^(\\d+)\\.(\\d+)\\.(\\d+)\\-\\d+", szOSName)
     if None == match_ret:
         return None, None, None
     return int(match_ret[1]),int(match_ret[2]),int(match_ret[3])
@@ -196,6 +201,7 @@ def buildDPDK():
     if False == os.path.exists("./f-stack-1.21.zip"):
         if 0 != os.system("wget https://github.com/F-Stack/f-stack/archive/refs/tags/v1.21.zip "+
             "-O f-stack-1.21.zip"):
+            os.system("rm -f ./f-stack-1.21.zip")
             return "Failed to download f-stack-1.21"
     if False == os.path.exists("/usr/local/dpdk"):
         #解压缩

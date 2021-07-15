@@ -26,7 +26,7 @@
 
 第四步，双击桌面**hyper-v管理器快捷方式**，在弹出的界面中选中**Hyper-V设置**，修改虚拟硬盘，虚拟机配置文件的存储位置，最好不要存储在C盘，因为会占用大量的存储空间。![set_hyper-v](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/set_hyper-v.jpg) 
 
-第五步，虚拟机管理界面中选中**快速创建...**：在弹出的对话框中点击**更改安装源(I)...**，选择centos7_x86-64、ubuntu18.04_x86-64/ubuntu20.04_x86-64镜像；取消**此虚拟机将运行Windows(启用Windows Secure Boot)**；点击**更多选项(R)**修改虚拟机的名称。上面三步做好后就可以点击**创建虚拟机(V)**按钮来创建虚拟机。这里需要说明一下，因为网络的原因，可能出现一直无法点击**创建虚拟机(V)**的情况，此时只需要断开windows 10的网络，重新创建虚拟机即可。
+第五步，虚拟机管理界面中选中**快速创建...**：在弹出的对话框中点击**更改安装源(I)...**，选择centos7_x86-64、centos8_x86-64、ubuntu18.04_x86-64/ubuntu20.04_x86-64镜像；取消**此虚拟机将运行Windows(启用Windows Secure Boot)**；点击**更多选项(R)**修改虚拟机的名称。上面三步做好后就可以点击**创建虚拟机(V)**按钮来创建虚拟机。这里需要说明一下，因为网络的原因，可能出现一直无法点击**创建虚拟机(V)**的情况，此时只需要断开windows 10的网络，重新创建虚拟机即可。
 
 第六步，创建成功的页面上点击**编辑设置(S)**。在弹出的界面中依次点击**添加硬件**->**网络适配器**->**添加(D)**，为虚拟机新建一个网卡，网卡的虚拟交换机设置为**HYPER-V-NAT-Network**；点击**检查点**，取消**启用检查点(E)**；点击**处理器**，设置处理器为物理CPU的一半(推荐)，点击**内存**，将**RAM(R)**设置为2048MB，动态内存区间设置为512M~2048M(推荐)；最后点击**确定**完成虚拟机的配置。
 
@@ -57,7 +57,7 @@
 ### Ubuntu安装注意事项
 1 安装ubuntu18.04、ubuntu20.04时**强烈建议**关闭主机的网络连接，否则在下载deb包时会卡死。
 
-### 设置centos开发环境
+### 设置centos7开发环境
 以root账号进入系统，打开终端，运行一下命令：
 
     cd /root/
@@ -70,6 +70,21 @@
     其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。
     在virtualbox环境下：
         python osenv_maker.py
+    系统会自动将第一张网卡设置为10.0.2.15/24，第二张网卡设置为192.168.56.xx/24。
+
+### 设置centos8开发环境
+以root账号进入系统，打开终端，运行一下命令：
+
+    cd /root/
+    wget https://github.com/boboniu2004/vscode_project_maker/archive/refs/heads/master.zip -O ./vscode_project_maker.zip
+    unzip ./vscode_project_maker.zip
+    cd ./vscode_project_maker-master
+
+    在hyper-v环境下：
+        python3 osenv_maker.py 192.168.137.xx/24
+    其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。
+    在virtualbox环境下：
+        python3 osenv_maker.py
     系统会自动将第一张网卡设置为10.0.2.15/24，第二张网卡设置为192.168.56.xx/24。
 
 ### 设置ubuntu开发环境
@@ -107,7 +122,7 @@ hyper-v可以在管理界面设置开机自启动；virtualbox需要修改**vsco
 其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。
 
 # 配置DPDK
-在virtualbox环境下，如果网卡支持DPDK，则可以安装DPDK开发环境。此时可以在vscode_project_maker目录下运行如下命令：
+在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，则可以安装DPDK开发环境。此时可以在vscode_project_maker目录下运行如下命令：
 
         python3 osenv_maker.py config_DPDK install/uninstall
 
@@ -124,3 +139,12 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 ![vscode_open_folder_1](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/vscode_open_folder_1.jpg) ![vscode_open_folder_2](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/vscode_open_folder_2.jpg)
 
 # 编译调试工程
+
+# 创建f-stack开发环境
+在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，且已经正确安装了DPDK到/usr/local/dpdk下，则可以配置f-stack开发环境。此时可以在vscode_project_maker目录下运行如下命令：
+
+        python3 f-stack_pacth/f-stack_init.py [f-stack_project_path]
+
+安装完毕后，需要重启虚拟机，然后就可以使用vscode打开f-stack开发目录，首先运行**gcc install active file**任务生成debug调试目录，该目录中可以修改f-stack和nginx的配置。后续就可以使用vscode进行集成开发和调试了，非常方便。如果在hyper-v环境下的centos8/ubuntu20.04系统下想查看已经绑定的设备，可以运行命令：
+
+        /usr/local/dpdk/sbin/driverctl/driverctl -b vmbus list-overrides
