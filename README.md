@@ -103,7 +103,7 @@ ubuntu安装时默认不开启root账号，所以只能已普通账号进入系�
         python3 osenv_maker.py
     系统会自动将第一张网卡设置为10.0.2.15/24，第二张网卡设置为192.168.56.xx/24。
 
-安装脚本会自动升级系统到最新版；系统安装配置GCC，PYTHON，JAVA，GO，GIT，SSHD等软件；配置网络；关闭图形界面；还会给ubuntu系统开启root账号并设置密码。**注意：因为网络原因，在安装GO和GIT时可能会因为网络问题而失败，此时只需要多试几次即可**。安装完毕重启系统后即可用字符界面登录(**注意：hyper-v环境下ubuntu20.04系统在重启时可能会卡主，此时需要在hyper-v控制台中选中相应的虚拟机，然后强制关机即可**)。![init_linux](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/init_linux.jpg)
+安装脚本会自动升级系统到最新版；系统安装配置GCC，PYTHON，JAVA，GO，GIT，SSHD等软件；配置网络；关闭图形界面；还会给ubuntu系统开启root账号并设置密码。**注意：因为网络原因，在安装GO和GIT时可能会因为网络问题而失败，此时只需要多试几次即可**。安装完毕重启系统后即可用字符界面登录(**注意：hyper-v环境下ubuntu20.04系统在重启时可能会停顿在hyper-v界面，此时只需要等待一端时间，然后按组合键Ctrl+Alt+F1就可以进入登录界面**)。![init_linux](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/init_linux.jpg)
 
 ## 安装vscode
 从( https://code.visualstudio.com )中下载最新的vscode进行安装，安装完毕后，打开vscode，在**Extensions**(扩展插件市场)中检索并安装Remote-SSH插件(Microsoft)。接着进入windows 10当前用户主目录下的.ssh目录，以管理员权限运行**initssh.bat**，输入前面安装的虚拟机的IP地址(192.168.137.00/24网段)、root账号、root密码后会初始化虚拟机的ssh免密连接，以后vscode就可以打开**Remote Explorer**->**Configure**->**用户主目录\\.ssh\\config**，编辑连接信息，然后右键点击**虚拟机图标**，选择**Connect to Host in Current Windows**或**Connect to Host in New Windows**即可免密连接操作虚拟机了。其中**IdentityFile**为前面的initssh.bat脚本生成的ssh连接私钥，连接上去后就可以在vscode的TERMINAL中执行各种shell命令。**注意：有些情况下，会因为IP复用的情况连接不上虚拟机，此时只需要删除用户主目录\\.ssh\\hosts文件即可**。
