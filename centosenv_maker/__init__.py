@@ -311,6 +311,18 @@ def installDPDK():
     szErr = installOrUpdateRpm("numactl-devel", "x86_64", "")
     if 0 < len(szErr):
         return szErr
+    #安装pcre
+    szErr = installOrUpdateRpm("pcre-devel", "x86_64", "")
+    if 0 < len(szErr):
+        return szErr
+    #安装openssl
+    szErr = installOrUpdateRpm("openssl-devel", "x86_64", "")
+    if 0 < len(szErr):
+        return szErr
+    #安装zlib
+    szErr = installOrUpdateRpm("zlib-devel", "x86_64", "")
+    if 0 < len(szErr):
+        return szErr
     #安装ninja
     if 0 != os.system("pip3 install ninja"):
         return "Install ninja failed"

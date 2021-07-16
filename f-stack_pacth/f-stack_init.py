@@ -65,14 +65,6 @@ def getOSName():
         return "ubuntu"
     return ""
 
-
-#功能：安装必须的软件包；参数：无；返回：错误码
-def install_dep():
-    os_name = getOSName()
-    if "centos" == os_name:
-        os.system("yum -y install pcre-devel")
-        os.system("yum -y install openssl-devel")
-
 #功能：加载巨页；参数：无；返回：错误码
 def using_hugepage():
     #设置巨页
@@ -355,12 +347,6 @@ if __name__ == "__main__":
     if False == os.path.exists("/usr/local/dpdk"):
         print("please install DPDK")
         exit(-1)
-    #安装缺失的软件包
-    szErr = install_dep()
-    if "" != szErr:
-        print(szErr)
-    else:
-        print("install sucess!")
     szErr = using_hugepage()
     if "" != szErr:
         print(szErr)
