@@ -126,7 +126,7 @@ hyper-v可以在管理界面设置开机自启动；virtualbox需要修改**vsco
 
         python3 osenv_maker.py config_DPDK install/uninstall
 
-其中的install为安装DPDK环境到/usr/local/dpdk中去，uninstall为卸载/usr/local/dpdk目录。默认会配置256个2M大小的巨页；驱动放置在/usr/local/dpdk/kernel下。
+其中的install为安装DPDK环境到/usr/local/dpdk中去，uninstall为卸载/usr/local/dpdk目录。默认会配置256个2M大小的巨页；驱动放置在/usr/local/dpdk/kernel下。同时还会附加安装hyperscan。
 
 # 新建工程
 目前可以通过vscode_project_maker创建c、c++、python、java、golang开发工程。可以在vscode_project_maker目录下运行如下命令创建：
