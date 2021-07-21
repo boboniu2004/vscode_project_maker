@@ -276,8 +276,8 @@ def buildDPDK():
 def buildHYPERSCAN():
     #安装hyperscan
     if False == os.path.exists("./hyperscan-5.4.0.zip"):
-        if 0 != os.system("wget https://github.com/intel/hyperscan/archive/refs/tags/v5.4.0.zip "\
-            "-O ./hyperscan-5.4.0.zip"):
+        if 0 != os.system("wget https://github.com/intel/hyperscan/archive/refs/tags/v"\
+            "5.4.0.zip -O ./hyperscan-5.4.0.zip"):
             os.system("rm -f ./hyperscan-5.4.0.zip")
             return "Failed to download hyperscan"
     if False == os.path.exists("/usr/local/hyperscan"):
