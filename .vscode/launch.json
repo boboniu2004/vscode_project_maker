@@ -8,9 +8,10 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/f-stack_pacth/f-stack_init.py",
+            "program": "${workspaceFolder}/osenv_maker.py",
             "args": [
-                "~/c_workspace",
+                "config_HYPERSCAN",
+                "install"
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"

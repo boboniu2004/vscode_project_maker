@@ -139,7 +139,8 @@ def load_driver(dirver_name, card_lst):
 def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
     if False == os.path.exists(vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
         if 0 != os.system("wget https://github.com/F-Stack/f-stack/archive/refs/tags/"
-        "v"+fstack_ver+".zip -O "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
+            "v"+fstack_ver+".zip -O "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
+            os.system("rm -f "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
             return "Failed to download f-stack-"+fstack_ver
     if False == os.path.exists(fstack_path+"/f-stack-"+fstack_ver):
         #解压缩
@@ -330,7 +331,7 @@ def export_path(fstack_ver, fstack_path):
     if "" != sz_err:
         return sz_err
     return ""
-    
+
 
 #函数功能：主函数
 #函数参数：可执行文件全路径，启动时加入的参数
@@ -347,6 +348,14 @@ if __name__ == "__main__":
     if False == os.path.exists("/usr/local/dpdk"):
         print("please install DPDK")
         exit(-1)
+    #安装hyperscan
+    szErr = install_hyperscan("5.4.0", "/usr/local/hyperscan", 
+        os.environ["HOME"]+"/vscode_project_maker")
+    if "" != szErr:
+        print(szErr)
+    else:
+        print("install hyperscan sucess!")
+    exit(0)
     szErr = using_hugepage()
     if "" != szErr:
         print(szErr)

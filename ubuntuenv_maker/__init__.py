@@ -314,6 +314,26 @@ def installDPDK():
     #安装 DPDK
     return maker_public.buildDPDK()
 
+#installHYPERSCAN配置hyperscan；参数：无；返回：错误描述
+def installHYPERSCAN():
+    #安装cmake
+    if 0 != os.system("apt-get -y install cmake"):
+        return "Install cmake failed"
+    #安装ragel
+    if 0 != os.system("apt-get -y install ragel"):
+        return "Install ragel failed"
+    #安装Pcap
+    if 0 != os.system("apt-get -y install libpcap-dev"):
+        return "Install pcap failed"
+    #安装python
+    if 0 != os.system("apt-get -y install python-is-python3"):
+        return "Install python-is-python3 failed"
+    #安装boost
+    if 0 != os.system("apt-get -y install libboost-dev"):
+        return "Install libboost-dev failed"
+    #安装 HYPERSCAN
+    return maker_public.buildHYPERSCAN()
+
 #InitEnv 初始化环境；参数：无；返回：错误描述
 def InitEnv():
     #释放apt资源
@@ -394,5 +414,18 @@ def ConfigDPDK(szOperation):
     else:
         if 0 != os.system("rm -rf /usr/local/dpdk"):
             return "remove /usr/local/dpdk failed"
+    #
+    return ""
+
+
+#ConfigHYPERSCAN 配置DPDK；参数：无；返回：错误描述
+def ConfigHYPERSCAN(szOperation):
+    if "install" == szOperation:
+        szErr = installHYPERSCAN()
+        if 0 < len(szErr):
+            return("Config HYPERSCAN failed:%s" %(szErr))
+    else:
+        if 0 != os.system("rm -rf /usr/local/hyperscan"):
+            return "remove /usr/local/hyperscan failed"
     #
     return ""

@@ -4,6 +4,7 @@
 
 import os
 import re
+import multiprocessing
 
 
 #函数功能：读取一个文本文件
@@ -268,4 +269,36 @@ def buildDPDK():
         if 0 != os.system("git clone https://gitlab.com/driverctl/driverctl.git "\
             "/usr/local/dpdk/sbin/driverctl"):
             return "download driverctl failed"
+    return ""
+
+
+    #功能：安装hyperscan；参数：无；返回：错误码
+def buildHYPERSCAN():
+    #安装hyperscan
+    if False == os.path.exists("./hyperscan-5.4.0.zip"):
+        if 0 != os.system("wget https://github.com/intel/hyperscan/archive/refs/tags/v5.4.0.zip "\
+            "-O ./hyperscan-5.4.0.zip"):
+            os.system("rm -f ./hyperscan-5.4.0.zip")
+            return "Failed to download hyperscan"
+    if False == os.path.exists("/usr/local/hyperscan"):
+        #解压缩
+        os.system("unzip -d /tmp/ ./hyperscan-5.4.0.zip")
+        try:
+            os.system("rm -Rf /tmp/hyperscan-5.4.0/build")
+            os.makedirs("/tmp/hyperscan-5.4.0/build")
+        except:
+            os.system("rm -Rf /tmp/hyperscan-5.4.0")
+            return "Make /tmp/hyperscan-5.4.0/build failed"
+        if 0 != os.system("cd /tmp/hyperscan-5.4.0/build && "\
+            "cmake -DCMAKE_BUILD_TYPE=release "\
+            "-DCMAKE_INSTALL_PREFIX=/usr/local/hyperscan ../"):
+            os.system("rm -Rf /tmp/hyperscan-5.4.0")
+            return "Failed to config hyperscan"
+        if 0 != os.system("cd /tmp/hyperscan-5.4.0/build && make -j"+\
+            str(multiprocessing.cpu_count())+" && make install"):
+            os.system("rm -Rf /tmp/hyperscan-5.4.0")
+            os.system("rm -Rf /usr/local/hyperscan")
+            return "Failed to make hyperscan"
+        os.system("rm -Rf /tmp/hyperscan-5.4.0")
+
     return ""
