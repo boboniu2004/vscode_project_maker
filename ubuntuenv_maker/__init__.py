@@ -325,9 +325,6 @@ def installHYPERSCAN():
     #安装Pcap
     if 0 != os.system("apt-get -y install libpcap-dev"):
         return "Install pcap failed"
-    #安装python
-    if 0 != os.system("apt-get -y install python-is-python3"):
-        return "Install python-is-python3 failed"
     #安装boost
     if 0 != os.system("apt-get -y install libboost-dev"):
         return "Install libboost-dev failed"
