@@ -411,21 +411,11 @@ def ConfigDPDK(szOperation):
         szErr = installDPDK()
         if 0 < len(szErr):
             return("Config DPDK failed:%s" %(szErr))
-    else:
-        if 0 != os.system("rm -rf /usr/local/dpdk"):
-            return "remove /usr/local/dpdk failed"
-    #
-    return ""
-
-
-#ConfigHYPERSCAN 配置DPDK；参数：无；返回：错误描述
-def ConfigHYPERSCAN(szOperation):
-    if "install" == szOperation:
         szErr = installHYPERSCAN()
         if 0 < len(szErr):
             return("Config HYPERSCAN failed:%s" %(szErr))
     else:
-        if 0 != os.system("rm -rf /usr/local/hyperscan"):
-            return "remove /usr/local/hyperscan failed"
+        os.system("rm -rf /usr/local/dpdk")
+        os.system("rm -rf /usr/local/hyperscan")
     #
     return ""

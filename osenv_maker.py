@@ -38,19 +38,9 @@ if __name__ == "__main__":
                 szErr = ubuntuenv_maker.ConfigDPDK(sys.argv[2])
             else:
                 szErr = "Invaild OS"
-    elif 2<len(sys.argv) and "config_HYPERSCAN"==sys.argv[1]:
-        if "" == maker_public.execCmdAndGetOutput("lscpu | grep -E \"sse|avx|neon\""):
-            szErr = "Invaild SIMD"
-        else:
-            if "centos" == szOSName:
-                szErr = centosenv_maker.ConfigHYPERSCAN(sys.argv[2])
-            elif "ubuntu" == szOSName:
-                szErr = ubuntuenv_maker.ConfigHYPERSCAN(sys.argv[2])
-            else:
-                szErr = "Invaild OS"
     elif 1!=len(sys.argv):
         szErr = "vs_progject_maker: null|config_IP [xx.xx.xx.xx]|"\
-            "config_DPDK [install/uninstall]|config_HYPERSCAN [install/uninstall]"
+            "config_DPDK [install/uninstall]"
     else:
         if "centos" == szOSName:
             szErr = centosenv_maker.InitEnv()
@@ -64,8 +54,6 @@ if __name__ == "__main__":
         print("Config IP finish")
     elif 2<len(sys.argv) and "config_DPDK"==sys.argv[1]:
         print("Config DPDK finish")
-    elif 2<len(sys.argv) and "config_HYPERSCAN"==sys.argv[1]:
-        print("Config HYPERSCAN finish")
     elif re.search("^2\\..*", sys.version):
         raw_input("make development environment of %s finish, please any key to reboot..." %(szOSName))
         os.system("reboot")
