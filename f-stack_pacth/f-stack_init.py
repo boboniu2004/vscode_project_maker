@@ -348,14 +348,6 @@ if __name__ == "__main__":
     if False == os.path.exists("/usr/local/dpdk"):
         print("please install DPDK")
         exit(-1)
-    #安装hyperscan
-    szErr = install_hyperscan("5.4.0", "/usr/local/hyperscan", 
-        os.environ["HOME"]+"/vscode_project_maker")
-    if "" != szErr:
-        print(szErr)
-    else:
-        print("install hyperscan sucess!")
-    exit(0)
     szErr = using_hugepage()
     if "" != szErr:
         print(szErr)
