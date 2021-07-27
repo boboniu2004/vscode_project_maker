@@ -207,47 +207,21 @@ def buildDPDK():
     if False == os.path.exists("/usr/local/dpdk"):
         #解压缩
         os.system("unzip -d /tmp/ ./f-stack-1.21.zip")
-        #修改DPDK的dpdk-setup.sh
-        dpdk_setup,sz_err = readTxtFile(
-                "/tmp/f-stack-1.21/dpdk/usertools/dpdk-setup.sh")
-        if "" != sz_err:
-            os.system("rm -Rf /tmp/f-stack-1.21")
-            return "config DPDK failed"
-        dpdk_setup = re.sub("\n\tread[ \\t]+our_entry\n\t", 
-            "\n\t#read our_entry\n\tour_entry=41\n\t", dpdk_setup)
-        dpdk_setup = re.sub("\n\t\techo[ \\t]+-n[ \\t]+\"Press[ \\t]+enter[ \\t]+"
-            "to[ \\t]+continue[ \\t]+...\";[ \\t]+read\n\t", 
-            "\n\t\tquit\n\t", dpdk_setup)
-        sz_err = writeTxtFile("/tmp/f-stack-1.21/dpdk/usertools/dpdk-setup.sh", 
-            dpdk_setup)
-        if "" != sz_err:
-            os.system("rm -Rf /tmp/f-stack-1.21")
-            return "config DPDK failed"
         #编译安装DPDK
         pwd_dir = os.getcwd()
-        try:
-            os.chdir("/tmp/f-stack-1.21/dpdk/usertools")
-            if 0 != os.system("./dpdk-setup.sh"):
-                os.chdir(pwd_dir)
-                os.system("rm -Rf /tmp/f-stack-1.21")
-                return "config DPDK failed"
-            os.chdir("/tmp/f-stack-1.21/dpdk/x86_64-native-linuxapp-gcc")
-            if 0 != os.system("make install prefix=/usr/local/dpdk"):
-                os.chdir(pwd_dir)
-                os.system("rm -Rf /tmp/f-stack-1.21")
-                return "config DPDK failed"
-            if 0 != os.system("cp -r ./kmod /usr/local/dpdk/"):
-                os.chdir(pwd_dir)
-                os.system("rm -Rf /tmp/f-stack-1.21")
-                return "config DPDK failed"
-            #移动头文件
-            if True == os.path.isdir("/usr/local/dpdk/include/dpdk"):
-                os.system("rm -Rf /usr/local/dpdk/include-dpdk")
-                os.rename("/usr/local/dpdk/include/dpdk", "/usr/local/dpdk/include-dpdk")
-                os.system("rm -Rf /usr/local/dpdk/include")
-                os.rename("/usr/local/dpdk/include-dpdk", "/usr/local/dpdk/include")
-        finally:
+        os.chdir("/tmp/f-stack-1.21/dpdk")
+        #配置
+        if 0 != os.system("make defconfig"):
             os.chdir(pwd_dir)
+            os.system("rm -Rf /tmp/f-stack-1.21")
+            return "config DPDK failed"
+        #编译安装
+        if 0 != os.system("make -j"+str(multiprocessing.cpu_count())+
+            "&& make install prefix=/usr/local/dpdk"):
+            os.chdir(pwd_dir)
+            os.system("rm -Rf /tmp/f-stack-1.21")
+            return "config DPDK failed"
+        os.chdir(pwd_dir)
         os.system("rm -Rf /tmp/f-stack-1.21")
     #设置巨页
     node_info = execCmdAndGetOutput("ls /sys/devices/system/node/"

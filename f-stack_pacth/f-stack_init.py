@@ -361,7 +361,7 @@ if __name__ == "__main__":
     if False == os.path.exists("/usr/local/dpdk/sbin/driverctl"):
         szErr = load_driver("igb_uio", [["enp0s9","0000:00:09.0"]])
     else:
-        szErr = load_driver("igb_uio", [["eth2"]])
+        szErr = load_driver("igb_uio", [["eth2"],["eth3"]])
     if "" != szErr:
         print(szErr)
     else:
