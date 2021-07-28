@@ -35,7 +35,8 @@ def addGitignore(szProjPath):
 if __name__ == "__main__":
     #检测参数
     if 4 != len(sys.argv):
-        print("vs_progject_maker: Language(c/c++/golang/python/java) Output(app/static/shared) Workspace")
+        print("vs_progject_maker: Language[c|c++|golang|python|java] "\
+            "Output[app|static|shared|app-dpdk|static-dpdk|shared-dpdk] Workspace")
         exit(-1)
     #提取开发语言，工程类型，建立工程路径
     szLangType = str(sys.argv[1]).lower()
@@ -77,4 +78,4 @@ if __name__ == "__main__":
         print("vs_progject_maker: %s" %(szErrRet))
         exit(-1)    
     #打印生成成功信息
-    print("Create %s/%s workespace(%s) sucess\n" %(szLangType, szAppType, szProjPath))
+    print("Create %s_%s_workespace(%s) sucess\n" %(szLangType, szAppType, szProjPath))

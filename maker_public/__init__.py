@@ -383,7 +383,11 @@ def buildHYPERSCAN():
             os.system("rm -Rf /usr/local/hyperscan")
             return "Failed to make hyperscan"
         os.system("rm -Rf /tmp/hyperscan-5.4.0")
-
+    #安装pc文件
+    os.system("mkdir -p /usr/local/share/pkgconfig")
+    if 0 != os.system("cp -rf /usr/local/hyperscan/lib/pkgconfig/* "\
+        "/usr/local/share/pkgconfig/"):
+        return "copy pkgconfig failed"
     return ""
 
 
@@ -393,6 +397,7 @@ def uninstallDPDK():
     os.system("rm -rf /usr/local/dpdk-meson")
     os.system("rm -rf /usr/local/share/pkgconfig/libdpdk*")
     os.system("rm -rf /usr/local/hyperscan")
+    os.system("rm -rf /usr/local/share/pkgconfig/libhs*")
     #如果pkgconfig，则删除
     try:
         dir_lst = os.listdir("/usr/local/share/pkgconfig")

@@ -8,84 +8,139 @@ import re
 import maker_public
 
 
-#makeMakefile 制作c语言的makefile文件；参数：工程类型，工程路径，编译器，源文件后缀，语言标准；返回：错误描述
+#makeMakefile 制作c语言的makefile文件；参数：工程类型，工程路径，编译器，源文件后缀，语言标准；
+# 返回：错误描述
 def makeMakefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
     #检测
-    if "app"!=szAppType and "shared"!=szAppType and "static"!=szAppType:
+    if "app"!=szAppType and "shared"!=szAppType and "static"!=szAppType and \
+        "app-dpdk"!=szAppType and "shared-dpdk"!=szAppType and "static-dpdk"!=szAppType:
         return ("Invalid output(%s)" %(szAppType))
     #读取基础的makefile文件
-    szMakeCont,szErr = maker_public.readTxtFile( os.path.dirname(os.path.realpath(sys.argv[0]))+"/cxx_maker/makefile.conf" )
+    szMakeCont,szErr = maker_public.readTxtFile( 
+        os.path.dirname(os.path.realpath(sys.argv[0]))+"/cxx_maker/makefile.conf" )
     if 0 < len(szErr):
         return szErr
     #替换编译器
-    szMakeCont = re.sub("\\n[ \\t]*CXX[ \\t]*:=.*", ("\nCXX := %s" %(szComplier)), szMakeCont)
+    szMakeCont = re.sub("\\n[ \\t]*CXX[ \\t]*:=.*", 
+        ("\nCXX := %s" %(szComplier)), szMakeCont)
     #替换后缀
-    szMakeCont = re.sub("\\n[ \\t]*SUFFIX[ \\t]*:=.*", ("\nSUFFIX := %s" %(szSuffix)), szMakeCont)
+    szMakeCont = re.sub("\\n[ \\t]*SUFFIX[ \\t]*:=.*", 
+        ("\nSUFFIX := %s" %(szSuffix)), szMakeCont)
     #替换编译选项
-    if "app"==szAppType:
+    if -1!=str(szAppType).find("app"):
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS[ \\t]*:=.*", \
             ("\nCXXFLAGS := -std=%s -Wall -m64 -O2 -fmessage-length=0" %(szStd)), szMakeCont)
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS_DBG[ \\t]*:=.*", \
-            ("\nCXXFLAGS_DBG := -std=%s -Wall -m64 -O0 -g3 -fmessage-length=0" %(szStd)), szMakeCont)
-    elif "shared"==szAppType:
+            ("\nCXXFLAGS_DBG := -std=%s -Wall -m64 -O0 -g3 -fmessage-length=0" 
+            %(szStd)), szMakeCont)
+    elif -1!=str(szAppType).find("shared"):
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS[ \\t]*:=.*", \
-            ("\nCXXFLAGS := -std=%s -Wall -m64 -O2 -fPIC -fmessage-length=0 -fvisibility=hidden" %(szStd)), szMakeCont)
+            ("\nCXXFLAGS := -std=%s -Wall -m64 -O2 -fPIC -fmessage-length=0 "\
+            "-fvisibility=hidden" %(szStd)), szMakeCont)
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS_DBG[ \\t]*:=.*", \
-            ("\nCXXFLAGS_DBG := -std=%s -Wall -m64 -O0 -g3 -fPIC -fmessage-length=0 -fvisibility=hidden" %(szStd)), szMakeCont)
+            ("\nCXXFLAGS_DBG := -std=%s -Wall -m64 -O0 -g3 -fPIC "\
+            "-fmessage-length=0 -fvisibility=hidden" %(szStd)), szMakeCont)
     else:
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS[ \\t]*:=.*", \
-            ("\nCXXFLAGS := -std=%s -Wall -m64 -O2 -fPIC -fmessage-length=0" %(szStd)), szMakeCont)
+            ("\nCXXFLAGS := -std=%s -Wall -m64 -O2 -fPIC -fmessage-length=0" 
+            %(szStd)), szMakeCont)
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS_DBG[ \\t]*:=.*", \
-            ("\nCXXFLAGS_DBG := -std=%s -Wall -m64 -O0 -g3 -fPIC -fmessage-length=0" %(szStd)), szMakeCont)
+            ("\nCXXFLAGS_DBG := -std=%s -Wall -m64 -O0 -g3 -fPIC -fmessage-length=0" 
+            %(szStd)), szMakeCont)
+    if -1!=str(szAppType).find("-dpdk"):
+        rep_str = "$(shell $(PKGCONF) --cflags libdpdk)"
+        #if "test_libhs\n"==maker_public.execCmdAndGetOutput(
+        #    "pkg-config --exists libhs && echo test_libhs"):
+        #    rep_str += " $(shell $(PKGCONF) --cflags libhs)"
+        szMakeCont = "ifeq ($(shell pkg-config --exists libdpdk && echo 0),)\n"+\
+            "$(error \"Please define RTE_SDK environment variable\")\nendif\n\n"+\
+            szMakeCont
+        szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS[ \\t]*:=[ \\t]*", \
+            "\nCXXFLAGS := "+rep_str+" ", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS_DBG[ \\t]*:=[ \\t]*", \
+            ("\nCXXFLAGS_DBG := "+rep_str+" "), szMakeCont)
     #替换链接器
-    if "app"==szAppType or "shared"==szAppType:
-        szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := "+szComplier, szMakeCont)
-        szMakeCont = re.sub("\\n[ \\t]*LDOUTFLG[ \\t]*:=.*", "\nLDOUTFLG := -o", szMakeCont)
+    if -1!=str(szAppType).find("app") or -1!=str(szAppType).find("shared"):
+        szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := "+szComplier, 
+            szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDOUTFLG[ \\t]*:=.*", 
+            "\nLDOUTFLG := -o", szMakeCont)
     else:
         szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := ar", szMakeCont)
-        szMakeCont = re.sub("\\n[ \\t]*LDOUTFLG[ \\t]*:=.*", "\nLDOUTFLG := ", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDOUTFLG[ \\t]*:=.*", 
+            "\nLDOUTFLG := ", szMakeCont)
     #替换链接选项
-    if "app" == szAppType:
-        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS[ \\t]*:=.*", "\nLDFLAGS := -Wl,-rpath,./", szMakeCont)
-        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS_DBG[ \\t]*:=.*", "\nLDFLAGS_DBG := -Wl,-rpath,./", szMakeCont)
-    elif "shared" == szAppType:
-        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS[ \\t]*:=.*", "\nLDFLAGS := -Wl,-rpath,./ -shared", szMakeCont)
-        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS_DBG[ \\t]*:=.*", "\nLDFLAGS_DBG := -Wl,-rpath,./ -shared", szMakeCont)
+    if -1!=str(szAppType).find("app"):
+        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS[ \\t]*:=.*", 
+            "\nLDFLAGS := -Wl,-rpath,./", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS_DBG[ \\t]*:=.*", 
+            "\nLDFLAGS_DBG := -Wl,-rpath,./", szMakeCont)
+    elif -1!=str(szAppType).find("shared"):
+        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS[ \\t]*:=.*", 
+            "\nLDFLAGS := -Wl,-rpath,./ -shared", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS_DBG[ \\t]*:=.*", 
+            "\nLDFLAGS_DBG := -Wl,-rpath,./ -shared", szMakeCont)
     else:
-        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS[ \\t]*:=.*", "\nLDFLAGS := -crv", szMakeCont)
-        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS_DBG[ \\t]*:=.*", "\nLDFLAGS_DBG := -crv", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS[ \\t]*:=.*", 
+            "\nLDFLAGS := -crv", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS_DBG[ \\t]*:=.*", 
+            "\nLDFLAGS_DBG := -crv", szMakeCont)
+    if "app-dpdk"==szAppType or "shared-dpdk"==szAppType:
+        rep_str = "$(shell $(PKGCONF) --static --libs libdpdk)"
+        #if "test_libhs\n"==maker_public.execCmdAndGetOutput(
+        #    "pkg-config --exists libhs && echo test_libhs"):
+        #    rep_str += " $(shell $(PKGCONF) --static --libs libhs)"
+        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS[ \\t]*:=[ \\t]*", 
+            "\nLDFLAGS := "+rep_str+" ", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS_DBG[ \\t]*:=[ \\t]*", 
+            "\nLDFLAGS_DBG := "+rep_str+" ", szMakeCont)
     #替换最终目标
     szTarget = os.path.basename(szProjPath)
-    if "app" == szAppType:
-        szMakeCont = re.sub("\\n[ \\t]*TARGET[ \\t]*:=.*", ("\nTARGET := $(BIN_DIR)/%s" %(szTarget)), szMakeCont)
-        szMakeCont = re.sub("\\n[ \\t]*TARGET_DBG[ \\t]*:=.*", ("\nTARGET_DBG := $(BIN_DIR_DBG)/%s" %(szTarget)), szMakeCont)
-    elif "shared" == szAppType:
-        szMakeCont = re.sub("\\n[ \\t]*TARGET[ \\t]*:=.*", ("\nTARGET := $(BIN_DIR)/lib%s.so" %(szTarget)), szMakeCont)
-        szMakeCont = re.sub("\\n[ \\t]*TARGET_DBG[ \\t]*:=.*", ("\nTARGET_DBG := $(BIN_DIR_DBG)/lib%s.so" %(szTarget)), szMakeCont)
+    if -1!=str(szAppType).find("app"):
+        szMakeCont = re.sub("\\n[ \\t]*TARGET[ \\t]*:=.*", 
+            ("\nTARGET := $(BIN_DIR)/%s" %(szTarget)), szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*TARGET_DBG[ \\t]*:=.*", 
+            ("\nTARGET_DBG := $(BIN_DIR_DBG)/%s" %(szTarget)), szMakeCont)
+    elif -1!=str(szAppType).find("shared"):
+        szMakeCont = re.sub("\\n[ \\t]*TARGET[ \\t]*:=.*", 
+            ("\nTARGET := $(BIN_DIR)/lib%s.so" %(szTarget)), szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*TARGET_DBG[ \\t]*:=.*", 
+            ("\nTARGET_DBG := $(BIN_DIR_DBG)/lib%s.so" %(szTarget)), szMakeCont)
     else:
-        szMakeCont = re.sub("\\n[ \\t]*TARGET[ \\t]*:=.*", ("\nTARGET := $(BIN_DIR)/lib%s.a" %(szTarget)), szMakeCont)
-        szMakeCont = re.sub("\\n[ \\t]*TARGET_DBG[ \\t]*:=.*", ("\nTARGET_DBG := $(BIN_DIR_DBG)/lib%s.a" %(szTarget)), szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*TARGET[ \\t]*:=.*", 
+            ("\nTARGET := $(BIN_DIR)/lib%s.a" %(szTarget)), szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*TARGET_DBG[ \\t]*:=.*", 
+            ("\nTARGET_DBG := $(BIN_DIR_DBG)/lib%s.a" %(szTarget)), szMakeCont)
     #写入makefile文件
     szErr = maker_public.writeTxtFile(szProjPath+"/makefile", szMakeCont)
     return szErr
 
 
-#makePropertiesfile 制作索引文件；参数：工程路径和开发语言；返回：错误描述
-def makePropertiesfile(szProjPath, szLangType):
+#makePropertiesfile 制作索引文件；参数：项目类型、工程路径和开发语言；返回：错误描述
+def makePropertiesfile(szAppType, szProjPath, szLangType):
     #获取GCC
     GccVersion = maker_public.execCmdAndGetOutput("gcc -dumpversion").replace('\n', '')
     CppVersion = maker_public.execCmdAndGetOutput("g++ -dumpversion").replace('\n', '')
     #获取GCC的include路径
     GccIncPath = ""
-    CppIncPath = "\n"
+    other_inc_path = "\n"
     if "centos" == maker_public.getOSName():
         GccIncPath = "x86_64-redhat-linux/"+GccVersion+"/include"
         if "c++" == szLangType:
-            CppIncPath = ",\n                \"/usr/include/c++/"+CppVersion+"/x86_64-redhat-linux\"\n"
+            other_inc_path = ",\n                \"/usr/include/c++/"+\
+                CppVersion+"/x86_64-redhat-linux\"\n"
     else:
         GccIncPath = "x86_64-linux-gnu/"+GccVersion+"/include"
         if "c++" == szLangType:
-            CppIncPath = ",\n                \"/usr/include/c++/"+CppVersion+"\"\n"
+            other_inc_path = ",\n                \"/usr/include/c++/"+CppVersion+"\"\n"
+    if -1!=str(szAppType).find("-dpdk"):
+        other_inc_path = other_inc_path[:len(other_inc_path)-1]
+        #if "test_libhs\n"!=maker_public.execCmdAndGetOutput(
+        #    "pkg-config --exists libhs && echo test_libhs"):
+        other_inc_path += ",\n                \"/usr/local/dpdk/include\"\n"
+        #else:
+        #    other_inc_path += ",\n                \"/usr/local/dpdk/include\""\
+        #       ",\n                \"/usr/local/hyperscan/include/hs\"\n"
     szConfig = \
         "{\n"\
         "    \"configurations\": [\n"\
@@ -95,7 +150,7 @@ def makePropertiesfile(szProjPath, szLangType):
         "                \"${workspaceFolder}/**\",\n"\
         "                \"/usr/include\",\n"\
         "                \"/usr/local/include\",\n"\
-        "                \"/usr/lib/gcc/"+GccIncPath+"\""+CppIncPath+\
+        "                \"/usr/lib/gcc/"+GccIncPath+"\""+other_inc_path+\
         "            ],\n"\
         "            \"defines\": [],\n"\
         "            \"compilerPath\": \"/usr/bin/gcc\",\n"\
@@ -218,13 +273,13 @@ def MakeProject(szLangType, szAppType, szProjPath):
         return szErr
     #建立makefile
     if "c" == szLangType:
-        szErr = makeMakefile(szAppType, szProjPath, szComplier, ".c", "c11")
+        szErr = makeMakefile(szAppType, szProjPath, szComplier, ".c", "gnu11")
     else: 
-        szErr = makeMakefile(szAppType, szProjPath, szComplier, ".cpp", "c++11")
+        szErr = makeMakefile(szAppType, szProjPath, szComplier, ".cpp", "gnu++11")
     if 0 < len(szErr):
         return szErr
     #建立配置索引配置目录
-    szErr = makePropertiesfile(szProjPath, szLangType)
+    szErr = makePropertiesfile(szAppType, szProjPath, szLangType)
     if 0 < len(szErr):
         return szErr
     #建立编译任务
@@ -241,17 +296,19 @@ def MakeProject(szLangType, szAppType, szProjPath):
         "//函数参数：可执行文件全路径，启动时加入的参数\n"\
         "//函数返回：执行成功返回0，否则返回负值的错误码\n"
     if "c" == szLangType:
-        szData += \
-            "int main(void){\n"\
-            "    return 0;\n"\
-            "}\n"
-        szErr = maker_public.writeTxtFile(szProjPath+"/src/main.c", szData)
+        if False==os.path.exists(szProjPath+"/src/main.c"):
+            szData += \
+                "int main(void){\n"\
+                "    return 0;\n"\
+                "}\n"
+            szErr = maker_public.writeTxtFile(szProjPath+"/src/main.c", szData)
     else:
-        szData += \
-            "int main(){\n"\
-            "    return 0;\n"\
-            "}\n"
-        szErr = maker_public.writeTxtFile(szProjPath+"/src/main.cpp", szData)
+        if False==os.path.exists(szProjPath+"/src/main.cpp"):
+            szData += \
+                "int main(){\n"\
+                "    return 0;\n"\
+                "}\n"
+            szErr = maker_public.writeTxtFile(szProjPath+"/src/main.cpp", szData)
     if 0 < len(szErr):
         return szErr
     #
