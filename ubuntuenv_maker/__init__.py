@@ -412,7 +412,6 @@ def ConfigDPDK(szOperation):
         if 0 < len(szErr):
             return("Config HYPERSCAN failed:%s" %(szErr))
     else:
-        os.system("rm -rf /usr/local/dpdk")
-        os.system("rm -rf /usr/local/hyperscan")
+        maker_public.uninstallDPDK()
     #
     return ""
