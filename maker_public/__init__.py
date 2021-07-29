@@ -408,14 +408,17 @@ def uninstallDPDK():
         execCmdAndGetOutput("pkg-config --version")):
         pkg_path_lst = execCmdAndGetOutput(
         "pkg-config --variable pc_path pkg-config").split(":")
+        meson_pkg_path = "/usr/local/dpdk-meson/lib64/pkgconfig"
+        if True == os.path.exists("/usr/local/dpdk-meson/lib"):
+            meson_pkg_path = execCmdAndGetOutput(
+                "cd /usr/local/dpdk-meson/lib/*/pkgconfig && pwd").split("\n")[0]
         for pkg_path in pkg_path_lst:
             if "\n" == pkg_path[len(pkg_path)-1:]:
                 pkg_path = pkg_path[:len(pkg_path)-1]
             if "" == pkg_path:
                 continue
             remove_s_link("/usr/local/dpdk/lib/pkgconfig", pkg_path)
-            remove_s_link(execCmdAndGetOutput(
-                "cd /usr/local/hyperscan/lib*/pkgconfig && pwd").split("\n")[0], pkg_path)
+            remove_s_link(meson_pkg_path, pkg_path)
     #删除其他文件
     os.system("rm -rf /usr/local/dpdk")
     os.system("rm -rf /usr/local/dpdk-meson")
