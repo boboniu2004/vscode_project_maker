@@ -218,7 +218,7 @@ def build_s_link(src_dir, dst_dir):
     for cur_dir in src_dir_list:
         if "."==cur_dir or ".."==cur_dir:
             continue
-        if os.path.islink(dst_dir+"/"+cur_dir):
+        if True == os.path.islink(dst_dir+"/"+cur_dir):
             continue
         if 0 != os.system("ln -s "+src_dir+"/"+cur_dir+" "+dst_dir+"/"+cur_dir):
             return "ln -s "+src_dir+"/"+cur_dir+" "+dst_dir+"/"+cur_dir+" failed"
@@ -299,6 +299,7 @@ def install_pc(src_path):
     pkg_path = pkg_path_lst[0]
     if "\n" == pkg_path[len(pkg_path)-1:]:
         pkg_path = pkg_path[:len(pkg_path)-1]
+    os.system("mkdir -p "+pkg_path)
     return build_s_link(src_path, pkg_path)
 
 
@@ -418,19 +419,35 @@ def buildHYPERSCAN():
         "cd /usr/local/hyperscan/lib*/pkgconfig && pwd").split("\n")[0])
 
 
+#remove_s_link 将源目录中的全部文件对应的软链接删除；参数：源目录、目标目录；
+#返回：错误描述
+def remove_s_link(src_dir, dst_dir):
+    src_dir = os.path.realpath(src_dir)
+    dst_dir = os.path.realpath(dst_dir)
+    src_dir_list = os.listdir(src_dir)
+    for cur_dir in src_dir_list:
+        if "."==cur_dir or ".."==cur_dir:
+            continue
+        os.system("rm -rf "+dst_dir+"/"+cur_dir)
+    return ""
+
+
 #uninstallDPDK 卸载DPDK；参数：无；返回：错误码
 def uninstallDPDK():
+    #尝试删除pc文件
+    if None != re.search("^\\d+\\.\\d+\\.\\d+\\n$", 
+        execCmdAndGetOutput("pkg-config --version")):
+        pkg_path_lst = execCmdAndGetOutput(
+        "pkg-config --variable pc_path pkg-config").split(":")
+        for pkg_path in pkg_path_lst:
+            if "\n" == pkg_path[len(pkg_path)-1:]:
+                pkg_path = pkg_path[:len(pkg_path)-1]
+            if "" == pkg_path:
+                continue
+            remove_s_link("/usr/local/dpdk/lib/pkgconfig", pkg_path)
+            remove_s_link(execCmdAndGetOutput(
+                "cd /usr/local/hyperscan/lib*/pkgconfig && pwd").split("\n")[0], pkg_path)
+    #删除其他文件
     os.system("rm -rf /usr/local/dpdk")
     os.system("rm -rf /usr/local/dpdk-meson")
-    os.system("rm -rf /usr/local/share/pkgconfig/libdpdk*")
     os.system("rm -rf /usr/local/hyperscan")
-    os.system("rm -rf /usr/local/share/pkgconfig/libhs*")
-    #如果pkgconfig，则删除
-    try:
-        dir_lst = os.listdir("/usr/local/share/pkgconfig")
-    except:
-        dir_lst = None
-    for cur_dir in dir_lst:
-        if "."!=cur_dir and ".."!=cur_dir:
-            return 
-    os.system("rm -rf /usr/local/share/pkgconfig")
