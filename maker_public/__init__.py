@@ -208,6 +208,23 @@ def issame_kernel_ver(dpdk_path):
         return False
     return True
 
+
+#build_s_link 将源目录中的全部文件在目的目录中建立软链接；参数：源目录、目标目录；
+#返回：错误描述
+def build_s_link(src_dir, dst_dir):
+    src_dir = os.path.realpath(src_dir)
+    dst_dir = os.path.realpath(dst_dir)
+    src_dir_list = os.listdir(src_dir)
+    for cur_dir in src_dir_list:
+        if "."==cur_dir or ".."==cur_dir:
+            continue
+        if os.path.islink(dst_dir+"/"+cur_dir):
+            continue
+        if 0 != os.system("ln -s "+src_dir+"/"+cur_dir+" "+dst_dir+"/"+cur_dir):
+            return "ln -s "+src_dir+"/"+cur_dir+" "+dst_dir+"/"+cur_dir+" failed"
+    return ""
+
+
 #build_normal_dpdk 编译普通版本的DPDK；参数：无；返回：错误描述
 def build_normal_dpdk():
     if False==issame_kernel_ver("/usr/local/dpdk") or \
@@ -226,19 +243,10 @@ def build_normal_dpdk():
             os.system("rm -Rf /tmp/f-stack-1.21")
             return "config DPDK failed"
         #设置
-        dir_list = os.listdir("/usr/local/dpdk/include/dpdk")
-        for cur_dir in dir_list:
-            if "."==cur_dir or ".."==cur_dir:
-                continue
-            if os.path.islink("/usr/local/dpdk/include/dpdk/"+cur_dir):
-                continue
-            if "dpdk" == cur_dir:
-                os.system("rm -Rf /tmp/f-stack-1.21")
-                return "invaild path(dpdk)"
-            if 0 != os.system("ln -s /usr/local/dpdk/include/dpdk/"+cur_dir+" "\
-                "/usr/local/dpdk/include/"+cur_dir):
-                os.system("rm -Rf /tmp/f-stack-1.21")
-                return "config DPDK failed"
+        sz_err = build_s_link("/usr/local/dpdk/include/dpdk", 
+            "/usr/local/dpdk/include")
+        if "" != sz_err:
+            return sz_err
         if 0 != os.system("cp -rf /tmp/f-stack-1.21/dpdk/build/kmod /usr/local/dpdk/"):
             os.system("rm -Rf /tmp/f-stack-1.21")
             return "config DPDK failed"       
@@ -278,31 +286,53 @@ def build_meson_dpdk():
     return ""
 
 
-#install_pc_for_dpdk 为DPDK安装PC文件
+#install_pc 安装PC文件；参数：pc所在目录；返回：错误码
+def install_pc(src_path):
+    if None == re.search("^\\d+\\.\\d+\\.\\d+\\n$", 
+        execCmdAndGetOutput("pkg-config --version")):
+        print ("have no pkg-config")
+        return ""
+    pkg_path_lst = execCmdAndGetOutput(
+        "pkg-config --variable pc_path pkg-config").split(":")
+    if 0 >= len(pkg_path_lst):
+        return "have no pc_path"
+    pkg_path = pkg_path_lst[0]
+    if "\n" == pkg_path[len(pkg_path)-1:]:
+        pkg_path = pkg_path[:len(pkg_path)-1]
+    return build_s_link(src_path, pkg_path)
+
+
+#install_pc_for_dpdk 为DPDK安装PC文件；参数：无；返回：错误码
 def install_pc_for_dpdk():
-    os.system("mkdir -p /usr/local/share/pkgconfig")
-    if 0 != os.system("cp -rf /usr/local/dpdk-meson/lib/*/pkgconfig/* "\
-        "/usr/local/share/pkgconfig/"):
-        return "copy pkgconfig failed"
-    dpdk_pc,sz_err = readTxtFile("/usr/local/share/pkgconfig/libdpdk.pc")
+    os.system("mkdir -p /usr/local/dpdk/lib/pkgconfig")
+    if True == os.path.exists("/usr/local/dpdk-meson/lib"):
+        if 0 != os.system("cp -rf /usr/local/dpdk-meson/lib/*/pkgconfig/* "\
+            "/usr/local/dpdk/lib/pkgconfig/"):
+            return "copy pkgconfig failed"
+    else:
+        if 0 != os.system("cp -rf /usr/local/dpdk-meson/lib64/pkgconfig/* "\
+            "/usr/local/dpdk/lib/pkgconfig/"):
+            return "copy pkgconfig failed"
+    dpdk_pc,sz_err = readTxtFile("/usr/local/dpdk/lib/pkgconfig/libdpdk.pc")
     if ""!=sz_err:
         return sz_err
     dpdk_pc = re.sub("-l:librte_.+\\.a ", "", dpdk_pc)
     dpdk_pc = re.sub("-L\\$\\{libdir\\}", "-L${libdir} -ldpdk", dpdk_pc)
     dpdk_pc = re.sub("/usr/local/dpdk-meson", "/usr/local/dpdk", dpdk_pc)
     dpdk_pc = re.sub("\\nlibdir=.+", "\nlibdir=${prefix}/lib", dpdk_pc)
-    sz_err = writeTxtFile("/usr/local/share/pkgconfig/libdpdk.pc", dpdk_pc)
+    sz_err = writeTxtFile("/usr/local/dpdk/lib/pkgconfig/libdpdk.pc", dpdk_pc)
     if "" != sz_err:
         return sz_err
-    dpdk_pc,sz_err = readTxtFile("/usr/local/share/pkgconfig/libdpdk-libs.pc")
+    dpdk_pc,sz_err = readTxtFile("/usr/local/dpdk/lib/pkgconfig/libdpdk-libs.pc")
     if ""!=sz_err:
         return sz_err
     dpdk_pc = re.sub("/usr/local/dpdk-meson", "/usr/local/dpdk", dpdk_pc)
     dpdk_pc = re.sub("\\nlibdir=.+", "\nlibdir=${prefix}/lib", dpdk_pc)
-    sz_err = writeTxtFile("/usr/local/share/pkgconfig/libdpdk-libs.pc", dpdk_pc)
+    sz_err = writeTxtFile("/usr/local/dpdk/lib/pkgconfig/libdpdk-libs.pc", dpdk_pc)
     if "" != sz_err:
         return sz_err
-    return ""
+    #建立pc软链接
+    return install_pc("/usr/local/dpdk/lib/pkgconfig")
 
 
 #buildDPDK 编译DPDK；参数：无；返回：错误码
@@ -384,11 +414,8 @@ def buildHYPERSCAN():
             return "Failed to make hyperscan"
         os.system("rm -Rf /tmp/hyperscan-5.4.0")
     #安装pc文件
-    os.system("mkdir -p /usr/local/share/pkgconfig")
-    if 0 != os.system("cp -rf /usr/local/hyperscan/lib/pkgconfig/* "\
-        "/usr/local/share/pkgconfig/"):
-        return "copy pkgconfig failed"
-    return ""
+    return install_pc(execCmdAndGetOutput(
+        "cd /usr/local/hyperscan/lib*/pkgconfig && pwd").split("\n")[0])
 
 
 #uninstallDPDK 卸载DPDK；参数：无；返回：错误码
