@@ -402,10 +402,10 @@ def InitInternalNet():
     #
     return ""
 
-#ConfigDPDK 配置DPDK；参数：无；返回：错误描述
-def ConfigDPDK(szOperation):
+#ConfigDPDK 配置DPDK；参数：编译类型；返回：错误描述
+def ConfigDPDK(complie_type, szOperation):
     if "install" == szOperation:
-        szErr = installDPDK()
+        szErr = installDPDK(complie_type)
         if 0 < len(szErr):
             return("Config DPDK failed:%s" %(szErr))
         szErr = installHYPERSCAN()

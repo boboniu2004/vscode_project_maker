@@ -225,6 +225,23 @@ def build_s_link(src_dir, dst_dir):
     return ""
 
 
+#install_pc 安装PC文件；参数：pc所在目录；返回：错误码
+def install_pc(src_path):
+    if None == re.search("^\\d+\\.\\d+\\.\\d+\\n$", 
+        execCmdAndGetOutput("pkg-config --version")):
+        print ("have no pkg-config")
+        return ""
+    pkg_path_lst = execCmdAndGetOutput(
+        "pkg-config --variable pc_path pkg-config").split(":")
+    if 0 >= len(pkg_path_lst):
+        return "have no pc_path"
+    pkg_path = pkg_path_lst[0]
+    if "\n" == pkg_path[len(pkg_path)-1:]:
+        pkg_path = pkg_path[:len(pkg_path)-1]
+    os.system("mkdir -p "+pkg_path)
+    return build_s_link(src_path, pkg_path)
+
+
 #build_normal_dpdk 编译普通版本的DPDK；参数：无；返回：错误描述
 def build_normal_dpdk():
     if False==issame_kernel_ver("/usr/local/dpdk") or \
@@ -283,61 +300,15 @@ def build_meson_dpdk():
         os.system("mkdir -p /usr/local/dpdk-meson/sbin")
         os.system("rm -rf /usr/local/dpdk-meson/kernel_verion && "\
             "uname -r >> /usr/local/dpdk-meson/kernel_verion")
-    return ""
-
-
-#install_pc 安装PC文件；参数：pc所在目录；返回：错误码
-def install_pc(src_path):
-    if None == re.search("^\\d+\\.\\d+\\.\\d+\\n$", 
-        execCmdAndGetOutput("pkg-config --version")):
-        print ("have no pkg-config")
-        return ""
-    pkg_path_lst = execCmdAndGetOutput(
-        "pkg-config --variable pc_path pkg-config").split(":")
-    if 0 >= len(pkg_path_lst):
-        return "have no pc_path"
-    pkg_path = pkg_path_lst[0]
-    if "\n" == pkg_path[len(pkg_path)-1:]:
-        pkg_path = pkg_path[:len(pkg_path)-1]
-    os.system("mkdir -p "+pkg_path)
-    return build_s_link(src_path, pkg_path)
-
-
-#install_pc_for_dpdk 为DPDK安装PC文件；参数：无；返回：错误码
-def install_pc_for_dpdk():
-    os.system("mkdir -p /usr/local/dpdk/lib/pkgconfig")
+    pkg_path = "/usr/local/dpdk-meson/lib64/pkgconfig"
     if True == os.path.exists("/usr/local/dpdk-meson/lib"):
-        if 0 != os.system("cp -rf /usr/local/dpdk-meson/lib/*/pkgconfig/* "\
-            "/usr/local/dpdk/lib/pkgconfig/"):
-            return "copy pkgconfig failed"
-    else:
-        if 0 != os.system("cp -rf /usr/local/dpdk-meson/lib64/pkgconfig/* "\
-            "/usr/local/dpdk/lib/pkgconfig/"):
-            return "copy pkgconfig failed"
-    dpdk_pc,sz_err = readTxtFile("/usr/local/dpdk/lib/pkgconfig/libdpdk.pc")
-    if ""!=sz_err:
-        return sz_err
-    dpdk_pc = re.sub("-l:librte_.+\\.a ", "", dpdk_pc)
-    dpdk_pc = re.sub("-L\\$\\{libdir\\}", "-L${libdir} -ldpdk", dpdk_pc)
-    dpdk_pc = re.sub("/usr/local/dpdk-meson", "/usr/local/dpdk", dpdk_pc)
-    dpdk_pc = re.sub("\\nlibdir=.+", "\nlibdir=${prefix}/lib", dpdk_pc)
-    sz_err = writeTxtFile("/usr/local/dpdk/lib/pkgconfig/libdpdk.pc", dpdk_pc)
-    if "" != sz_err:
-        return sz_err
-    dpdk_pc,sz_err = readTxtFile("/usr/local/dpdk/lib/pkgconfig/libdpdk-libs.pc")
-    if ""!=sz_err:
-        return sz_err
-    dpdk_pc = re.sub("/usr/local/dpdk-meson", "/usr/local/dpdk", dpdk_pc)
-    dpdk_pc = re.sub("\\nlibdir=.+", "\nlibdir=${prefix}/lib", dpdk_pc)
-    sz_err = writeTxtFile("/usr/local/dpdk/lib/pkgconfig/libdpdk-libs.pc", dpdk_pc)
-    if "" != sz_err:
-        return sz_err
-    #建立pc软链接
-    return install_pc("/usr/local/dpdk/lib/pkgconfig")
+        pkg_path = execCmdAndGetOutput(
+        "cd /usr/local/dpdk-meson/lib/*/pkgconfig && pwd").split("\n")[0]
+    return install_pc(pkg_path)
 
 
-#buildDPDK 编译DPDK；参数：无；返回：错误码
-def buildDPDK():
+#buildDPDK 编译DPDK；参数：编译方式；返回：错误码
+def buildDPDK(complie_type):
     #安装 DPDK
     if False == os.path.exists("./f-stack-1.21.zip"):
         if 0 != os.system("wget https://github.com/F-Stack/f-stack/archive/refs/tags/v1.21.zip "+
@@ -346,16 +317,14 @@ def buildDPDK():
             return "Failed to download f-stack-1.21"
     #测试DPDK的版本是否需要更新
     #编译安装DPDK
-    sz_err = build_normal_dpdk()
-    if "" != sz_err:
-        return sz_err
-    sz_err = build_meson_dpdk()
-    if "" != sz_err:
-        return sz_err
-    #修改PC文件
-    sz_err = install_pc_for_dpdk()
-    if "" != sz_err:
-        return sz_err
+    if -1 == str(complie_type).find("-meson"):
+        sz_err = build_normal_dpdk()
+        if "" != sz_err:
+            return sz_err
+    else:
+        sz_err = build_meson_dpdk()
+        if "" != sz_err:
+            return sz_err
     os.system("rm -Rf /tmp/f-stack-1.21")
     #设置巨页
     node_info = execCmdAndGetOutput("ls /sys/devices/system/node/"
