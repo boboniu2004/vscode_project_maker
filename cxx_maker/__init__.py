@@ -8,21 +8,18 @@ import re
 import maker_public
 
 
-#makeMakefile 制作c语言的makefile文件；参数：工程类型，工程路径，编译器，源文件后缀，语言标准；
+#make_nomal_makefile 制作c语言的makefile文件；
+# 参数：工程类型，工程路径，编译器，源文件后缀，语言标准；
 # 返回：错误描述
-def makeMakefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
-    #检测
-    if "app"!=szAppType and "shared"!=szAppType and "static"!=szAppType and \
-        "app-dpdk"!=szAppType and "shared-dpdk"!=szAppType and "static-dpdk"!=szAppType:
-        return ("Invalid output(%s)" %(szAppType))
+def make_nomal_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
     #读取基础的makefile文件
     szMakeCont,szErr = maker_public.readTxtFile( 
         os.path.dirname(os.path.realpath(sys.argv[0]))+"/cxx_maker/makefile.conf" )
     if 0 < len(szErr):
         return szErr
     #替换编译器
-    szMakeCont = re.sub("\\n[ \\t]*CXX[ \\t]*:=.*", 
-        ("\nCXX := %s" %(szComplier)), szMakeCont)
+    szMakeCont = re.sub("\\n[ \\t]*CC[ \\t]*:=.*", 
+        ("\nCC := %s" %(szComplier)), szMakeCont)
     #替换后缀
     szMakeCont = re.sub("\\n[ \\t]*SUFFIX[ \\t]*:=.*", 
         ("\nSUFFIX := %s" %(szSuffix)), szMakeCont)
@@ -47,18 +44,6 @@ def makeMakefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS_DBG[ \\t]*:=.*", \
             ("\nCXXFLAGS_DBG := -std=%s -Wall -m64 -O0 -g3 -fPIC -fmessage-length=0" 
             %(szStd)), szMakeCont)
-    if -1!=str(szAppType).find("-dpdk"):
-        rep_str = "$(shell $(PKGCONF) --cflags libdpdk)"
-        #if "test_libhs\n"==maker_public.execCmdAndGetOutput(
-        #    "pkg-config --exists libhs && echo test_libhs"):
-        #    rep_str += " $(shell $(PKGCONF) --cflags libhs)"
-        szMakeCont = "ifeq ($(shell pkg-config --exists libdpdk && echo 0),)\n"+\
-            "$(error \"Please define RTE_SDK environment variable\")\nendif\n\n"+\
-            szMakeCont
-        szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS[ \\t]*:=[ \\t]*", \
-            "\nCXXFLAGS := "+rep_str+" ", szMakeCont)
-        szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS_DBG[ \\t]*:=[ \\t]*", \
-            ("\nCXXFLAGS_DBG := "+rep_str+" "), szMakeCont)
     #替换链接器
     if -1!=str(szAppType).find("app") or -1!=str(szAppType).find("shared"):
         szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := "+szComplier, 
@@ -71,29 +56,20 @@ def makeMakefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
             "\nLDOUTFLG := ", szMakeCont)
     #替换链接选项
     if -1!=str(szAppType).find("app"):
-        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS[ \\t]*:=.*", 
-            "\nLDFLAGS := -Wl,-rpath,./", szMakeCont)
-        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS_DBG[ \\t]*:=.*", 
-            "\nLDFLAGS_DBG := -Wl,-rpath,./", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDXXFLAGS[ \\t]*:=.*", 
+            "\nLDXXFLAGS := -Wl,-rpath,./", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDXXFLAGS_DBG[ \\t]*:=.*", 
+            "\nLDXXFLAGS_DBG := -Wl,-rpath,./", szMakeCont)
     elif -1!=str(szAppType).find("shared"):
-        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS[ \\t]*:=.*", 
-            "\nLDFLAGS := -Wl,-rpath,./ -shared", szMakeCont)
-        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS_DBG[ \\t]*:=.*", 
-            "\nLDFLAGS_DBG := -Wl,-rpath,./ -shared", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDXXFLAGS[ \\t]*:=.*", 
+            "\nLDXXFLAGS := -Wl,-rpath,./ -shared", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDXXFLAGS_DBG[ \\t]*:=.*", 
+            "\nLDXXFLAGS_DBG := -Wl,-rpath,./ -shared", szMakeCont)
     else:
-        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS[ \\t]*:=.*", 
-            "\nLDFLAGS := -crv", szMakeCont)
-        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS_DBG[ \\t]*:=.*", 
-            "\nLDFLAGS_DBG := -crv", szMakeCont)
-    if "app-dpdk"==szAppType or "shared-dpdk"==szAppType:
-        rep_str = "$(shell $(PKGCONF) --static --libs libdpdk)"
-        #if "test_libhs\n"==maker_public.execCmdAndGetOutput(
-        #    "pkg-config --exists libhs && echo test_libhs"):
-        #    rep_str += " $(shell $(PKGCONF) --static --libs libhs)"
-        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS[ \\t]*:=[ \\t]*", 
-            "\nLDFLAGS := "+rep_str+" ", szMakeCont)
-        szMakeCont = re.sub("\\n[ \\t]*LDFLAGS_DBG[ \\t]*:=[ \\t]*", 
-            "\nLDFLAGS_DBG := "+rep_str+" ", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDXXFLAGS[ \\t]*:=.*", 
+            "\nLDXXFLAGS := -crv", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDXXFLAGS_DBG[ \\t]*:=.*", 
+            "\nLDXXFLAGS_DBG := -crv", szMakeCont)
     #替换最终目标
     szTarget = os.path.basename(szProjPath)
     if -1!=str(szAppType).find("app"):
@@ -114,6 +90,121 @@ def makeMakefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
     #写入makefile文件
     szErr = maker_public.writeTxtFile(szProjPath+"/makefile", szMakeCont)
     return szErr
+
+
+#make_nomal_makefile 制作c语言的makefile文件；
+# 参数：工程类型，工程路径，编译器，源文件后缀，语言标准；
+# 返回：错误描述
+def make_dpdk_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
+    #读取基础的makefile文件
+    szMakeCont,szErr = maker_public.readTxtFile( 
+        os.path.dirname(os.path.realpath(sys.argv[0]))+"/cxx_maker/makefile.conf" )
+    if 0 < len(szErr):
+        return szErr
+    #替换编译器
+    szMakeCont = re.sub("\\n[ \\t]*C[ \\t]*:=.*", 
+        ("\nC := %s" %(szComplier)), szMakeCont)
+    #替换后缀
+    szMakeCont = re.sub("\\n[ \\t]*SUFFIX[ \\t]*:=.*", 
+        ("\nSUFFIX := %s" %(szSuffix)), szMakeCont)
+    #替换编译选项
+    if -1!=str(szAppType).find("app"):
+        szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS[ \\t]*:=.*", \
+            ("\nCXXFLAGS := -std=%s -O3 -fmessage-length=0 "\
+            "$(shell $(PKGCONF) --cflags libdpdk)" %(szStd)), szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS_DBG[ \\t]*:=.*", \
+            ("\nCXXFLAGS_DBG := -std=%s -O0 -g3 -fmessage-length=0 "\
+            "$(shell $(PKGCONF) --cflags libdpdk)" %(szStd)), szMakeCont)
+    elif -1!=str(szAppType).find("shared"):
+        szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS[ \\t]*:=.*", \
+            ("\nCXXFLAGS := -std=%s -O3 -fPIC -fmessage-length=0 -fvisibility=hidden "\
+            "$(shell $(PKGCONF) --cflags libdpdk)" %(szStd)), szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS_DBG[ \\t]*:=.*", \
+            ("\nCXXFLAGS_DBG := -std=%s -O0 -g3 -fPIC -fmessage-length=0 "\
+            "-fvisibility=hidden $(shell $(PKGCONF) --cflags libdpdk)" 
+            %(szStd)), szMakeCont)
+    else:
+        szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS[ \\t]*:=.*", \
+            ("\nCXXFLAGS := -std=%s -O3 -fPIC -fmessage-length=0 "\
+            "$(shell $(PKGCONF) --cflags libdpdk)" %(szStd)), szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS_DBG[ \\t]*:=.*", \
+            ("\nCXXFLAGS_DBG := -std=%s -O0 -g3 -fPIC -fmessage-length=0 "\
+            "$(shell $(PKGCONF) --cflags libdpdk)" %(szStd)), szMakeCont)
+    #替换链接器
+    if -1!=str(szAppType).find("app") or -1!=str(szAppType).find("shared"):
+        szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := "+szComplier, 
+            szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDOUTFLG[ \\t]*:=.*", 
+            "\nLDOUTFLG := -o", szMakeCont)
+    else:
+        szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := ar", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDOUTFLG[ \\t]*:=.*", 
+            "\nLDOUTFLG := ", szMakeCont)
+    #替换链接选项
+    if -1!=str(szAppType).find("app"):
+        szMakeCont = re.sub("\\n[ \\t]*LDXXFLAGS[ \\t]*:=.*", 
+            "\nLDXXFLAGS := -Wl,-rpath,./", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDXXFLAGS_DBG[ \\t]*:=.*", 
+            "\nLDXXFLAGS_DBG := -Wl,-rpath,./", szMakeCont)
+    elif -1!=str(szAppType).find("shared"):
+        szMakeCont = re.sub("\\n[ \\t]*LDXXFLAGS[ \\t]*:=.*", 
+            "\nLDXXFLAGS := -Wl,-rpath,./ -shared", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDXXFLAGS_DBG[ \\t]*:=.*", 
+            "\nLDXXFLAGS_DBG := -Wl,-rpath,./ -shared", szMakeCont)
+    else:
+        szMakeCont = re.sub("\\n[ \\t]*LDXXFLAGS[ \\t]*:=.*", 
+            "\nLDXXFLAGS := -crv", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LDXXFLAGS_DBG[ \\t]*:=.*", 
+            "\nLDXXFLAGS_DBG := -crv", szMakeCont)
+    #替换最终目标
+    szTarget = os.path.basename(szProjPath)
+    if -1!=str(szAppType).find("app"):
+        szMakeCont = re.sub("\\n[ \\t]*TARGET[ \\t]*:=.*", 
+            ("\nTARGET := $(BIN_DIR)/%s" %(szTarget)), szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*TARGET_DBG[ \\t]*:=.*", 
+            ("\nTARGET_DBG := $(BIN_DIR_DBG)/%s" %(szTarget)), szMakeCont)
+    elif -1!=str(szAppType).find("shared"):
+        szMakeCont = re.sub("\\n[ \\t]*TARGET[ \\t]*:=.*", 
+            ("\nTARGET := $(BIN_DIR)/lib%s.so" %(szTarget)), szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*TARGET_DBG[ \\t]*:=.*", 
+            ("\nTARGET_DBG := $(BIN_DIR_DBG)/lib%s.so" %(szTarget)), szMakeCont)
+    else:
+        szMakeCont = re.sub("\\n[ \\t]*TARGET[ \\t]*:=.*", 
+            ("\nTARGET := $(BIN_DIR)/lib%s.a" %(szTarget)), szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*TARGET_DBG[ \\t]*:=.*", 
+            ("\nTARGET_DBG := $(BIN_DIR_DBG)/lib%s.a" %(szTarget)), szMakeCont)
+    #替换没有pkg-config下的编译项目
+    #替换APP
+    szMakeCont = re.sub("\\n[ \\t]*APP[ \\t]*=.*", 
+        ("\nAPP = %s" %(szTarget)), szMakeCont)
+    #替换CFLAGS
+    szMakeCont = re.sub("\\n[ \\t]*CFLAGS[ \\t]*\\+=[ \\t]+-O0", 
+        ("\nCFLAGS += -std=%s -O0 -g3 -fmessage-length=0 " %(szStd)), szMakeCont)
+    szMakeCont = re.sub("\\n[ \\t]*CFLAGS[ \\t]*\\+=[ \\t]+-O3", 
+        ("\nCFLAGS += -std=%s -O3 -fmessage-length=0 " %(szStd)), szMakeCont)
+    #替换rte.extapp.mk
+    if -1 == str(szAppType).find("shared"):
+        szMakeCont = re.sub("rte\\.extapp\\.mk", "rte.extshared.mk", szMakeCont)
+    elif -1 == str(szAppType).find("shatic"):
+        szMakeCont = re.sub("rte\\.extapp\\.mk", "rte.extlib.mk", szMakeCont)
+    #写入makefile文件
+    szErr = maker_public.writeTxtFile(szProjPath+"/makefile", szMakeCont)
+    return szErr
+
+
+#makeMakefile 制作c语言的makefile文件；参数：工程类型，工程路径，编译器，源文件后缀，语言标准；
+# 返回：错误描述
+def makeMakefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
+    #检测
+    if "app"!=szAppType and "shared"!=szAppType and "static"!=szAppType and \
+        "app-dpdk"!=szAppType and "shared-dpdk"!=szAppType and "static-dpdk"!=szAppType:
+        return ("Invalid output(%s)" %(szAppType))
+    sz_err = ""
+    if -1 == str(szAppType).find("-dpdk"):
+        sz_err = make_nomal_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd)
+    else:
+        sz_err = make_dpdk_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd)
+    return sz_err
 
 
 #makePropertiesfile 制作索引文件；参数：项目类型、工程路径和开发语言；返回：错误描述
@@ -164,8 +255,13 @@ def makePropertiesfile(szAppType, szProjPath, szLangType):
     return maker_public.writeTxtFile(szProjPath+"/.vscode/c_cpp_properties.json", szConfig)
 
 
-#makeBuildfile 制作编译文件；参数：工程路径和编译器；返回：错误描述
-def makeBuildfile(szProjPath, szComplier):
+#makeBuildfile 制作编译文件；参数：应用类型、工程路径和编译器；返回：错误描述
+def makeBuildfile(szAppType, szProjPath, szComplier):
+    build_cmd = "                \"debug\"\n"
+    clean_cmd = "                \"clean\"\n"
+    if -1 != str(szAppType).find("-dpdk"):
+        build_cmd = "                \"O=debug\"\n"
+        clean_cmd = "                \"O=clean\"\n"
     szConfig = \
         "{\n"\
         "    // See https://go.microsoft.com/fwlink/?LinkId=733558\n"\
@@ -178,8 +274,8 @@ def makeBuildfile(szProjPath, szComplier):
         "            \"command\": \"/usr/bin/make\",\n"\
         "            \"args\": [\n"\
         "                \"-f\",\n"\
-        "                \"${workspaceFolder}/makefile\",\n"\
-        "                \"debug\"\n"\
+        "                \"${workspaceFolder}/makefile\",\n"+\
+        build_cmd+\
         "            ],\n"\
         "            \"options\": {\n"\
         "                \"cwd\": \"${workspaceFolder}\"\n"\
@@ -198,8 +294,8 @@ def makeBuildfile(szProjPath, szComplier):
         "            \"command\": \"/usr/bin/make\",\n"\
         "            \"args\": [\n"\
         "                \"-f\",\n"\
-        "                \"${workspaceFolder}/makefile\",\n"\
-        "                \"clean\"\n"\
+        "                \"${workspaceFolder}/makefile\",\n"+\
+        clean_cmd+\
         "            ],\n"\
         "            \"options\": {\n"\
         "                \"cwd\": \"${workspaceFolder}\"\n"\
@@ -283,7 +379,7 @@ def MakeProject(szLangType, szAppType, szProjPath):
     if 0 < len(szErr):
         return szErr
     #建立编译任务
-    szErr = makeBuildfile(szProjPath, szComplier)
+    szErr = makeBuildfile(szAppType, szProjPath, szComplier)
     if 0 < len(szErr):
         return szErr
     #建立调试任务
