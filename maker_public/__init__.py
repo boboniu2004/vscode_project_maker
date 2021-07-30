@@ -274,16 +274,16 @@ def build_normal_dpdk():
 
 #build_meson_dpdk 编译meson版本的DPDK；参数：无；返回：错误描述
 def build_meson_dpdk():
-    if False==issame_kernel_ver("/usr/local/dpdk-meson") or \
-        False==os.path.exists("/usr/local/dpdk-meson"):
-        os.system("rm -Rf /usr/local/dpdk-meson")
+    if False==issame_kernel_ver("/usr/local/dpdk") or \
+        False==os.path.exists("/usr/local/dpdk"):
+        os.system("rm -Rf /usr/local/dpdk")
         #解压缩
         if False == os.path.exists("/tmp/f-stack-1.21"):
             os.system("unzip -d /tmp/ ./f-stack-1.21.zip")
         #编译安装meson版本
         if 0 != os.system("cd /tmp/f-stack-1.21/dpdk && "\
             "meson ./dpdk_build && cd ./dpdk_build && "\
-            "meson configure -Dprefix=/usr/local/dpdk-meson "\
+            "meson configure -Dprefix=/usr/local/dpdk "\
             "-Dibverbs_link=static -Ddefault_library=static"):
             os.system("rm -Rf /tmp/f-stack-1.21")
             return "config DPDK failed"
@@ -292,18 +292,18 @@ def build_meson_dpdk():
             os.system("rm -Rf /tmp/f-stack-1.21")
             return "config DPDK failed"
         #设置
-        if 0 != os.system("mkdir -p /usr/local/dpdk-meson/kmod && "\
+        if 0 != os.system("mkdir -p /usr/local/dpdk/kmod && "\
             "cp -rf /tmp/f-stack-1.21/dpdk/dpdk_build/kernel/linux/*/*.ko "\
-            "/usr/local/dpdk-meson/kmod"):
+            "/usr/local/dpdk/kmod"):
             os.system("rm -Rf /tmp/f-stack-1.21")
             return "config DPDK failed"  
-        os.system("mkdir -p /usr/local/dpdk-meson/sbin")
-        os.system("rm -rf /usr/local/dpdk-meson/kernel_verion && "\
-            "uname -r >> /usr/local/dpdk-meson/kernel_verion")
-    pkg_path = "/usr/local/dpdk-meson/lib64/pkgconfig"
-    if True == os.path.exists("/usr/local/dpdk-meson/lib"):
+        os.system("mkdir -p /usr/local/dpdk/sbin")
+        os.system("rm -rf /usr/local/dpdk/kernel_verion && "\
+            "uname -r >> /usr/local/dpdk/kernel_verion")
+    pkg_path = "/usr/local/dpdk/lib64/pkgconfig"
+    if True == os.path.exists("/usr/local/dpdk/lib"):
         pkg_path = execCmdAndGetOutput(
-        "cd /usr/local/dpdk-meson/lib/*/pkgconfig && pwd").split("\n")[0]
+        "cd /usr/local/dpdk/lib/*/pkgconfig && pwd").split("\n")[0]
     return install_pc(pkg_path)
 
 
@@ -346,12 +346,6 @@ def buildDPDK(complie_type):
         if 0 != os.system("git clone https://gitlab.com/driverctl/driverctl.git "\
             "/usr/local/dpdk/sbin/driverctl"):
             return "download driverctl failed"
-    if ""==execCmdAndGetOutput("lspci") and \
-        True == os.path.exists("/usr/local/dpdk-meson/sbin") and \
-        False == os.path.exists("/usr/local/dpdk-meson/sbin/driverctl"):
-        if 0 != os.system("cp -rf /usr/local/dpdk/sbin/driverctl "\
-            "/usr/local/dpdk-meson/sbin/"):
-            return "copy driverctl failed"
     return ""
 
 
@@ -408,18 +402,19 @@ def uninstallDPDK():
         execCmdAndGetOutput("pkg-config --version")):
         pkg_path_lst = execCmdAndGetOutput(
         "pkg-config --variable pc_path pkg-config").split(":")
-        meson_pkg_path = "/usr/local/dpdk-meson/lib64/pkgconfig"
-        if True == os.path.exists("/usr/local/dpdk-meson/lib"):
+        meson_pkg_path = "/usr/local/dpdk/lib64/pkgconfig"
+        if True == os.path.exists("/usr/local/dpdk/lib"):
             meson_pkg_path = execCmdAndGetOutput(
-                "cd /usr/local/dpdk-meson/lib/*/pkgconfig && pwd").split("\n")[0]
+                "cd /usr/local/dpdk/lib/*/pkgconfig && pwd").split("\n")[0]
         for pkg_path in pkg_path_lst:
             if "\n" == pkg_path[len(pkg_path)-1:]:
                 pkg_path = pkg_path[:len(pkg_path)-1]
             if "" == pkg_path:
                 continue
+            if False == os.path.isdir(pkg_path):
+                continue
             remove_s_link("/usr/local/dpdk/lib/pkgconfig", pkg_path)
             remove_s_link(meson_pkg_path, pkg_path)
     #删除其他文件
     os.system("rm -rf /usr/local/dpdk")
-    os.system("rm -rf /usr/local/dpdk-meson")
     os.system("rm -rf /usr/local/hyperscan")
