@@ -98,12 +98,12 @@ def make_nomal_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
 def make_dpdk_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
     #读取基础的makefile文件
     szMakeCont,szErr = maker_public.readTxtFile( 
-        os.path.dirname(os.path.realpath(sys.argv[0]))+"/cxx_maker/makefile.conf" )
+        os.path.dirname(os.path.realpath(sys.argv[0]))+"/cxx_maker/makefile-dpdk.conf" )
     if 0 < len(szErr):
         return szErr
     #替换编译器
-    szMakeCont = re.sub("\\n[ \\t]*C[ \\t]*:=.*", 
-        ("\nC := %s" %(szComplier)), szMakeCont)
+    szMakeCont = re.sub("\\n[ \\t]*CC[ \\t]*:=.*", 
+        ("\nCC := %s" %(szComplier)), szMakeCont)
     #替换后缀
     szMakeCont = re.sub("\\n[ \\t]*SUFFIX[ \\t]*:=.*", 
         ("\nSUFFIX := %s" %(szSuffix)), szMakeCont)
@@ -156,6 +156,14 @@ def make_dpdk_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
             "\nLDXXFLAGS := -crv", szMakeCont)
         szMakeCont = re.sub("\\n[ \\t]*LDXXFLAGS_DBG[ \\t]*:=.*", 
             "\nLDXXFLAGS_DBG := -crv", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*STATIC_LIBS[ \\t]*:=.*", 
+            "\nSTATIC_LIBS := ", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*STATIC_LIBS_DBG[ \\t]*:=.*", 
+            "\nSTATIC_LIBS_DBG := ", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*SHARE_LIBS[ \\t]*:=.*", 
+            "\nSHARE_LIBS := ", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*SHARE_LIBS_DBG[ \\t]*:=.*", 
+            "\nSHARE_LIBS_DBG := ", szMakeCont)
     #替换最终目标
     szTarget = os.path.basename(szProjPath)
     if -1!=str(szAppType).find("app"):
@@ -178,14 +186,14 @@ def make_dpdk_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
     szMakeCont = re.sub("\\n[ \\t]*APP[ \\t]*=.*", 
         ("\nAPP = %s" %(szTarget)), szMakeCont)
     #替换CFLAGS
-    szMakeCont = re.sub("\\n[ \\t]*CFLAGS[ \\t]*\\+=[ \\t]+-O0", 
+    szMakeCont = re.sub("\\n[ \\t]*CFLAGS[ \\t]*\\+=[ \\t]*-O0.*", 
         ("\nCFLAGS += -std=%s -O0 -g3 -fmessage-length=0 " %(szStd)), szMakeCont)
-    szMakeCont = re.sub("\\n[ \\t]*CFLAGS[ \\t]*\\+=[ \\t]+-O3", 
+    szMakeCont = re.sub("\\n[ \\t]*CFLAGS[ \\t]*\\+=[ \\t]*-O3.*", 
         ("\nCFLAGS += -std=%s -O3 -fmessage-length=0 " %(szStd)), szMakeCont)
     #替换rte.extapp.mk
-    if -1 == str(szAppType).find("shared"):
+    if -1 != str(szAppType).find("shared"):
         szMakeCont = re.sub("rte\\.extapp\\.mk", "rte.extshared.mk", szMakeCont)
-    elif -1 == str(szAppType).find("shatic"):
+    elif -1 != str(szAppType).find("static"):
         szMakeCont = re.sub("rte\\.extapp\\.mk", "rte.extlib.mk", szMakeCont)
     #写入makefile文件
     szErr = maker_public.writeTxtFile(szProjPath+"/makefile", szMakeCont)

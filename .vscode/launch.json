@@ -11,7 +11,7 @@
             "program": "${workspaceFolder}/__init__.py",
             "args": [
                 "c",
-                "app",
+                "static-dpdk",
                 "/root/c_workspace/dpdk_hash_test"
             ],
             "cwd": "${workspaceFolder}",
