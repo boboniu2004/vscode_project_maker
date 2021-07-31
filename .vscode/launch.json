@@ -8,10 +8,11 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/osenv_maker.py",
+            "program": "${workspaceFolder}/__init__.py",
             "args": [
-                "config_DPDK",
-                "uninstall",
+                "c",
+                "app-dpdk",
+                "/root/c_workspace/dpdk_hash_test"
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"
