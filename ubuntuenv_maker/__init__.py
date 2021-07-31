@@ -288,8 +288,8 @@ def configInternalNet(szEthEnName, szIpAddr):
     #
     return ""
 
-#installDPDK配置DPDK；参数：无；返回：错误描述
-def installDPDK():
+#installDPDK配置DPDK；参数：编译参数；返回：错误描述
+def installDPDK(complie_type):
     #安装gawk
     if 0 != os.system("apt-get -y install gawk"):
         return "Install gawk failed"
@@ -312,7 +312,7 @@ def installDPDK():
     if 0 != os.system("pip3 install meson"):
         return "Install meson failed"
     #安装 DPDK
-    return maker_public.buildDPDK()
+    return maker_public.buildDPDK(complie_type)
 
 #installHYPERSCAN配置hyperscan；参数：无；返回：错误描述
 def installHYPERSCAN():

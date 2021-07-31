@@ -307,7 +307,7 @@ def configInternalNet(szEthChName, szEthEnName, szIpAddr):
 
 
 #installDPDK配置DPDK；参数：无；返回：错误描述
-def installDPDK():
+def installDPDK(complie_type):
     #安装libnuma-dev
     szErr = installOrUpdateRpm("numactl-devel", "x86_64", "")
     if 0 < len(szErr):
@@ -331,7 +331,7 @@ def installDPDK():
     if 0 != os.system("pip3 install meson"):
         return "Install meson failed"
     #安装 DPDK
-    return maker_public.buildDPDK()
+    return maker_public.buildDPDK(complie_type)
 
 
 #installHYPERSCAN配置hyperscan；参数：无；返回：错误描述

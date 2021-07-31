@@ -218,8 +218,7 @@ def build_s_link(src_dir, dst_dir):
     for cur_dir in src_dir_list:
         if "."==cur_dir or ".."==cur_dir:
             continue
-        if True == os.path.islink(dst_dir+"/"+cur_dir):
-            continue
+        os.system("rm -rf "+dst_dir+"/"+cur_dir)
         if 0 != os.system("ln -s "+src_dir+"/"+cur_dir+" "+dst_dir+"/"+cur_dir):
             return "ln -s "+src_dir+"/"+cur_dir+" "+dst_dir+"/"+cur_dir+" failed"
     return ""
@@ -317,14 +316,13 @@ def buildDPDK(complie_type):
             return "Failed to download f-stack-1.21"
     #测试DPDK的版本是否需要更新
     #编译安装DPDK
+    sz_err = ""
     if -1 == str(complie_type).find("-meson"):
         sz_err = build_normal_dpdk()
-        if "" != sz_err:
-            return sz_err
     else:
         sz_err = build_meson_dpdk()
-        if "" != sz_err:
-            return sz_err
+    if "" != sz_err:
+        return sz_err
     os.system("rm -Rf /tmp/f-stack-1.21")
     #设置巨页
     node_info = execCmdAndGetOutput("ls /sys/devices/system/node/"
@@ -411,10 +409,11 @@ def uninstallDPDK():
                 pkg_path = pkg_path[:len(pkg_path)-1]
             if "" == pkg_path:
                 continue
-            if False == os.path.isdir(pkg_path):
-                continue
-            remove_s_link("/usr/local/dpdk/lib/pkgconfig", pkg_path)
-            remove_s_link(meson_pkg_path, pkg_path)
+            if True == os.path.isdir(meson_pkg_path):
+                remove_s_link(meson_pkg_path, pkg_path)
+            remove_s_link(execCmdAndGetOutput(
+        "cd /usr/local/hyperscan/lib*/pkgconfig && pwd").split("\n")[0], pkg_path)
+            
     #删除其他文件
     os.system("rm -rf /usr/local/dpdk")
     os.system("rm -rf /usr/local/hyperscan")
