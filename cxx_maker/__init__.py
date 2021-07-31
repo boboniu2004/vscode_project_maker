@@ -183,8 +183,21 @@ def make_dpdk_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
             ("\nTARGET_DBG := $(BIN_DIR_DBG)/lib%s.a" %(szTarget)), szMakeCont)
     #替换没有pkg-config下的编译项目
     #替换APP
-    szMakeCont = re.sub("\\n[ \\t]*APP[ \\t]*=.*", 
-        ("\nAPP = %s" %(szTarget)), szMakeCont)
+    if -1!=str(szAppType).find("app"):
+        szMakeCont = re.sub("\\n[ \\t]*APP[ \\t]*=.*", 
+            ("\nAPP = %s" %(szTarget)), szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*TARGET_NAME[ \\t]*:=.*", 
+            "\nTARGET_NAME = $(APP)", szMakeCont)
+    elif -1!=str(szAppType).find("shared"):
+        szMakeCont = re.sub("\\n[ \\t]*SHARED[ \\t]*=.*", 
+            ("\nSHARED = lib%s.so" %(szTarget)), szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*TARGET_NAME[ \\t]*:=.*", 
+            "\nTARGET_NAME = $(SHARED)", szMakeCont)
+    else:
+        szMakeCont = re.sub("\\n[ \\t]*LIB[ \\t]*=.*", 
+            ("\nLIB = lib%s.a" %(szTarget)), szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*TARGET_NAME[ \\t]*:=.*", 
+            "\nTARGET_NAME = $(LIB)", szMakeCont)
     #替换CFLAGS
     szMakeCont = re.sub("\\n[ \\t]*CFLAGS[ \\t]*\\+=[ \\t]*-O0.*", 
         ("\nCFLAGS += -std=%s -O0 -g3 -fmessage-length=0 " %(szStd)), szMakeCont)
