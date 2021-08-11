@@ -137,6 +137,7 @@ def load_driver(dirver_name, card_lst):
 
 #功能：下载胚子f-stack；参数：无；返回：错误码
 def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
+    need_continue = ""
     if False == os.path.exists(vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
         if 0 != os.system("wget https://github.com/F-Stack/f-stack/archive/refs/tags/"
             "v"+fstack_ver+".zip -O "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
@@ -146,6 +147,14 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
         #解压缩
         os.system("unzip -d "+fstack_path+"/ "+vscode_project_maker+"/f-stack-"+
             fstack_ver+".zip")
+    elif re.search("^2\\..*", sys.version):
+        need_continue = \
+            raw_input("f-stack is already installed, do you want to continue[y/n]:")
+    else:
+        need_continue = \
+            input("f-stack is already installed, do you want to continue[y/n]:")
+    if "y"!=need_continue and "Y"!=need_continue:
+        return ""
     #修改lib下的makefile
     lib_make,sz_err = readTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/lib/Makefile")
     if "" != sz_err:

@@ -55,8 +55,8 @@ if __name__ == "__main__":
     elif 2<len(sys.argv) and -1!=str(sys.argv[1]).find("config_DPDK"):
         print("Config DPDK finish")
     elif re.search("^2\\..*", sys.version):
-        raw_input("make development environment of %s finish, please any key to reboot..." %(szOSName))
+        raw_input("make development environment of %s finish, press any key to reboot..." %(szOSName))
         os.system("reboot")
     else:
-        input("make development environment of %s finish, please any key to reboot..." %(szOSName))
+        input("make development environment of %s finish, press any key to reboot..." %(szOSName))
         os.system("reboot")
