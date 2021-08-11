@@ -137,24 +137,11 @@ def load_driver(dirver_name, card_lst):
 
 #功能：下载胚子f-stack；参数：无；返回：错误码
 def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
-    need_continue = ""
     if False == os.path.exists(vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
         if 0 != os.system("wget https://github.com/F-Stack/f-stack/archive/refs/tags/"
             "v"+fstack_ver+".zip -O "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
             os.system("rm -f "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
             return "Failed to download f-stack-"+fstack_ver
-    if False == os.path.exists(fstack_path+"/f-stack-"+fstack_ver):
-        #解压缩
-        os.system("unzip -d "+fstack_path+"/ "+vscode_project_maker+"/f-stack-"+
-            fstack_ver+".zip")
-    elif re.search("^2\\..*", sys.version):
-        need_continue = \
-            raw_input("f-stack is already installed, do you want to continue[y/n]:")
-    else:
-        need_continue = \
-            input("f-stack is already installed, do you want to continue[y/n]:")
-    if "y"!=need_continue and "Y"!=need_continue:
-        return ""
     #修改lib下的makefile
     lib_make,sz_err = readTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/lib/Makefile")
     if "" != sz_err:
@@ -375,25 +362,35 @@ if __name__ == "__main__":
         print(szErr)
     else:
         print("load driver sucess!")
-    szErr = config_fstack("1.21", fstack_path, 
-        os.environ["HOME"]+"/vscode_project_maker")
-    if "" != szErr:
-        print(szErr)
-    else:
-        print("config f-stack sucess!")
-    szErr = create_fstack_project("1.21", fstack_path, 
-        os.environ["HOME"]+"/vscode_project_maker")
-    if "" != szErr:
-        print(szErr)
-    else:
-        print("create f-stack project sucess!")
-    szErr = correct_fstack_code("1.21", fstack_path)
-    if "" != szErr:
-        print(szErr)
-    else:
-        print("correct fstack code sucess!")
-    szErr = export_path("1.21", fstack_path)
-    if "" != szErr:
-        print(szErr)
-    else:
-        print("export path sucess!")
+    #初始化f-stack
+    need_continue = "y"
+    if True == os.path.exists(fstack_path+"/f-stack-1.21"):
+        if re.search("^2\\..*", sys.version):
+            need_continue = \
+                raw_input("f-stack is already installed, do you want to continue[y/n]:")
+        else:
+            need_continue = \
+                input("f-stack is already installed, do you want to continue[y/n]:")
+    if "y"==need_continue or "Y"==need_continue:
+        szErr = config_fstack("1.21", fstack_path, 
+            os.environ["HOME"]+"/vscode_project_maker")
+        if "" != szErr:
+            print(szErr)
+        else:
+            print("config f-stack sucess!")
+        szErr = create_fstack_project("1.21", fstack_path, 
+            os.environ["HOME"]+"/vscode_project_maker")
+        if "" != szErr:
+            print(szErr)
+        else:
+            print("create f-stack project sucess!")
+        szErr = correct_fstack_code("1.21", fstack_path)
+        if "" != szErr:
+            print(szErr)
+        else:
+            print("correct fstack code sucess!")
+        szErr = export_path("1.21", fstack_path)
+        if "" != szErr:
+            print(szErr)
+        else:
+            print("export path sucess!")
