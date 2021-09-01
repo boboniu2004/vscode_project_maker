@@ -142,6 +142,9 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
             "v"+fstack_ver+".zip -O "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
             os.system("rm -f "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
             return "Failed to download f-stack-"+fstack_ver
+    if False == os.path.exists(fstack_path+"/f-stack-"+fstack_ver):
+        os.system("unzip -d "+fstack_path+"/ "+
+            vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
     #修改lib下的makefile
     lib_make,sz_err = readTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/lib/Makefile")
     if "" != sz_err:

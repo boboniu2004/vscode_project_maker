@@ -8,11 +8,9 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/__init__.py",
+            "program": "${workspaceFolder}/f-stack_pacth/f-stack_init.py",
             "args": [
-                "c",
-                "app-dpdk",
-                "/root/c_workspace/dpdk_hash_test"
+                "/root/other_workspace/"
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"
