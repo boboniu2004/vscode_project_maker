@@ -200,9 +200,9 @@ def make_dpdk_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
             "\nTARGET_NAME = $(LIB)", szMakeCont)
     #替换CFLAGS
     szMakeCont = re.sub("\\n[ \\t]*CFLAGS[ \\t]*\\+=[ \\t]*-O0.*", 
-        ("\nCFLAGS += -std=%s -O0 -g3 -fmessage-length=0 " %(szStd)), szMakeCont)
+        ("\nCFLAGS += -std=%s -O0 -g3 -fmessage-length=0 $(WERROR_FLAGS) $(MACROS_DBG) " %(szStd)), szMakeCont)
     szMakeCont = re.sub("\\n[ \\t]*CFLAGS[ \\t]*\\+=[ \\t]*-O3.*", 
-        ("\nCFLAGS += -std=%s -O3 -fmessage-length=0 " %(szStd)), szMakeCont)
+        ("\nCFLAGS += -std=%s -O3 -fmessage-length=0 $(WERROR_FLAGS) $(MACROS) " %(szStd)), szMakeCont)
     #替换rte.extapp.mk
     if -1 != str(szAppType).find("shared"):
         szMakeCont = re.sub("rte\\.extapp\\.mk", "rte.extshared.mk", szMakeCont)
