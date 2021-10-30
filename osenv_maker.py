@@ -38,7 +38,8 @@ if __name__ == "__main__":
                 szErr = ubuntuenv_maker.ConfigDPDK(sys.argv[1], sys.argv[2])
             else:
                 szErr = "Invaild OS"
-    elif 1!=len(sys.argv):
+    elif 1<len(sys.argv) and None==re.match("^\\d+\\.\\d+\\.\\d+\\.\\d+$",
+        sys.argv[1]):
         szErr = "vs_progject_maker: null|config_IP [xx.xx.xx.xx]|"\
             "config_DPDK [install/uninstall]|config_DPDK-meson [install/uninstall]"
     else:
