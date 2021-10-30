@@ -83,7 +83,7 @@ def configDebSource():
         maker_public.execCmdAndGetOutput("lsb_release -c"))
     if None == CodeNameObj:
         return "Can not find codename!"
-    szCodeName = CodeNameObj[1]
+    szCodeName = CodeNameObj.group(1)
     #安装网易源
     szAptSource = \
         "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\

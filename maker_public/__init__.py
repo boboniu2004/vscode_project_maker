@@ -193,7 +193,8 @@ def get_kernel_ver():
     match_ret = re.match("^(\\d+)\\.(\\d+)\\.(\\d+)\\-\\d+", szOSName)
     if None == match_ret:
         return None, None, None
-    return int(match_ret[1]),int(match_ret[2]),int(match_ret[3])
+    return int(match_ret.group(1)),int(match_ret.group(2)),\
+        int(match_ret.group(3))
     
 
 #issame_kernel_ver 比较编译时的内额内核版本和当前的内核版本是否一致；
