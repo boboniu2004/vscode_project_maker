@@ -26,23 +26,23 @@ def make_nomal_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
     #替换编译选项
     if -1!=str(szAppType).find("app"):
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS[ \\t]*:=.*", \
-            ("\nCXXFLAGS := -std=%s -Wall -m64 -O2 -fmessage-length=0" %(szStd)), szMakeCont)
+            ("\nCXXFLAGS := -std=%s $(WERROR_FLAGS) -m64 -O2 -fmessage-length=0" %(szStd)), szMakeCont)
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS_DBG[ \\t]*:=.*", \
-            ("\nCXXFLAGS_DBG := -std=%s -Wall -m64 -O0 -g3 -fmessage-length=0" 
+            ("\nCXXFLAGS_DBG := -std=%s $(WERROR_FLAGS) -m64 -O0 -g3 -fmessage-length=0" 
             %(szStd)), szMakeCont)
     elif -1!=str(szAppType).find("shared"):
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS[ \\t]*:=.*", \
-            ("\nCXXFLAGS := -std=%s -Wall -m64 -O2 -fPIC -fmessage-length=0 "\
+            ("\nCXXFLAGS := -std=%s $(WERROR_FLAGS) -m64 -O2 -fPIC -fmessage-length=0 "\
             "-fvisibility=hidden" %(szStd)), szMakeCont)
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS_DBG[ \\t]*:=.*", \
-            ("\nCXXFLAGS_DBG := -std=%s -Wall -m64 -O0 -g3 -fPIC "\
+            ("\nCXXFLAGS_DBG := -std=%s $(WERROR_FLAGS) -m64 -O0 -g3 -fPIC "\
             "-fmessage-length=0 -fvisibility=hidden" %(szStd)), szMakeCont)
     else:
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS[ \\t]*:=.*", \
-            ("\nCXXFLAGS := -std=%s -Wall -m64 -O2 -fPIC -fmessage-length=0" 
+            ("\nCXXFLAGS := -std=%s $(WERROR_FLAGS) -m64 -O2 -fPIC -fmessage-length=0" 
             %(szStd)), szMakeCont)
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS_DBG[ \\t]*:=.*", \
-            ("\nCXXFLAGS_DBG := -std=%s -Wall -m64 -O0 -g3 -fPIC -fmessage-length=0" 
+            ("\nCXXFLAGS_DBG := -std=%s $(WERROR_FLAGS) -m64 -O0 -g3 -fPIC -fmessage-length=0" 
             %(szStd)), szMakeCont)
     #替换链接器
     if -1!=str(szAppType).find("app") or -1!=str(szAppType).find("shared"):
