@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/opensrc_maker.py",
             "args": [
-                "f-stack",
+                "vpp",
                 "/root/other_workspace/"
             ],
             "cwd": "${workspaceFolder}",

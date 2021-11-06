@@ -337,4 +337,3 @@ def makeropensrc():
             print(szErr)
         else:
             print("export path sucess!")
-    print("install f-stack sucess!")

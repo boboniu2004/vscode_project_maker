@@ -29,6 +29,12 @@ def addGitignore(szProjPath):
     return ""
 
 
+#功能：给工程配置口令自动保存功能；参数：工程路径；返回：错误描述
+def configGit(szProjPath):
+    #配置口令自动保存
+    #os.system("cd "+szProjPath+" && "+"git config  credential.helper store")
+    return addGitignore(szProjPath)
+
 #函数功能：主函数
 #函数参数：可执行文件全路径，启动时加入的参数
 #函数返回：执行成功返回0，否则返回负值的错误码
@@ -72,10 +78,10 @@ if __name__ == "__main__":
     if 0 < len(szErrRet):
         print("vs_progject_maker: %s" %(szErrRet))
         exit(-1)
-    #扫描工程沐目录下的所有目录，如果是空目录则增加一个.gitignore防止git无法添加该目录
-    szErrRet = addGitignore(szProjPath)
+    #配置该git工程
+    szErrRet = configGit(szProjPath)
     if 0 < len(szErrRet):
         print("vs_progject_maker: %s" %(szErrRet))
-        exit(-1)    
+        exit(-1)
     #打印生成成功信息
     print("Create %s_%s_workespace(%s) sucess\n" %(szLangType, szAppType, szProjPath))

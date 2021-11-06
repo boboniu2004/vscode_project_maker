@@ -5,6 +5,7 @@
 import sys
 import os
 import fstack_maker
+import vpp_maker
 
 
 #函数功能：主函数
@@ -17,5 +18,7 @@ if __name__ == "__main__":
         print(error)
     elif "f-stack"==sys.argv[1]:
         fstack_maker.makeropensrc()
+    elif "vpp"==sys.argv[1]:
+        vpp_maker.makeropensrc()
     else:
         print(error)
