@@ -332,21 +332,19 @@ def export_path(fstack_ver, fstack_path):
     return ""
 
 
-#函数功能：主函数
-#函数参数：可执行文件全路径，启动时加入的参数
-#函数返回：执行成功返回0，否则返回负值的错误码
-if __name__ == "__main__":
+#功能：主函数；参数：无；返回：无
+def makeropensrc():
     fstack_path = os.getcwd()
-    if 1<len(sys.argv):
-        fstack_path = sys.argv[1]
+    if 2<len(sys.argv):
+        fstack_path = sys.argv[2]
     if False==os.path.isdir(fstack_path):
         print("Invaild f-stack path")
-        exit(-1)
+        return
     fstack_path = os.path.realpath(fstack_path)
     #检测是否安装了DPDK
     if False == os.path.exists("/usr/local/dpdk"):
         print("please install DPDK")
-        exit(-1)
+        return
     szErr = using_hugepage()
     if "" != szErr:
         print(szErr)
@@ -397,3 +395,4 @@ if __name__ == "__main__":
             print(szErr)
         else:
             print("export path sucess!")
+    print("install f-stack sucess!")
