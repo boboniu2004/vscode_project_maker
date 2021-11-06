@@ -8,7 +8,7 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/f-stack_pacth/f-stack_init.py",
+            "program": "${workspaceFolder}/f-stack_maker/f-stack_init.py",
             "args": [
                 "/root/other_workspace/"
             ],
