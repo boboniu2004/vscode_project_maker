@@ -1,74 +1,16 @@
 #!/usr/python/bin
 # -*- coding: utf-8 -*-
 
-import os
-import re
 import sys
+import re
+import os
+import maker_public
 
-#功能：读取一个文本文件；参数：待读取的文件；返回：读取到的内容，错误描述
-def readTxtFile(szSrcFile):
-    try:
-        CurFile = open(szSrcFile, "r")
-        szContent = CurFile.read()
-        CurFile.close()
-    except:
-        return "", ("Exception while try to reading %s"  %(szSrcFile))
-    return szContent, ""
-
-
-#功能：将数据写入一个文本文件；参数：待写入的文件，待写入的内容；返回：错误描述
-def writeTxtFile(szDstFile, szData):
-    try:
-        CurFile = open(szDstFile, "w")
-        CurFile.write(szData)
-        CurFile.close()
-    except:
-        return ("Exception while try to writing %s"  %(szDstFile))
-    return ""
-
-
-#功能：创建一个目录；参数：待创建的目录；返回：错误描述
-def makeDirs(szDirs):
-    if True==os.path.exists(szDirs) and False==os.path.isdir(szDirs):
-        os.remove(szDirs)
-    try:
-        if False==os.path.isdir(szDirs):
-            os.makedirs(szDirs)
-    except:
-        return ("create dir %s failed" %(szDirs))
-    return ""
-
-
-#功能：执行命令并且获取输出；参数：准备执行的命令；返回：获取的输出
-def execCmdAndGetOutput(szCmd):
-    Ret = os.popen(szCmd)
-    szOutput = Ret.read()  
-    Ret.close()  
-    return str(szOutput)  
-
-
-#getOSName 获取操作系统名称；参数：无；返回：操作系统名称
-def getOSName():
-    #获取centos版本
-    szOSName = execCmdAndGetOutput("rpm -q centos-release")
-    if None != re.search("^centos\\-release\\-[\\d]+\\-[\\d]+\\.[\\d]+"+\
-        "\\.[\\d]+\\.[^\\.]+\\.centos\\.[^\\.^\\s]+$", szOSName):
-        return "centos"
-    else:
-        szOSName,sz_err = readTxtFile("/etc/redhat-release")
-        if ""==sz_err and None!=re.search(
-            "CentOS[ \\t]+Linux[ \\t]+release[ \\t]+\\d+\\.\\d+\\.\\d+", szOSName):
-            return "centos"
-    #获取ubuntu版本
-    szOSName = execCmdAndGetOutput("lsb_release -a")
-    if None != re.search("Distributor[ \\t]+ID[ \\t]*:[ \\t]+Ubuntu.*", szOSName):
-        return "ubuntu"
-    return ""
 
 #功能：加载巨页；参数：无；返回：错误码
 def using_hugepage():
     #设置巨页
-    node_info = execCmdAndGetOutput("ls /sys/devices/system/node/"
+    node_info = maker_public.execCmdAndGetOutput("ls /sys/devices/system/node/"
         " | grep -P \"^node\\d+$\" | sort -u").split("\n")
     if 2 >= len(node_info):#这里2的原因是最后结束行是空行
         os.system("echo 256 > /sys/kernel/mm/hugepages/hugepages-2048kB/"
@@ -82,7 +24,7 @@ def using_hugepage():
         os.system("umount -f /mnt/huge")
     if True == os.path.exists("/mnt/huge"):
         os.system("rm -Rf /mnt/huge")
-    szErr = makeDirs("/mnt/huge")
+    szErr = maker_public.makeDirs("/mnt/huge")
     if "" != szErr:
         return szErr
     if 0 != os.system("mount -t hugetlbfs nodev /mnt/huge"):
@@ -98,13 +40,13 @@ def close_ASLR():
 
 #功能：加载网卡驱动；参数：dirver_name驱动名称，card_lst网卡名称链表；返回：错误码
 def load_driver(dirver_name, card_lst):
-    if "" == execCmdAndGetOutput("lsmod | grep -P \"^uio[ \\t]+\""):
+    if "" == maker_public.execCmdAndGetOutput("lsmod | grep -P \"^uio[ \\t]+\""):
         if 0 != os.system("modprobe uio"):
             return "modprobe uio failed!"
-    if "" == execCmdAndGetOutput("lsmod | grep -P \"^"+dirver_name+"[ \\t]+\""):
+    if "" == maker_public.execCmdAndGetOutput("lsmod | grep -P \"^"+dirver_name+"[ \\t]+\""):
         if 0 != os.system("insmod /usr/local/dpdk/kmod/"+dirver_name+".ko"):
             return "insmod "+dirver_name+" failed!"
-    if "" == execCmdAndGetOutput("lsmod | grep -P \"^rte_kni[ \\t]+\""):
+    if "" == maker_public.execCmdAndGetOutput("lsmod | grep -P \"^rte_kni[ \\t]+\""):
         if 0 != os.system("insmod /usr/local/dpdk/kmod/rte_kni.ko carrier=on"):
             os.system("rmmod "+dirver_name)
             return "insmod rte_kni failed!"
@@ -113,11 +55,11 @@ def load_driver(dirver_name, card_lst):
         for cur_card in card_lst:
             card_name = cur_card[0]
             card_addr = cur_card[1]
-            if ""!=card_name and "" != execCmdAndGetOutput("python3 /usr/local"
+            if ""!=card_name and "" != maker_public.execCmdAndGetOutput("python3 /usr/local"
                 "/dpdk/sbin/dpdk-devbind --status-dev net | grep \"if="+
                 card_name+"\""):
                 os.system("ifconfig "+card_name+" down")
-            if "" != execCmdAndGetOutput("python3 /usr/local/dpdk/sbin/dpdk-devbind "
+            if "" != maker_public.execCmdAndGetOutput("python3 /usr/local/dpdk/sbin/dpdk-devbind "
                 "--status-dev net | grep -P \""+card_addr+"[ \\t]+'.+'[ \\t]+drv=.+"
                 "[ \\t]unused=.+\""):
                 os.system("python3 /usr/local/dpdk/sbin/dpdk-devbind -u "
@@ -146,7 +88,7 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
         os.system("unzip -d "+fstack_path+"/ "+
             vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
     #修改lib下的makefile
-    lib_make,sz_err = readTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/lib/Makefile")
+    lib_make,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/lib/Makefile")
     if "" != sz_err:
         return "config f-stack failed"
     if 0 >= len(re.findall("\\n#DEBUG[ \\t]*=|\\nDEBUG[ \\t]*=", lib_make)):
@@ -155,7 +97,7 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
         return "can not find FF_IPFW"
     lib_make = re.sub("\\n#DEBUG[ \\t]*=", "\nDEBUG=", lib_make)
     lib_make = re.sub("\\n#FF_IPFW[ \\t]*=[ \\t]*1", "\nFF_IPFW=1", lib_make)
-    sz_err = writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/lib/Makefile", lib_make)
+    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/lib/Makefile", lib_make)
     if "" != sz_err:
         return "config f-stack failed"
     #配置nginx
@@ -204,7 +146,7 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
         "uninstall:"\
 	        "\n\trm -rf "+fstack_path+"/f-stack-"+fstack_ver+"/debug/*"\
             "\n"
-    sz_err = writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/makefile", fstack_make)
+    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/makefile", fstack_make)
     if "" != sz_err:
         return "config f-stack failed" 
     return ""
@@ -220,7 +162,7 @@ def create_fstack_project(fstack_ver, fstack_path, vscode_project_maker):
         fstack_path+"/f-stack-"+fstack_ver+"/")
     os.system("rm -rf /tmp/nginx")
     #替换工作目录
-    launch,sz_err = readTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/.vscode/"
+    launch,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/.vscode/"
         "launch.json")
     if "" != sz_err:
         return "create f-stack project failed"
@@ -228,12 +170,12 @@ def create_fstack_project(fstack_ver, fstack_path, vscode_project_maker):
         "${workspaceFolder}/debug/sbin", launch)
     launch = re.sub("\"\\$\\{workspaceFolder\\}\"", 
         "\"${workspaceFolder}/debug/sbin\"", launch)
-    sz_err = writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/.vscode/"
+    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/.vscode/"
         "launch.json", launch)
     if "" != sz_err:
         return "create f-stack project failed"
     #替换编译TAG
-    tasks,sz_err = readTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/.vscode/"
+    tasks,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/.vscode/"
         "tasks.json")
     if "" != sz_err:
         return "create f-stack project failed"
@@ -262,7 +204,7 @@ def create_fstack_project(fstack_ver, fstack_path, vscode_project_maker):
             "\n            }"\
             "\n        },"
         , tasks)
-    sz_err = writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/.vscode/"
+    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/.vscode/"
         "tasks.json", tasks)
     if "" != sz_err:
         return "create f-stack project failed"
@@ -277,7 +219,7 @@ def correct_fstack_code(fstack_ver, fstack_path):
         time_path = "/usr/include/sys/time.h"
     if False == os.path.isfile(time_path):
         return "Can not find time.h"
-    time_cont,sz_err = readTxtFile(time_path)
+    time_cont,sz_err = maker_public.readTxtFile(time_path)
     if ""!=sz_err:
         return sz_err
     gettimeofday_ret = re.search("gettimeofday[ \\t\\n]*\\(([^\\)]+)",time_cont)
@@ -293,7 +235,7 @@ def correct_fstack_code(fstack_ver, fstack_path):
     else:
         match_type = "ubuntu"
     #替换
-    ff_mod_cont,sz_err = readTxtFile(fstack_path+"/f-stack-"+fstack_ver+
+    ff_mod_cont,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack-"+fstack_ver+
         "/app/nginx-1.16.1/src/event/modules/ngx_ff_module.c")
     if ""!=sz_err:
         return sz_err
@@ -304,14 +246,14 @@ def correct_fstack_code(fstack_ver, fstack_path):
         ff_mod_cont = re.sub("gettimeofday[ \\t\\n]*\\(([^\\)]+)", 
             "gettimeofday(struct timeval *__restrict tv, __timezone_ptr_t tz", 
             ff_mod_cont, 1)        
-    sz_err = writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+
+    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+
         "/app/nginx-1.16.1/src/event/modules/ngx_ff_module.c", ff_mod_cont)
     return sz_err
 
 #功能：导入路径参数；参数：无；返回：错误码
 def export_path(fstack_ver, fstack_path):
     #读取
-    profile,sz_err = readTxtFile(os.environ["HOME"]+"/.bashrc")
+    profile,sz_err = maker_public.readTxtFile(os.environ["HOME"]+"/.bashrc")
     if "" != sz_err:
         return sz_err
     #修改
@@ -326,7 +268,7 @@ def export_path(fstack_ver, fstack_path):
         profile = re.sub("\nexport[ \\t]+FF_DPDK[ \\t]*=.+", 
             "\nexport FF_DPDK=/usr/local/dpdk", profile)
     #写入
-    sz_err = writeTxtFile(os.environ["HOME"]+"/.bashrc", profile)
+    sz_err = maker_public.writeTxtFile(os.environ["HOME"]+"/.bashrc", profile)
     if "" != sz_err:
         return sz_err
     return ""

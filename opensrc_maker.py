@@ -15,7 +15,7 @@ if __name__ == "__main__":
     #获取发行版本
     if 2>len(sys.argv):
         print(error)
-    elif "f-stack"==sys.argv[2]:
+    elif "f-stack"==sys.argv[1]:
         fstack_maker.makeropensrc()
     else:
         print(error)
