@@ -311,7 +311,7 @@ def build_meson_dpdk():
 def buildDPDK(complie_type):
     #安装 DPDK
     if False == os.path.exists("./f-stack-1.21.zip"):
-        if 0 != os.system("wget https://github.com/F-Stack/f-stack/archive/refs/tags/v1.21.zip "+
+        if 0 != os.system("wget https://ghproxy.com/github.com/F-Stack/f-stack/archive/refs/tags/v1.21.zip "+
             "-O f-stack-1.21.zip"):
             os.system("rm -f ./f-stack-1.21.zip")
             return "Failed to download f-stack-1.21"
@@ -352,7 +352,7 @@ def buildDPDK(complie_type):
 def buildHYPERSCAN():
     #安装hyperscan
     if False == os.path.exists("./hyperscan-5.4.0.zip"):
-        if 0 != os.system("wget https://github.com/intel/hyperscan/archive/refs/tags/v"\
+        if 0 != os.system("wget https://ghproxy.com/github.com/intel/hyperscan/archive/refs/tags/v"\
             "5.4.0.zip -O ./hyperscan-5.4.0.zip"):
             os.system("rm -f ./hyperscan-5.4.0.zip")
             return "Failed to download hyperscan"

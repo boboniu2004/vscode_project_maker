@@ -80,7 +80,7 @@ def load_driver(dirver_name, card_lst):
 #功能：下载胚子f-stack；参数：无；返回：错误码
 def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
     if False == os.path.exists(vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
-        if 0 != os.system("wget https://github.com/F-Stack/f-stack/archive/refs/tags/"
+        if 0 != os.system("wget https://ghproxy.com/github.com/F-Stack/f-stack/archive/refs/tags/"
             "v"+fstack_ver+".zip -O "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
             os.system("rm -f "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
             return "Failed to download f-stack-"+fstack_ver

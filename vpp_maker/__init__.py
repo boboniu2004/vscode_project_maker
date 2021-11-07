@@ -7,17 +7,17 @@ import sys
 import maker_public
 
 
-#功能：下载胚子vpp；参数：无；返回：错误码
+#功能：下载配置vpp；参数：无；返回：错误码
 def make_dep(vpp_ver, vpp_path, vscode_project_maker):
     return ""
 
 
 
-#功能：下载胚子vpp；参数：无；返回：错误码
+#功能：下载配置vpp；参数：无；返回：错误码
 def config_fstack(vpp_ver, vpp_path, vscode_project_maker):
     if False == os.path.exists(vscode_project_maker+"/vpp-"+vpp_ver+".zip"):
         if 0 != os.system(\
-            "wget https://github.com/FDio/vpp/archive/refs/tags/"
+            "wget https://ghproxy.com/github.com/FDio/vpp/archive/refs/tags/"
             "v"+vpp_ver+".zip -O "+vscode_project_maker+\
             "/vpp-"+vpp_ver+".zip"):
             os.system("rm -f "+vscode_project_maker+"/vpp-"+vpp_ver+".zip")
