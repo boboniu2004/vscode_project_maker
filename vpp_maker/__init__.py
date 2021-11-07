@@ -37,10 +37,23 @@ def config_fstack(vpp_ver, vpp_path, vscode_project_maker):
         vpp_ver+"/Makefile")
     if "" != sz_err:
         return sz_err
+    makedat = re.sub("python-virtualenv", "python3-virtualenv", makedat)
     if "ubuntu" == osver:
-        makedat = re.sub("python-virtualenv", "python3-virtualenv", makedat)
         makedat = re.sub("libffi6", "libffi7", makedat)
         makedat = re.sub("python-pip", "python-pip-whl", makedat)
+    else:
+        makedat = re.sub("centos-release-scl-rh", "", makedat)
+        makedat = re.sub("glibc-static", "", makedat)
+        makedat = re.sub("mbedtls-devel", "", makedat)
+        makedat = re.sub("\\nRPM_DEPENDS[ \\t]+\\+=[ \\t]+ninja-build", 
+            "\nRPM_DEPENDS += ", makedat)
+        makedat = re.sub("mbedtls-devel", "", makedat)
+        makedat = re.sub(" python-devel", 
+            " platform-python-devel python2", makedat)
+        makedat = re.sub("python36-ply", "python3-ply", makedat)
+        makedat = re.sub("python36-jsonschema", "python3-jsonschema", makedat)
+        makedat = re.sub("devtoolset-7", "gcc-toolset-10", makedat)
+        makedat = re.sub("base-debuginfo", "debuginfo", makedat)
     if False == os.path.isdir(vpp_path+"/vpp-"+vpp_ver+".git"):
         makedat = re.sub("\\n\\tgit[ ]+config", "\n#\tgit config", makedat)
     sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+"/Makefile", 
@@ -78,13 +91,13 @@ def makeropensrc():
     vpp_path = os.path.realpath(vpp_path)
     #初始化vpp
     need_continue = "y"
-    if True == os.path.exists(vpp_path+"/vpp-19.08.3"):
-        if re.search("^2\\..*", sys.version):
-            need_continue = \
-                raw_input("vpp is already installed, do you want to continue[y/n]:")
-        else:
-            need_continue = \
-                input("vpp is already installed, do you want to continue[y/n]:")
+    #if True == os.path.exists(vpp_path+"/vpp-19.08.3"):
+    #    if re.search("^2\\..*", sys.version):
+    #        need_continue = \
+    #            raw_input("vpp is already installed, do you want to continue[y/n]:")
+    #    else:
+    #        need_continue = \
+    #            input("vpp is already installed, do you want to continue[y/n]:")
     if "y"==need_continue or "Y"==need_continue:
         szErr = config_fstack("19.08.3", vpp_path, 
             os.environ["HOME"]+"/vscode_project_maker")
