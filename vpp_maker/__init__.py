@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import os
+from posixpath import basename
 import re
 import sys
 import maker_public
 
 
-#功能：下载配置vpp；参数：无；返回：错误码
+#功能：安装依赖；参数：无；返回：错误码
 def make_dep(vpp_ver, vpp_path, vscode_project_maker):
     return ""
 
@@ -76,7 +77,26 @@ def config_fstack(vpp_ver, vpp_path, vscode_project_maker):
     sz_err = maker_public.writeTxtFile(\
         vpp_path+"/vpp-"+vpp_ver+"/src/CMakeLists.txt", cmakedat)
     if "" != sz_err:
-        return sz_err        
+        return sz_err
+    #替换github.com
+    pkgmkfiles = os.listdir(vpp_path+"/vpp-"+vpp_ver+"/build/external/packages/")
+    for mkfile in pkgmkfiles:
+        if False == os.path.isfile(\
+            vpp_path+"/vpp-"+vpp_ver+"/build/external/packages/"+mkfile):
+            continue
+        if None == re.search(".+\\.mk$", mkfile):
+            continue
+        mkcont,err = maker_public.readTxtFile(\
+            vpp_path+"/vpp-"+vpp_ver+"/build/external/packages/"+mkfile)
+        if ""!=err:
+            return err
+        mkcont = re.sub("://github\\.com", \
+            "://ghproxy.com/github.com", mkcont)
+        err = maker_public.writeTxtFile(\
+            vpp_path+"/vpp-"+vpp_ver+"/build/external/packages/"+mkfile, 
+            mkcont)
+        if ""!=err:
+            return err
     return ""
 
 
