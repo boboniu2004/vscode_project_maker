@@ -10,8 +10,8 @@ import maker_public
 
 #功能：安装依赖；参数：无；返回：错误码
 def make_dep(vpp_ver, vpp_path, vscode_project_maker):
+    os.system("cd "+vpp_path+"/vpp-"+vpp_ver+" && make install-dep")
     return ""
-
 
 
 #功能：下载配置vpp；参数：无；返回：错误码
@@ -121,6 +121,10 @@ def makeropensrc():
     if "y"==need_continue or "Y"==need_continue:
         szErr = config_fstack("19.08.3", vpp_path, 
             os.environ["HOME"]+"/vscode_project_maker")
+        if "" != szErr:
+            print(szErr)
+            exit(-1)
+        szErr = make_dep("19.08.3", vpp_path)
         if "" != szErr:
             print(szErr)
         else:
