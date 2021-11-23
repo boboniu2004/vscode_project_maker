@@ -91,13 +91,13 @@ def makeropensrc():
     vpp_path = os.path.realpath(vpp_path)
     #初始化vpp
     need_continue = "y"
-    #if True == os.path.exists(vpp_path+"/vpp-19.08.3"):
-    #    if re.search("^2\\..*", sys.version):
-    #        need_continue = \
-    #            raw_input("vpp is already installed, do you want to continue[y/n]:")
-    #    else:
-    #        need_continue = \
-    #            input("vpp is already installed, do you want to continue[y/n]:")
+    if True == os.path.exists(vpp_path+"/vpp-19.08.3"):
+        if re.search("^2\\..*", sys.version):
+            need_continue = \
+                raw_input("vpp is already installed, do you want to continue[y/n]:")
+        else:
+            need_continue = \
+                input("vpp is already installed, do you want to continue[y/n]:")
     if "y"==need_continue or "Y"==need_continue:
         szErr = config_fstack("19.08.3", vpp_path, 
             os.environ["HOME"]+"/vscode_project_maker")
