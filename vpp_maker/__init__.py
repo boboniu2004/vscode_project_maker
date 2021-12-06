@@ -14,8 +14,46 @@ def make_dep(vpp_ver, vpp_path, vscode_project_maker):
     return ""
 
 
+#功能：制作vpp工程；参数：无；返回：错误码
+def create_vpp_project(vpp_ver, vpp_path, vscode_project_maker):
+    if 0 != os.system("python3 "+vscode_project_maker+
+        "/__init__.py c app /tmp/vpp"):
+        os.system("rm -rf /tmp/vpp")
+        return "create vpp project failed"
+    os.system("cp -rf /tmp/vpp/.vscode "+
+        vpp_path+"/vpp-"+vpp_ver+"/")
+    os.system("rm -rf /tmp/vpp")
+    #替换工作目录
+    launch,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+vpp_ver+"/.vscode/"
+        "launch.json")
+    if "" != sz_err:
+        return "create vpp project failed"
+    launch = re.sub("\\$\\{workspaceFolder\\}/debug", 
+        "${workspaceFolder}/build-root/install-vpp_debug-native/vpp/bin", launch)
+    launch = re.sub("\"\\$\\{workspaceFolder\\}\"", 
+        "\"${workspaceFolder}/build-root/install-vpp_debug-native/vpp/bin\"", launch)
+    launch = re.sub("\"args\"[ \\t]*:[ \\t]*\\[[^\\]]*\\],", 
+        "\"args\": [\"-c\",\"${workspaceFolder}/build-root/install-vpp_debug-native/vpp/etc/vpp/startup.conf\"],", launch)
+    sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+"/.vscode/"
+        "launch.json", launch)
+    if "" != sz_err:
+        return "create vpp project failed"
+    #替换编译TAG
+    tasks,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+vpp_ver+"/.vscode/"
+        "tasks.json")
+    if "" != sz_err:
+        return "create vpp project failed"
+    tasks = re.sub("\"debug\"", "\"build\"", tasks)
+    tasks = re.sub("\\$\\{workspaceFolder\\}/makefile", "${workspaceFolder}/Makefile", tasks)
+    sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+"/.vscode/"
+        "tasks.json", tasks)
+    if "" != sz_err:
+        return "create vpp project failed"
+    return ""
+
+
 #功能：下载配置vpp；参数：无；返回：错误码
-def config_fstack(vpp_ver, vpp_path, vscode_project_maker):
+def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
     if False == os.path.exists(vscode_project_maker+"/vpp-"+vpp_ver+".zip"):
         if 0 != os.system(\
             "wget https://ghproxy.com/github.com/FDio/vpp/archive/refs/tags/"
@@ -119,13 +157,20 @@ def makeropensrc():
             need_continue = \
                 input("vpp is already installed, do you want to continue[y/n]:")
     if "y"==need_continue or "Y"==need_continue:
-        szErr = config_fstack("19.08.3", vpp_path, 
+        szErr = config_vpp("19.08.3", vpp_path, 
             os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
             print(szErr)
             exit(-1)
-        szErr = make_dep("19.08.3", vpp_path)
+        szErr = make_dep("19.08.3", vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
             print(szErr)
         else:
             print("config vpp sucess!")
+    #生成工程
+    szErr = create_vpp_project("19.08.3", vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
+    if "" != szErr:
+        print(szErr)
+    else:
+        print("create vpp project sucess!")
+        
