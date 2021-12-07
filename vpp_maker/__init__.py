@@ -46,6 +46,28 @@ def create_vpp_project(vpp_ver, vpp_path, vscode_project_maker):
     tasks = re.sub("\"debug\"", "\"build\"", tasks)
     tasks = re.sub("\"clean\"", "\"wipe\"", tasks)
     tasks = re.sub("\\$\\{workspaceFolder\\}/makefile", "${workspaceFolder}/Makefile", tasks)
+    #增加安装任务
+    tasks = re.sub("\"tasks\":[ \\t]+\\[", 
+            "\"tasks\": ["\
+            "\n        {"\
+            "\n            \"type\": \"shell\","\
+            "\n            \"label\": \"gcc init active file\","\
+            "\n            \"command\": \"/usr/bin/python3\","\
+            "\n            \"args\": ["\
+            "\n                \"${workspaceFolder}/dpdk_init.py\","\
+            "\n            ],"\
+            "\n            \"options\": {"\
+            "\n                \"cwd\": \"${workspaceFolder}\""\
+            "\n            },"\
+            "\n            \"problemMatcher\": ["\
+            "\n                \"$gcc\""\
+            "\n            ],"\
+            "\n            \"group\": {"\
+            "\n                \"kind\": \"build\","\
+            "\n                \"isDefault\": true"\
+            "\n            }"\
+            "\n        },"
+        , tasks)
     sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+"/.vscode/"
         "tasks.json", tasks)
     if "" != sz_err:
@@ -141,14 +163,22 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
     #修改DPDK的CMakelist
     cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+\
         vpp_ver+"/build/external/packages/dpdk.mk")
-    cmakedat = re.sub("RTE_LIBRTE_KNI[ \\t]*,[ \\t]*n", "RTE_LIBRTE_KNI,y", cmakedat)
     cmakedat = re.sub("RTE_EAL_IGB_UIO[ \\t]*,[ \\t]*n", "RTE_EAL_IGB_UIO,y", cmakedat)
-    cmakedat = re.sub("RTE_KNI_KMOD[ \\t]*,[ \\t]*n", "RTE_KNI_KMOD,y", cmakedat)
     sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+\
         "/build/external/packages/dpdk.mk", 
         cmakedat)
     if "" != sz_err:
         return sz_err
+    #下载绑定器
+    if ""==maker_public.execCmdAndGetOutput("lspci") and \
+        False == os.path.exists(vpp_path+"/vpp-"+vpp_ver+"/driverctl"):
+        if 0 != os.system("git clone https://gitlab.com/driverctl/driverctl.git "+\
+            vpp_path+"/vpp-"+vpp_ver+"/driverctl"):
+            return "download driverctl failed"
+    #拷贝dpdk初始化工具
+    if 0 != os.system("cp -rf "+os.environ["HOME"]+\
+        "/vscode_project_maker/vpp_maker/dpdk_init.py "+vpp_path+"/vpp-"+vpp_ver+"/"):
+        return "cp dpdk_init.py failed"
     return ""
 
 
