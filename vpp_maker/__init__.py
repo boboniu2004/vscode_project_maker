@@ -44,6 +44,7 @@ def create_vpp_project(vpp_ver, vpp_path, vscode_project_maker):
     if "" != sz_err:
         return "create vpp project failed"
     tasks = re.sub("\"debug\"", "\"build\"", tasks)
+    tasks = re.sub("\"clean\"", "\"wipe\"", tasks)
     tasks = re.sub("\\$\\{workspaceFolder\\}/makefile", "${workspaceFolder}/Makefile", tasks)
     sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+"/.vscode/"
         "tasks.json", tasks)
@@ -54,6 +55,8 @@ def create_vpp_project(vpp_ver, vpp_path, vscode_project_maker):
 
 #功能：下载配置vpp；参数：无；返回：错误码
 def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
+    cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+\
+        vpp_ver+"/build/external/packages/dpdk.mk")
     if False == os.path.exists(vscode_project_maker+"/vpp-"+vpp_ver+".zip"):
         if 0 != os.system(\
             "wget https://ghproxy.com/github.com/FDio/vpp/archive/refs/tags/"
@@ -135,6 +138,17 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
             mkcont)
         if ""!=err:
             return err
+    #修改DPDK的CMakelist
+    cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+\
+        vpp_ver+"/build/external/packages/dpdk.mk")
+    cmakedat = re.sub("RTE_LIBRTE_KNI[ \\t]*,[ \\t]*n", "RTE_LIBRTE_KNI,y", cmakedat)
+    cmakedat = re.sub("RTE_EAL_IGB_UIO[ \\t]*,[ \\t]*n", "RTE_EAL_IGB_UIO,y", cmakedat)
+    cmakedat = re.sub("RTE_KNI_KMOD[ \\t]*,[ \\t]*n", "RTE_KNI_KMOD,y", cmakedat)
+    sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+\
+        "/build/external/packages/dpdk.mk", 
+        cmakedat)
+    if "" != sz_err:
+        return sz_err
     return ""
 
 
@@ -149,7 +163,7 @@ def makeropensrc():
     vpp_path = os.path.realpath(vpp_path)
     #初始化vpp
     need_continue = "y"
-    if True == os.path.exists(vpp_path+"/vpp-19.08.3"):
+    if True == os.path.exists(vpp_path+"/vpp-20.05"):
         if re.search("^2\\..*", sys.version):
             need_continue = \
                 raw_input("vpp is already installed, do you want to continue[y/n]:")
@@ -157,18 +171,18 @@ def makeropensrc():
             need_continue = \
                 input("vpp is already installed, do you want to continue[y/n]:")
     if "y"==need_continue or "Y"==need_continue:
-        szErr = config_vpp("19.08.3", vpp_path, 
+        szErr = config_vpp("20.05", vpp_path, 
             os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
             print(szErr)
             exit(-1)
-        szErr = make_dep("19.08.3", vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
+        szErr = make_dep("20.05", vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
             print(szErr)
         else:
             print("config vpp sucess!")
     #生成工程
-    szErr = create_vpp_project("19.08.3", vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
+    szErr = create_vpp_project("20.05", vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
     if "" != szErr:
         print(szErr)
     else:
