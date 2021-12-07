@@ -80,12 +80,16 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
     cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+\
         vpp_ver+"/build/external/packages/dpdk.mk")
     if False == os.path.exists(vscode_project_maker+"/vpp-"+vpp_ver+".zip"):
+        os.system("rm -rf "+vscode_project_maker+"/vpp-"+vpp_ver)
         if 0 != os.system(\
-            "wget https://ghproxy.com/github.com/FDio/vpp/archive/refs/tags/"
-            "v"+vpp_ver+".zip -O "+vscode_project_maker+\
-            "/vpp-"+vpp_ver+".zip"):
-            os.system("rm -f "+vscode_project_maker+"/vpp-"+vpp_ver+".zip")
+            "git clone --branch v"+vpp_ver+" https://ghproxy.com/github.com/FDio/vpp.git "+\
+            vscode_project_maker+"/vpp-"+vpp_ver):
+            os.system("rm -rf "+vscode_project_maker+"/vpp-"+vpp_ver)
             return "Failed to download vpp-"+vpp_ver
+        if 0 != os.system("cd "+vscode_project_maker+\
+            " && zip -r "+"vpp-"+vpp_ver+".zip vpp-"+vpp_ver):
+            os.system("rm -f "+vscode_project_maker+"/vpp-"+vpp_ver+".zip")
+        os.system("rm -rf "+vscode_project_maker+"/vpp-"+vpp_ver) 
     if False == os.path.exists(vpp_path+"/vpp-"+vpp_ver):
         os.system("unzip -d "+vpp_path+"/ "+
             vscode_project_maker+"/vpp-"+vpp_ver+".zip")
@@ -118,6 +122,7 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
         makedat = re.sub("python36-jsonschema", "python3-jsonschema", makedat)
         makedat = re.sub("devtoolset-7", "gcc-toolset-10", makedat)
         makedat = re.sub("base-debuginfo", "debuginfo", makedat)
+        makedat = re.sub("\\nbuild:.*", "\nbuild: $(BR)/.deps.ok install-ext-deps", makedat)
     if False == os.path.isdir(vpp_path+"/vpp-"+vpp_ver+".git"):
         makedat = re.sub("\\n\\tgit[ ]+config", "\n#\tgit config", makedat)
     sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+"/Makefile", 
