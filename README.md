@@ -143,8 +143,24 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 # 创建f-stack开发环境
 在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，且已经正确安装了DPDK到/usr/local/dpdk下，则可以配置f-stack开发环境。此时可以在vscode_project_maker目录下运行如下命令：
 
-        python3 f-stack_pacth/f-stack_init.py [f-stack_project_path]
+        python3 opensrc_maker.py f-stack [f-stack_project_path]
 
 安装完毕后，需要重启虚拟机，然后就可以使用vscode打开f-stack开发目录，首先运行**gcc install active file**任务生成debug调试目录，该目录中可以修改f-stack和nginx的配置。后续就可以使用vscode进行集成开发和调试了，非常方便。如果在hyper-v环境下的centos8/ubuntu20.04系统下想查看已经绑定的设备，可以运行命令：
 
         /usr/local/dpdk/sbin/driverctl/driverctl -b vmbus list-overrides
+
+# 创建vpp开发环境
+在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，则可以配置vpp开发环境。此时可以在vscode_project_maker目录下运行如下命令：
+
+        python3 opensrc_maker.py vpp [f-stack_project_path]
+
+安装完毕后，然后就可以使用vscode打开vpp开发目录，每次运行**gcc init active file**任务初始化dpdk环境，该目录中的build-root/install-vpp_debug-native/vpp/etc/startup.conf中可以修改vpp配置。后续就可以使用vscode进行集成开发和调试了，非常方便。如果在hyper-v环境下的centos8/ubuntu20.04系统下想查看已经绑定的设备，可以运行命令：
+
+        driverctl/driverctl -b vmbus list-overrides
+
+注意：每次调试开始后，网卡处于非激活状态，此时需要运行build-root/install-vpp_debug-native/vpp/bin/vppctl，输入命令：
+
+        show hardware-interfaces
+        set interface state  [卡名称] up
+
+其中卡名称从show hardw-interface命令中获取。
