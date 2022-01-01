@@ -88,16 +88,16 @@ def configRepo():
         os.system( ("rm -Rf /etc/yum.repos.d/CentOS%s-Base-163.repo" %(MatchList.group(1))) )
         #安装epel源
         os.system("yum erase -y epel-release.noarch")
-        szRpmPath = ("https://mirrors.aliyun.com/epel/epel-release-latest-%s.noarch.rpm" 
-            %(MatchList.group(1)))
-        szErr = installOrUpdateRpm("epel-release", "noarch", szRpmPath)
+        #szRpmPath = ("https://mirrors.aliyun.com/epel/epel-release-latest-%s.noarch.rpm" 
+        #    %(MatchList.group(1)))
+        szErr = installOrUpdateRpm("epel-release", "noarch", "")
         if 0 < len(szErr):
             return "Install epel failed"
-        if 0 != os.system("sed -i 's|^[ \\t]*#[ \\t]*baseurl[ \\t]*=.*|"\
-            "baseurl=https://mirrors.aliyun.com/epel/%s/Modular/SRPMS|' "\
-            "/etc/yum.repos.d/epel* && "\
-            "sed -i 's|^metalink|#metalink|' /etc/yum.repos.d/epel*" %(MatchList.group(1))):
-            return "Install epel failed"
+        #if 0 != os.system("sed -i 's|^[ \\t]*#[ \\t]*baseurl[ \\t]*=.*|"\
+        #    "baseurl=https://mirrors.aliyun.com/epel/%s/Modular/SRPMS|' "\
+        #    "/etc/yum.repos.d/epel* && "\
+        #    "sed -i 's|^metalink|#metalink|' /etc/yum.repos.d/epel*" %(MatchList.group(1))):
+        #    return "Install epel failed"
     else:
         os.system(("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))))  
         if False==os.path.exists( ("/etc/yum.repos.d/CentOS%s-Base-163.repo" \
