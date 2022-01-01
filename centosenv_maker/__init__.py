@@ -81,10 +81,18 @@ def configRepo():
                 "/etc/yum.repos.d/CentOS-Base.repo")
             return "Download aliyun.repo failed"
         #替换
-        if 0!=os.system("sed -i -e '/mirrors.cloud.aliyuncs.com/d' -e "\
-            "'/mirrors.aliyuncs.com/d' "\
-            "/etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))):
-            return ("replace Centos-%s.repo failed" %MatchList.group(1))
+        repocont,reperr = maker_public.readTxtFile(\
+            "/etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1)))
+        if reperr!="":
+            return reperr
+        repocont = repocont.replace("\nfailovermethod=priority", 
+            "\n#failovermethod=priority")
+        repocont = repocont.replace("mirrors.cloud.aliyuncs.com", 
+            "mirrors.aliyuncs.com")
+        reperr = maker_public.writeTxtFile(\
+            "/etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1)),repocont)
+        if reperr!="":
+            return reperr
         os.system( ("rm -Rf /etc/yum.repos.d/CentOS%s-Base-163.repo" %(MatchList.group(1))) )
         #安装epel源
         os.system("yum erase -y epel-release.noarch")
