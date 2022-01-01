@@ -10,7 +10,12 @@ import maker_public
 
 #功能：安装依赖；参数：无；返回：错误码
 def make_dep(vpp_ver, vpp_path, vscode_project_maker):
-    os.system("cd "+vpp_path+"/vpp-"+vpp_ver+" && make install-dep")
+    if maker_public.getOSName()=="ubuntu":
+        os.system("apt-get --purge autoremove vpp-ext-deps.x86_64")
+    else:
+        os.system("yum -y erase vpp-ext-deps.x86_64")
+    os.system("cd "+vpp_path+"/vpp-"+vpp_ver+" && make install-dep && make install-ext-dep")
+    os.system("cd "+vpp_path+"/vpp-"+vpp_ver+" && make install-dep && make install-ext-dep")
     return ""
 
 
@@ -95,40 +100,6 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
             vscode_project_maker+"/vpp-"+vpp_ver+".zip")
     #获取OS版本
     osver = maker_public.getOSName()
-    #写入版本信息
-    #sz_err = maker_public.writeTxtFile(\
-    #    vpp_path+"/vpp-"+vpp_ver+"/src/scripts/.version", vpp_ver)
-    #if "" != sz_err:
-    #    return sz_err
-    #修改makefile
-    #makedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+\
-    #    vpp_ver+"/Makefile")
-    #if "" != sz_err:
-    #    return sz_err
-    #makedat = re.sub("python-virtualenv", "python3-virtualenv", makedat)
-    #if "ubuntu" == osver:
-    #    makedat = re.sub("libffi6", "libffi7", makedat)
-    #    makedat = re.sub("python-pip", "python-pip-whl", makedat)
-    #else:
-    #    makedat = re.sub("centos-release-scl-rh", "", makedat)
-    #    makedat = re.sub("glibc-static", "", makedat)
-    #    makedat = re.sub("mbedtls-devel", "", makedat)
-    #    makedat = re.sub("\\nRPM_DEPENDS[ \\t]+\\+=[ \\t]+ninja-build", 
-    #        "\nRPM_DEPENDS += ", makedat)
-    #    makedat = re.sub("mbedtls-devel", "", makedat)
-    #    makedat = re.sub(" python-devel", 
-    #        " platform-python-devel python2", makedat)
-    #    makedat = re.sub("python36-ply", "python3-ply", makedat)
-    #    makedat = re.sub("python36-jsonschema", "python3-jsonschema", makedat)
-    #    makedat = re.sub("devtoolset-7", "gcc-toolset-10", makedat)
-    #    makedat = re.sub("base-debuginfo", "debuginfo", makedat)
-    #    makedat = re.sub("\\nbuild:.*", "\nbuild: $(BR)/.deps.ok install-ext-deps", makedat)
-    #if False == os.path.isdir(vpp_path+"/vpp-"+vpp_ver+".git"):
-    #    makedat = re.sub("\\n\\tgit[ ]+config", "\n#\tgit config", makedat)
-    #sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+"/Makefile", 
-    #    makedat)
-    #if "" != sz_err:
-    #    return sz_err
     #修改CMakeLists.txt
     cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+\
         vpp_ver+"/src/CMakeLists.txt")
@@ -198,7 +169,7 @@ def makeropensrc():
     vpp_path = os.path.realpath(vpp_path)
     #初始化vpp
     need_continue = "y"
-    if True == os.path.exists(vpp_path+"/vpp-21.10"):
+    if True == os.path.exists(vpp_path+"/vpp-20.09"):
         if re.search("^2\\..*", sys.version):
             need_continue = \
                 raw_input("vpp is already installed, do you want to continue[y/n]:")
@@ -206,18 +177,18 @@ def makeropensrc():
             need_continue = \
                 input("vpp is already installed, do you want to continue[y/n]:")
     if "y"==need_continue or "Y"==need_continue:
-        szErr = config_vpp("21.10", vpp_path, 
+        szErr = config_vpp("20.09", vpp_path, 
             os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
             print(szErr)
             exit(-1)
-        szErr = make_dep("21.10", vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
+        szErr = make_dep("20.09", vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
             print(szErr)
         else:
             print("config vpp sucess!")
     #生成工程
-    szErr = create_vpp_project("21.10", vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
+    szErr = create_vpp_project("20.09", vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
     if "" != szErr:
         print(szErr)
     else:

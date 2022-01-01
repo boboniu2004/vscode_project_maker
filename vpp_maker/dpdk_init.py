@@ -4,6 +4,20 @@
 
 import sys
 import os
+import re
+
+
+#函数功能：读取一个文本文件
+#函数参数：待读取的文件
+#函数返回：读取到的内容，错误描述
+def readTxtFile(szSrcFile):
+    try:
+        CurFile = open(szSrcFile, "r")
+        szContent = CurFile.read()
+        CurFile.close()
+    except:
+        return "", ("Exception while try to reading %s"  %(szSrcFile))
+    return szContent, ""
 
 
 #函数功能：创建一个目录
@@ -28,6 +42,25 @@ def execCmdAndGetOutput(szCmd):
     szOutput = Ret.read()  
     Ret.close()  
     return str(szOutput)  
+
+
+#getOSName 获取操作系统名称；参数：无；返回：操作系统名称
+def getOSName():
+    #获取centos版本
+    szOSName = execCmdAndGetOutput("rpm -q centos-release")
+    if None != re.search("^centos\\-release\\-[\\d]+\\-[\\d]+\\.[\\d]+"+\
+        "\\.[\\d]+\\.[^\\.]+\\.centos\\.[^\\.^\\s]+$", szOSName):
+        return "centos"
+    else:
+        szOSName,sz_err = readTxtFile("/etc/redhat-release")
+        if ""==sz_err and None!=re.search(
+            "CentOS[ \\t]+Linux[ \\t]+release[ \\t]+\\d+\\.\\d+\\.\\d+", szOSName):
+            return "centos"
+    #获取ubuntu版本
+    szOSName = execCmdAndGetOutput("lsb_release -a")
+    if None != re.search("Distributor[ \\t]+ID[ \\t]*:[ \\t]+Ubuntu.*", szOSName):
+        return "ubuntu"
+    return ""
 
 
 #功能：加载巨页；参数：无；返回：错误码
@@ -63,7 +96,10 @@ def close_ASLR():
 
 #功能：加载网卡驱动；参数：dirver_name驱动名称，card_lst网卡名称链表；返回：错误码
 def load_driver(dirver_name, card_lst):
-    dirver_path = "build-root/install-vpp_debug-native/external/lib/modules/5.11.0-41-generic/extra/dpdk"
+    if getOSName() == "ubuntu":
+        dirver_path = "build-root/install-vpp_debug-native/external/lib/modules/*-generic/extra/dpdk"
+    else:
+        dirver_path =  "/opt/vpp/external/x86_64/lib/modules/*.x86_64/extra/dpdk"
     if "" == execCmdAndGetOutput("lsmod | grep -P \"^uio[ \\t]+\""):
         if 0 != os.system("modprobe uio"):
             return "modprobe uio failed!"
