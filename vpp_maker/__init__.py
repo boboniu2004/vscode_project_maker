@@ -14,8 +14,7 @@ def make_dep(vpp_ver, vpp_path, vscode_project_maker):
         os.system("apt-get --purge autoremove vpp-ext-deps.x86_64")
     else:
         os.system("yum -y erase vpp-ext-deps.x86_64")
-    os.system("cd "+vpp_path+"/vpp-"+vpp_ver+" && make install-dep && make install-ext-dep")
-    os.system("cd "+vpp_path+"/vpp-"+vpp_ver+" && make install-dep && make install-ext-dep")
+    os.system("cd "+vpp_path+"/vpp-"+vpp_ver+" && make install-dep")
     return ""
 
 
@@ -80,6 +79,60 @@ def create_vpp_project(vpp_ver, vpp_path, vscode_project_maker):
     return ""
 
 
+#功能：配置dpdk；参数：无；返回：错误码
+def config_dpdk(vpp_ver, vpp_path, vscode_project_maker):
+    #拷贝dpdk初始化工具
+    if 0 != os.system("cp -rf "+vscode_project_maker+\
+        "/vpp_maker/dpdk_init.py "+vpp_path+"/vpp-"+vpp_ver+"/"):
+        return "cp dpdk_init.py failed"
+    #写入igb_uio的meson文件
+    err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+\
+        "/dpdk-kmods/linux/igb_uio/meson.build", \
+            "# SPDX-License-Identifier: BSD-3-Clause\n"\
+            "# Copyright(c) 2017 Intel Corporation\n"\
+            "\n"\
+            "uio_mkfile = custom_target('igb_uio_makefile',\n"\
+            "        output: 'Makefile',\n"\
+            "        command: ['touch', '@OUTPUT@'])\n"\
+            "\n"\
+            "uio_sources = files(\n"\
+            "        'igb_uio.c',\n"\
+            "        'Kbuild',\n"\
+            ")\n"\
+            "\n"\
+            "custom_target('igb_uio',\n"\
+            "        input: uio_sources,\n"\
+            "        output: 'igb_uio.ko',\n"\
+            "        command: ['make', '-j4', '-C', kernel_build_dir,\n"\
+            "                'M=' + meson.current_build_dir(),\n"\
+            "                'src=' + meson.current_source_dir(),\n"\
+            "                'MODULE_CFLAGS=-include ' + meson.source_root() + '/config/rte_config.h' +\n"\
+            "                ' -I' + meson.source_root() + '/lib/eal/include' +\n"\
+            "                ' -I' + meson.build_root() +\n"\
+            "                ' -I' + meson.current_source_dir(),\n"\
+            "                'modules'],\n"\
+            "        depends: uio_mkfile,\n"\
+            "        install: install,\n"\
+            "        install_dir: kernel_install_dir,\n"\
+            "        build_by_default: get_option('enable_kmods')))\n")
+    if ""!=err:
+        return err
+    #修改DPDK的CMakelist
+    cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+\
+        vpp_ver+"/build/external/packages/dpdk.mk")
+    dstdat = "\n\nDPDK_MESON_ARGS += \" -Denable_kmods=true\"\n\ndefine dpdk_config_cmds"+\
+        "\n\tcp -rf "+vpp_path+"/vpp-"+vpp_ver+"/dpdk-kmods/linux/* $(dpdk_src_dir)/kernel/linux/"+\
+        " && "+"\\"
+    cmakedat = cmakedat.replace("\n\ndefine dpdk_config_cmds", dstdat)
+    #cmakedat = re.sub("\\n\\ndefine[ \\t]+dpdk_config_cmds.*", dstdat, cmakedat)
+    sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+\
+        "/build/external/packages/dpdk.mk", 
+        cmakedat)
+    if "" != sz_err:
+        return sz_err
+    return ""
+
+    
 #功能：下载配置vpp；参数：无；返回：错误码
 def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
     cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+\
@@ -91,6 +144,17 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
             vscode_project_maker+"/vpp-"+vpp_ver):
             os.system("rm -rf "+vscode_project_maker+"/vpp-"+vpp_ver)
             return "Failed to download vpp-"+vpp_ver
+        if 0 != os.system(\
+            "git clone http://dpdk.org/git/dpdk-kmods "+\
+            vscode_project_maker+"/vpp-"+vpp_ver+"/dpdk-kmods"):
+            os.system("rm -rf "+vscode_project_maker+"/vpp-"+vpp_ver+"/dpdk-kmods")
+            return "Failed to download dpdk-kmods"
+        #下载绑定器
+        if ""==maker_public.execCmdAndGetOutput("lspci") and \
+            False == os.path.exists(vscode_project_maker+"/vpp-"+vpp_ver+"/driverctl"):
+            if 0 != os.system("git clone https://gitlab.com/driverctl/driverctl.git "+\
+                vscode_project_maker+"/vpp-"+vpp_ver+"/driverctl"):
+                return "download driverctl failed"
         if 0 != os.system("cd "+vscode_project_maker+\
             " && zip -r "+"vpp-"+vpp_ver+".zip vpp-"+vpp_ver):
             os.system("rm -f "+vscode_project_maker+"/vpp-"+vpp_ver+".zip")
@@ -100,23 +164,27 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
             vscode_project_maker+"/vpp-"+vpp_ver+".zip")
     #获取OS版本
     osver = maker_public.getOSName()
+    if osver == "centos":
+        os.system("yum erase -y epel-release.noarch")
+        if 0 != os.system("yum install -y epel-release.noarch"):
+            return "Install epel failed"
     #修改CMakeLists.txt
-    cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+\
-        vpp_ver+"/src/CMakeLists.txt")
-    if "" != sz_err:
-        return sz_err
-    if "ubuntu" == osver:
-        cmakedat = re.sub("VPP_LIB_VERSION[ \\t]+\\${VPP_VERSION}", 
-            "VPP_LIB_VERSION \"${VPP_VERSION}\"", cmakedat)
-        if None == re.search("CMAKE_REQUIRED_LIBRARIES", cmakedat):
-            cmakedat = re.sub(\
-                "\\nfind_package[ \\t]*\\([ \\t]*Threads[^\\)]+", 
-                "\nset(CMAKE_REQUIRED_LIBRARIES \"-lpthread \")"\
-                "\nfind_package(Threads REQUIRED", cmakedat)            
-    sz_err = maker_public.writeTxtFile(\
-        vpp_path+"/vpp-"+vpp_ver+"/src/CMakeLists.txt", cmakedat)
-    if "" != sz_err:
-        return sz_err
+    #cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+\
+    #    vpp_ver+"/src/CMakeLists.txt")
+    #if "" != sz_err:
+    #    return sz_err
+    #if "ubuntu" == osver:
+    #    cmakedat = re.sub("VPP_LIB_VERSION[ \\t]+\\${VPP_VERSION}", 
+    #        "VPP_LIB_VERSION \"${VPP_VERSION}\"", cmakedat)
+    #    if None == re.search("CMAKE_REQUIRED_LIBRARIES", cmakedat):
+    #        cmakedat = re.sub(\
+    #            "\\nfind_package[ \\t]*\\([ \\t]*Threads[^\\)]+", 
+    #            "\nset(CMAKE_REQUIRED_LIBRARIES \"-lpthread \")"\
+    #            "\nfind_package(Threads REQUIRED", cmakedat)            
+    #sz_err = maker_public.writeTxtFile(\
+    #    vpp_path+"/vpp-"+vpp_ver+"/src/CMakeLists.txt", cmakedat)
+    #if "" != sz_err:
+    #    return sz_err
     #替换github.com
     pkgmkfiles = os.listdir(vpp_path+"/vpp-"+vpp_ver+"/build/external/packages/")
     for mkfile in pkgmkfiles:
@@ -136,26 +204,8 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
             mkcont)
         if ""!=err:
             return err
-    #修改DPDK的CMakelist
-    cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+\
-        vpp_ver+"/build/external/packages/dpdk.mk")
-    cmakedat = re.sub("RTE_EAL_IGB_UIO[ \\t]*,[ \\t]*n", "RTE_EAL_IGB_UIO,y", cmakedat)
-    sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+\
-        "/build/external/packages/dpdk.mk", 
-        cmakedat)
-    if "" != sz_err:
-        return sz_err
-    #下载绑定器
-    if ""==maker_public.execCmdAndGetOutput("lspci") and \
-        False == os.path.exists(vpp_path+"/vpp-"+vpp_ver+"/driverctl"):
-        if 0 != os.system("git clone https://gitlab.com/driverctl/driverctl.git "+\
-            vpp_path+"/vpp-"+vpp_ver+"/driverctl"):
-            return "download driverctl failed"
-    #拷贝dpdk初始化工具
-    if 0 != os.system("cp -rf "+os.environ["HOME"]+\
-        "/vscode_project_maker/vpp_maker/dpdk_init.py "+vpp_path+"/vpp-"+vpp_ver+"/"):
-        return "cp dpdk_init.py failed"
-    return ""
+    #修改DPDK的编译文件和打开内核模块
+    return config_dpdk(vpp_ver, vpp_path, vscode_project_maker)
 
 
 #功能：主函数；参数：无；返回：无
@@ -169,7 +219,7 @@ def makeropensrc():
     vpp_path = os.path.realpath(vpp_path)
     #初始化vpp
     need_continue = "y"
-    if True == os.path.exists(vpp_path+"/vpp-20.09"):
+    if True == os.path.exists(vpp_path+"/vpp-21.10"):
         if re.search("^2\\..*", sys.version):
             need_continue = \
                 raw_input("vpp is already installed, do you want to continue[y/n]:")
@@ -177,18 +227,18 @@ def makeropensrc():
             need_continue = \
                 input("vpp is already installed, do you want to continue[y/n]:")
     if "y"==need_continue or "Y"==need_continue:
-        szErr = config_vpp("20.09", vpp_path, 
+        szErr = config_vpp("21.10", vpp_path, 
             os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
             print(szErr)
             exit(-1)
-        szErr = make_dep("20.09", vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
+        szErr = make_dep("21.10", vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
             print(szErr)
         else:
             print("config vpp sucess!")
     #生成工程
-    szErr = create_vpp_project("20.09", vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
+    szErr = create_vpp_project("21.10", vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
     if "" != szErr:
         print(szErr)
     else:
