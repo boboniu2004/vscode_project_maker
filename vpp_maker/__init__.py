@@ -110,21 +110,32 @@ def config_dpdk(vpp_ver, vpp_path, vscode_project_maker):
             "                ' -I' + meson.source_root() + '/lib/eal/include' +\n"\
             "                ' -I' + meson.build_root() +\n"\
             "                ' -I' + meson.current_source_dir(),\n"\
-            "                'modules'],\n"\
+            "           'modules'] + cross_args,\n"\
             "        depends: uio_mkfile,\n"\
             "        install: install,\n"\
             "        install_dir: kernel_install_dir,\n"\
-            "        build_by_default: get_option('enable_kmods')))\n")
+            "        build_by_default: get_option('enable_kmods'))\n")
     if ""!=err:
         return err
     #修改DPDK的CMakelist
     cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+\
         vpp_ver+"/build/external/packages/dpdk.mk")
-    dstdat = "\n\nDPDK_MESON_ARGS += \" -Denable_kmods=true\"\n\ndefine dpdk_config_cmds"+\
+    #打开内核模块编译开关
+    dstdat = "\n\nDPDK_MESON_ARGS += \"-Denable_kmods=true\"\n\nPIP_DOWNLOAD_DIR"
+    cmakedat = cmakedat.replace("\n\nPIP_DOWNLOAD_DIR", dstdat)
+    #打开igb_uio.ko的编译
+    dstdat = "\n\ndefine dpdk_config_cmds"+\
         "\n\tcp -rf "+vpp_path+"/vpp-"+vpp_ver+"/dpdk-kmods/linux/* $(dpdk_src_dir)/kernel/linux/"+\
-        " && "+"\\"
+        " && \\"+\
+        "\n\tsed -i 's/\['\"'\"'kni'\"'\"'\]/\['\"'\"'kni'\"'\"','\"'\"'igb_uio'\"'\"'\]/' $(dpdk_src_dir)/kernel/linux/meson.build"+\
+        " && \\"
     cmakedat = cmakedat.replace("\n\ndefine dpdk_config_cmds", dstdat)
-    #cmakedat = re.sub("\\n\\ndefine[ \\t]+dpdk_config_cmds.*", dstdat, cmakedat)
+    #将ko文件安装到安装目录
+    dstdat = "\n\tmeson install && \\"+\
+        "\n\tmkdir -p $(dpdk_install_dir)/lib/modules && \\"+\
+        "\n\tcp -rf $(dpdk_build_dir)/kernel/linux/igb_uio/igb_uio.ko $(dpdk_install_dir)/lib/modules/ && \\"+\
+        "\n\tcp -rf $(dpdk_build_dir)/kernel/linux/kni/rte_kni.ko $(dpdk_install_dir)/lib/modules/"
+    cmakedat = cmakedat.replace("\n\tmeson install", dstdat)
     sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+\
         "/build/external/packages/dpdk.mk", 
         cmakedat)
@@ -135,8 +146,6 @@ def config_dpdk(vpp_ver, vpp_path, vscode_project_maker):
     
 #功能：下载配置vpp；参数：无；返回：错误码
 def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
-    cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+\
-        vpp_ver+"/build/external/packages/dpdk.mk")
     if False == os.path.exists(vscode_project_maker+"/vpp-"+vpp_ver+".zip"):
         os.system("rm -rf "+vscode_project_maker+"/vpp-"+vpp_ver)
         if 0 != os.system(\
@@ -166,8 +175,18 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
     osver = maker_public.getOSName()
     if osver == "centos":
         os.system("yum erase -y epel-release.noarch")
-        if 0 != os.system("yum install -y epel-release.noarch"):
-            return "Install epel failed"
+    #修改makefile
+    makedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+vpp_ver+"/Makefile")
+    if "" != sz_err:
+        return sz_err
+    if "centos" == osver:
+        makedat = re.sub(" yum[ \\t]+install ", " yum install -y ", makedat)
+        makedat = re.sub(" yum[ \\t]+groupinstall ", " yum groupinstall -y ", makedat)
+        makedat = re.sub(" dnf[ \\t]+install ", " dnf install -y ", makedat)
+        makedat = re.sub(" dnf[ \\t]+groupinstall ", " dnf groupinstall -y ", makedat)
+    sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+"/Makefile", makedat)
+    if "" != sz_err:
+        return sz_err
     #修改CMakeLists.txt
     #cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+\
     #    vpp_ver+"/src/CMakeLists.txt")
@@ -180,7 +199,7 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
     #        cmakedat = re.sub(\
     #            "\\nfind_package[ \\t]*\\([ \\t]*Threads[^\\)]+", 
     #            "\nset(CMAKE_REQUIRED_LIBRARIES \"-lpthread \")"\
-    #            "\nfind_package(Threads REQUIRED", cmakedat)            
+    #            "\nfind_package(Threads REQUIRED", cmakedat)         
     #sz_err = maker_public.writeTxtFile(\
     #    vpp_path+"/vpp-"+vpp_ver+"/src/CMakeLists.txt", cmakedat)
     #if "" != sz_err:
