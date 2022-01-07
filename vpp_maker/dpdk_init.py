@@ -99,7 +99,7 @@ def load_driver(dirver_name, card_lst):
     if getOSName() == "ubuntu":
         dirver_path = "build-root/install-vpp_debug-native/external/lib/modules/*-generic/extra/dpdk"
     else:
-        dirver_path =  "/opt/vpp/external/x86_64/lib/modules/*.x86_64/extra/dpdk"
+        dirver_path =  "build-root/install-vpp_debug-native/external/lib/modules"
     if "" == execCmdAndGetOutput("lsmod | grep -P \"^uio[ \\t]+\""):
         if 0 != os.system("modprobe uio"):
             return "modprobe uio failed!"
