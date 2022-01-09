@@ -149,7 +149,7 @@ if __name__ == "__main__":
         print(errstr)
     else:
         print("关闭ASLR完毕")
-    if False == os.path.exists("/usr/local/dpdk/sbin/driverctl"):
+    if False == os.path.exists("driverctl"):
         #这里修改驱动、网卡、pci地址来绑定PCI设备
         errstr = load_driver("igb_uio", [["enp0s9","0000:00:09.0"]])
     else:
