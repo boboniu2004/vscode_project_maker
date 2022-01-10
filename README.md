@@ -162,9 +162,14 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 
         driverctl/driverctl -b vmbus list-overrides
 
-注意：每次调试开始后，网卡处于非激活状态，此时需要运行build-root/install-vpp_debug-native/vpp/bin/vppctl，输入命令：
+注意：
+
+1 每次调试开始后，网卡处于非激活状态，此时需要运行build-root/install-vpp_debug-native/vpp/bin/vppctl，输入命令：
 
         show hardware-interfaces
         set interface state  [卡名称] up
 
 其中卡名称从show hardw-interface命令中获取。
+
+2 在编译vpp依赖的组件IPSec_MB时，虚拟机需要的内存会超过4GB，所以需要将虚拟机内存调整为至少6GB才能顺利编译完成，否则会出现编译任务被杀死的错误。其中hyper-v虚拟机是在**设置E**-**内存**-**动态内存**-**最大RAM(A)**中进行调整，记得在创建虚拟机时需要勾选同一界面上的**启用动态内存(E)**选项；virtualbox虚拟机是在**设置**-**系统**-**主板(M)**-**内存大小(M)**中进行调整。对hyper-v虚拟机的内存调整可以直接生效，而virtualbox需要先关闭虚拟机才能进行调整生效。
+![set_vpp_memory](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/set_vpp_memory.jpg) ![virtualbox_set_vpp_memory](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vpp_memory.jpg)
