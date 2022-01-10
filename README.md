@@ -30,6 +30,8 @@
 
 第六步，创建成功的页面上点击**编辑设置(S)**。在弹出的界面中依次点击**添加硬件**->**网络适配器**->**添加(D)**，为虚拟机新建一个网卡，网卡的虚拟交换机设置为**HYPER-V-NAT-Network**；点击**检查点**，取消**启用检查点(E)**；点击**处理器**，设置处理器为物理CPU的一半(推荐)，点击**内存**，将**RAM(R)**设置为2048MB，动态内存区间设置为512M~2048M(推荐)；最后点击**确定**完成虚拟机的配置。
 
+第七步，如果需要使用DPDK、F-STACK或者VPP，需要添加额外的虚拟网卡。此时需要在hyper-v主界面上点击虚拟机，单机右键选中**设置(E)**。在弹出的界面中依次点击**添加硬件**->**网络适配器**->**添加(D)**，添加新的虚拟网卡，网卡的虚拟交换机设置为**HYPER-V-NAT-Network**；最后点击**确定**完成虚拟机的配置。
+
 最后就可以在界面上看见新建的虚拟机了，此时可以选中虚拟机，然后点击**连接**进入虚拟机界面，再点击**启动**开始安装linux。![create_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/create_vm.jpg) ![set_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/set_vm.jpg) ![start_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/start_vm.jpg)
 
 ### 安装virtual box
@@ -41,6 +43,8 @@
 第三步，双击桌面**Oracle VM VirtualBox**，在弹出的界面中点击**新建**，此时会再次弹出界面，点击**专家模式**，依次设置虚拟机的类型、内存大小、硬盘(硬盘要设置为**动态分配**，且不低于**40G**)，然后创建虚拟机。**注意：虚拟机的存储路径最好不要放置在C盘，容易把分区占满**！！！**可以在创建虚拟机时选择存储路径，或者通过全局配置修改默认存储路径**。
 
 第四步，选中界面上新创建的虚拟机，右键进入设置界面，依次修改虚拟机的可用CPU(**如果要使用DPDK，则核心数不能小于2**)，开启第二网卡，并且网络类型设置为**host only**)，在**存储**分界面中设置接下来要安装的操作系统的ISO镜像，然后保存设置。
+
+第五步，如果需要使用DPDK、F-STACK或者VPP，需要添加额外的虚拟网卡。此时单机界面上的虚拟机，右键进入设置界面，添加新的虚拟网卡，然后保存设置。
 
 最后就可以可以选中虚拟机，然后点击**启动**开始安装linux。 ![virtualbox_create_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_create_vm.jpg) ![virtualbox_create_vm_hd](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_create_vm_hd.jpg) ![virtualbox_set_vm_cpu](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vm_cpu.jpg) ![virtualbox_set_vm_net](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vm_net.jpg) ![virtualbox_set_vm_iso](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vm_iso.jpg)
 
@@ -122,7 +126,7 @@ hyper-v可以在管理界面设置开机自启动；virtualbox需要修改**vsco
 其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。
 
 # 配置DPDK
-在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，则可以安装DPDK开发环境。此时可以在vscode_project_maker目录下运行如下命令：
+在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，则可以安装DPDK开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
 
         python3 osenv_maker.py config_DPDK install/uninstall
 
@@ -141,7 +145,7 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 # 编译调试工程
 
 # 创建f-stack开发环境
-在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，且已经正确安装了DPDK到/usr/local/dpdk下，则可以配置f-stack开发环境。此时可以在vscode_project_maker目录下运行如下命令：
+在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，且已经正确安装了DPDK到/usr/local/dpdk下，则可以配置f-stack开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
 
         python3 opensrc_maker.py f-stack [f-stack_project_path]
 
@@ -150,7 +154,7 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
         /usr/local/dpdk/sbin/driverctl/driverctl -b vmbus list-overrides
 
 # 创建vpp开发环境
-在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，则可以配置vpp开发环境。此时可以在vscode_project_maker目录下运行如下命令：
+在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，则可以配置vpp开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
 
         python3 opensrc_maker.py vpp [f-stack_project_path]
 
