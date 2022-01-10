@@ -28,7 +28,7 @@
 
 第五步，虚拟机管理界面中选中**快速创建...**：在弹出的对话框中点击**更改安装源(I)...**，选择centos7_x86-64、centos8_x86-64、ubuntu18.04_x86-64/ubuntu20.04_x86-64镜像；取消**此虚拟机将运行Windows(启用Windows Secure Boot)**；点击**更多选项(R)**修改虚拟机的名称。上面三步做好后就可以点击**创建虚拟机(V)**按钮来创建虚拟机。这里需要说明一下，因为网络的原因，可能出现一直无法点击**创建虚拟机(V)**的情况，此时只需要断开windows 10的网络，重新创建虚拟机即可。
 
-第六步，创建成功的页面上点击**编辑设置(S)**。在弹出的界面中依次点击**添加硬件**->**网络适配器**->**添加(D)**，为虚拟机新建一个网卡，网卡的虚拟交换机设置为**HYPER-V-NAT-Network**；点击**检查点**，取消**启用检查点(E)**；点击**处理器**，设置处理器为物理CPU的一半(推荐)，点击**内存**，将**RAM(R)**设置为2048MB，动态内存区间设置为512M~2048M(推荐)；最后点击**确定**完成虚拟机的配置。
+第六步，创建成功的页面上点击**编辑设置(S)**。在弹出的界面中依次点击**添加硬件**->**网络适配器**->**添加(D)**，为虚拟机新建一个网卡，网卡的虚拟交换机设置为**HYPER-V-NAT-Network**；点击**检查点**，取消**启用检查点(E)**；点击**处理器**，设置处理器为物理CPU的一半(推荐)，点击**内存**，将**RAM(R)**设置为4096MB，动态内存区间设置为512M~4096M(推荐，编译vpp的虚拟机内存不能低于6144M)；最后点击**确定**完成虚拟机的配置。
 
 第七步，如果需要使用DPDK、F-STACK或者VPP，需要添加额外的虚拟网卡。此时需要在hyper-v主界面上点击虚拟机，单机右键选中**设置(E)**。在弹出的界面中依次点击**添加硬件**->**网络适配器**->**添加(D)**，添加新的虚拟网卡，网卡的虚拟交换机设置为**HYPER-V-NAT-Network**；最后点击**确定**完成虚拟机的配置。
 
@@ -40,11 +40,11 @@
 第二步，双击安装包进入安装界面，需要自己选择一下安装路径!，在安装过程中会提示新增通用串行总线，此时要点击**安装**。**注意：安装过程可能会暂时断网**！ 
 ![virtualbox_path_select](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_path_select.jpg) ![virtualbox_install_bus](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_install_bus.jpg)
 
-第三步，双击桌面**Oracle VM VirtualBox**，在弹出的界面中点击**新建**，此时会再次弹出界面，点击**专家模式**，依次设置虚拟机的类型、内存大小、硬盘(硬盘要设置为**动态分配**，且不低于**40G**)，然后创建虚拟机。**注意：虚拟机的存储路径最好不要放置在C盘，容易把分区占满**！！！**可以在创建虚拟机时选择存储路径，或者通过全局配置修改默认存储路径**。
+第三步，双击桌面**Oracle VM VirtualBox**，在弹出的界面中点击**新建**，此时会再次弹出界面，点击**专家模式**，依次设置虚拟机的类型、内存大小(编译vpp的虚拟机内存不能低于6144M)、硬盘(硬盘要设置为**动态分配**，且不低于**40G**)，然后创建虚拟机。**注意：虚拟机的存储路径最好不要放置在C盘，容易把分区占满**！！！**可以在创建虚拟机时选择存储路径，或者通过全局配置修改默认存储路径**。
 
 第四步，选中界面上新创建的虚拟机，右键进入设置界面，依次修改虚拟机的可用CPU(**如果要使用DPDK，则核心数不能小于2**)，开启第二网卡，并且网络类型设置为**host only**)，在**存储**分界面中设置接下来要安装的操作系统的ISO镜像，然后保存设置。
 
-第五步，如果需要使用DPDK、F-STACK或者VPP，需要添加额外的虚拟网卡。此时单机界面上的虚拟机，右键进入设置界面，添加新的虚拟网卡，然后保存设置。
+第五步，如果需要使用DPDK、f-stack或者vpp，需要添加额外的虚拟网卡。此时单机界面上的虚拟机，右键进入设置界面，添加新的虚拟网卡，然后保存设置。
 
 最后就可以可以选中虚拟机，然后点击**启动**开始安装linux。 ![virtualbox_create_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_create_vm.jpg) ![virtualbox_create_vm_hd](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_create_vm_hd.jpg) ![virtualbox_set_vm_cpu](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vm_cpu.jpg) ![virtualbox_set_vm_net](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vm_net.jpg) ![virtualbox_set_vm_iso](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vm_iso.jpg)
 
