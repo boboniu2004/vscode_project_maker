@@ -97,7 +97,7 @@ def close_ASLR():
 #功能：加载网卡驱动；参数：dirver_name驱动名称，card_lst网卡名称链表；返回：错误码
 def load_driver(dirver_name, card_lst):
     if getOSName() == "ubuntu":
-        dirver_path = "build-root/install-vpp_debug-native/external/lib/modules/*-generic/extra/dpdk"
+        dirver_path = "build-root/install-vpp_debug-native/external/lib/modules"
     else:
         dirver_path =  "build-root/install-vpp_debug-native/external/lib/modules"
     if "" == execCmdAndGetOutput("lsmod | grep -P \"^uio[ \\t]+\""):
@@ -144,11 +144,11 @@ if __name__ == "__main__":
         print(errstr)
     else:
         print("初始化巨页完毕")
-    errstr = close_ASLR()
-    if "" != errstr:
-        print(errstr)
-    else:
-        print("关闭ASLR完毕")
+    #errstr = close_ASLR()
+    #if "" != errstr:
+    #    print(errstr)
+    #else:
+    #    print("关闭ASLR完毕")
     if False == os.path.exists("driverctl"):
         #这里修改驱动、网卡、pci地址来绑定PCI设备
         errstr = load_driver("igb_uio", [["enp0s9","0000:00:09.0"]])

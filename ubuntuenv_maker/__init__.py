@@ -141,7 +141,7 @@ def configGit():
 
 #configGcc 配置GCC；参数：无；返回：错误描述
 def configGcc():
-    if 0 != os.system("apt-get -y install gcc"):
+    if 0 != os.system("apt-get -y install gcc gdb"):
         return "Install gcc failed"
     return ""
 

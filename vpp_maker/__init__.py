@@ -12,9 +12,11 @@ import maker_public
 def make_dep(vpp_ver, vpp_path, vscode_project_maker):
     if maker_public.getOSName()=="ubuntu":
         os.system("apt-get --purge autoremove vpp-ext-deps.x86_64")
+        os.system("cd "+vpp_path+"/vpp-"+vpp_ver+" && make UNATTENDED=y install-dep")
     else:
         os.system("yum -y erase vpp-ext-deps.x86_64")
-    os.system("cd "+vpp_path+"/vpp-"+vpp_ver+" && make install-dep")
+        os.system("cd "+vpp_path+"/vpp-"+vpp_ver+" && make install-dep")
+    
     return ""
 
 
