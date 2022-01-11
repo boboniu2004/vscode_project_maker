@@ -125,12 +125,12 @@ hyper-v可以在管理界面设置开机自启动；virtualbox需要修改**vsco
         
 其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。
 
-# 配置DPDK
+# 配置DPDK和hyperscan
 在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，则可以安装DPDK开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
 
         python3 osenv_maker.py config_DPDK install/uninstall
 
-其中的install为安装DPDK环境到/usr/local/dpdk中去，uninstall为卸载/usr/local/dpdk目录。默认会配置256个2M大小的巨页；驱动放置在/usr/local/dpdk/kernel下。同时还会附加安装hyperscan。
+其中的install为安装DPDK环境到/usr/local/dpdk中去，uninstall为卸载/usr/local/dpdk目录。默认会配置256个2M大小的巨页；驱动放置在/usr/local/dpdk/kernel下。该命令同时还会安装/卸载hyperscan。
 
 # 新建工程
 目前可以通过vscode_project_maker创建c、c++、python、java、golang开发工程。可以在vscode_project_maker目录下运行如下命令创建：
@@ -149,27 +149,31 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 
         python3 opensrc_maker.py f-stack [f-stack_project_path]
 
-安装完毕后，需要重启虚拟机，然后就可以使用vscode打开f-stack开发目录，首先运行**gcc install active file**任务生成debug调试目录，该目录中可以修改f-stack和nginx的配置。后续就可以使用vscode进行集成开发和调试了，非常方便。如果在hyper-v环境下的centos8/ubuntu20.04系统下想查看已经绑定的设备，可以运行命令：
+安装完毕后，需要重启虚拟机，然后就可以使用vscode打开f-stack开发目录，首先运行**gcc clean active file**任务重新配置，然后运行**gcc install active file**任务生成debug调试目录，该目录中可以修改f-stack和nginx的配置。后续就可以使用vscode进行集成开发和调试了，非常方便。开机后第一次调试前需要运行**gcc init active file**任务初始化dpdk环境，如果在hyper-v环境下的centos8/ubuntu20.04系统下想查看已经绑定的设备，可以运行命令：
 
         /usr/local/dpdk/sbin/driverctl/driverctl -b vmbus list-overrides
+
+如果没有绑定任何设备，那么可能是LINUX内核进行了升级导致DPDK的内核模块失效了，此时需要重新安装DPDK，可以参见章节**配置DPDK**。
 
 # 创建vpp开发环境
 在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，则可以配置vpp开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
 
         python3 opensrc_maker.py vpp [f-stack_project_path]
 
-安装完毕后，然后就可以使用vscode打开vpp开发目录，每次运行**gcc init active file**任务初始化dpdk环境，该目录中的build-root/install-vpp_debug-native/vpp/etc/startup.conf中可以修改vpp配置。后续就可以使用vscode进行集成开发和调试了，非常方便。如果在hyper-v环境下的centos8/ubuntu20.04系统下想查看已经绑定的设备，可以运行命令：
+安装完毕后，然后就可以使用vscode打开vpp开发目录，该目录中的build-root/install-vpp_debug-native/vpp/etc/startup.conf中可以修改vpp配置。后续就可以使用vscode进行集成开发和调试了，非常方便。开机后第一次调试前需要运行**gcc init active file**任务初始化dpdk环境，如果在hyper-v环境下的centos8/ubuntu20.04系统下想查看已经绑定的设备，可以运行命令：
 
         driverctl/driverctl -b vmbus list-overrides
 
 注意：
 
-1 每次调试开始后，网卡处于非激活状态，此时需要运行build-root/install-vpp_debug-native/vpp/bin/vppctl，输入命令：
+1 如果driverctl/driverctl命令没有绑定任何设备，那么可能是LINUX内核进行了升级导致DPDK的内核模块失效了，此时需要重新安装vpp的依赖，可以运行**gcc clean active file**任务清理vpp环境，然后运行**gcc build active file**任务重新编译vpp。
+
+2 每次调试开始后，网卡处于非激活状态，此时需要运行build-root/install-vpp_debug-native/vpp/bin/vppctl，输入命令：
 
         show hardware-interfaces
         set interface state  [卡名称] up
 
 其中卡名称从show hardw-interface命令中获取。
 
-2 在编译vpp依赖的组件IPSec_MB时，虚拟机需要的内存会超过4GB，所以需要将虚拟机内存调整为至少6GB才能顺利编译完成，否则会出现编译任务被杀死的错误。其中hyper-v虚拟机是在**设置E**-**内存**-**动态内存**-**最大RAM(A)**中进行调整，记得在创建虚拟机时需要勾选同一界面上的**启用动态内存(E)**选项；virtualbox虚拟机是在**设置**-**系统**-**主板(M)**-**内存大小(M)**中进行调整。对hyper-v虚拟机的内存调整可以直接生效，而virtualbox需要先关闭虚拟机才能进行调整生效。
+3 在编译vpp依赖的组件IPSec_MB时，虚拟机需要的内存会超过4GB，所以需要将虚拟机内存调整为至少6GB才能顺利编译完成，否则会出现编译任务被杀死的错误。其中hyper-v虚拟机是在**设置E**-**内存**-**动态内存**-**最大RAM(A)**中进行调整，记得在创建虚拟机时需要勾选同一界面上的**启用动态内存(E)**选项；virtualbox虚拟机是在**设置**-**系统**-**主板(M)**-**内存大小(M)**中进行调整。对hyper-v虚拟机的内存调整可以直接生效，而virtualbox需要先关闭虚拟机才能进行调整生效。
 ![set_vpp_memory](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/set_vpp_memory.jpg) ![virtualbox_set_vpp_memory](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vpp_memory.jpg)
