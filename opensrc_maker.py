@@ -12,13 +12,16 @@ import vpp_maker
 #函数参数：可执行文件全路径，启动时加入的参数
 #函数返回：执行成功返回0，否则返回负值的错误码
 if __name__ == "__main__":
-    error = "opensrc_maker:  opensrc[f-stack|vpp] [private parameter]"
+    error = "opensrc_maker: [f-stack|vpp] [private parameter]"
     #获取发行版本
     if 2>len(sys.argv):
         print(error)
+        exit(-1)
     elif "f-stack"==sys.argv[1]:
-        fstack_maker.makeropensrc()
+        error = fstack_maker.makeropensrc()
     elif "vpp"==sys.argv[1]:
-        vpp_maker.makeropensrc()
-    else:
+        error  = vpp_maker.makeropensrc()
+    if ""!=error:
         print(error)
+        exit(-1)
+    exit(0)

@@ -7,88 +7,47 @@ import os
 import maker_public
 
 
-#功能：加载巨页；参数：无；返回：错误码
-def using_hugepage():
-    #设置巨页
-    node_info = maker_public.execCmdAndGetOutput("ls /sys/devices/system/node/"
-        " | grep -P \"^node\\d+$\" | sort -u").split("\n")
-    if 2 >= len(node_info):#这里2的原因是最后结束行是空行
-        os.system("echo 256 > /sys/kernel/mm/hugepages/hugepages-2048kB/"
-            "nr_hugepages")
-    else:
-        for cur_nd in node_info:
-            os.system("echo 256 > /sys/devices/system/node/"+cur_nd+"/"
-                "hugepages/hugepages-2048kB/nr_hugepages")
-    #加载巨页文件
-    if True == os.path.isdir("/mnt/huge"):
-        os.system("umount -f /mnt/huge")
-    if True == os.path.exists("/mnt/huge"):
-        os.system("rm -Rf /mnt/huge")
-    szErr = maker_public.makeDirs("/mnt/huge")
-    if "" != szErr:
-        return szErr
-    if 0 != os.system("mount -t hugetlbfs nodev /mnt/huge"):
-        return "mount /mnt/huge failed!"
+#功能：配置f-stack下的tools中的makefile；参数：无；返回：错误码
+def config_tools(fstack_path):
+    #修改tools下的makefile
+    #修改compat
+    makedat,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack"+"/tools/compat/Makefile")
+    if "" != sz_err:
+        return "config f-stack tools failed"
+    makedat = re.sub("\\n\\n\\$\\{OBJS\\}:.*", \
+        "\n\n${OBJS}: %.o: %.c ${TOPDIR}/lib/ff_msg.h", makedat)
+    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/tools/compat/Makefile", makedat)
+    if "" != sz_err:
+        return "config f-stack tools failed"
+    #修改prog.mk
+    makedat,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack"+"/tools/prog.mk")
+    if "" != sz_err:
+        return "config f-stack tools failed"
+    makedat = re.sub("\\n\\n\\$\\{PROG\\}:.*", "\n\n${PROGDIR}/${PROG}: ${HEADERS} ${OBJS} "\
+        "${TOPDIR}/tools/compat/libffcompat.a", makedat)
+    makedat = re.sub("\\nall:[ ]+\\$\\{PROG\\}.*", "\nall: ${PROGDIR}/${PROG}", makedat)
+    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/tools/prog.mk", makedat)
+    if "" != sz_err:
+        return "config f-stack tools failed"
     return ""
 
-
-#功能：关闭ASLR；参数：无；返回：错误码
-def close_ASLR():
-    if os.system("echo 0 > /proc/sys/kernel/randomize_va_space"):
-        return "close ASLR failed!"
-    return ""
-
-#功能：加载网卡驱动；参数：dirver_name驱动名称，card_lst网卡名称链表；返回：错误码
-def load_driver(dirver_name, card_lst):
-    if "" == maker_public.execCmdAndGetOutput("lsmod | grep -P \"^uio[ \\t]+\""):
-        if 0 != os.system("modprobe uio"):
-            return "modprobe uio failed!"
-    if "" == maker_public.execCmdAndGetOutput("lsmod | grep -P \"^"+dirver_name+"[ \\t]+\""):
-        if 0 != os.system("insmod /usr/local/dpdk/kmod/"+dirver_name+".ko"):
-            return "insmod "+dirver_name+" failed!"
-    if "" == maker_public.execCmdAndGetOutput("lsmod | grep -P \"^rte_kni[ \\t]+\""):
-        if 0 != os.system("insmod /usr/local/dpdk/kmod/rte_kni.ko carrier=on"):
-            os.system("rmmod "+dirver_name)
-            return "insmod rte_kni failed!"
-    #绑定网卡
-    if False == os.path.exists("/usr/local/dpdk/sbin/driverctl"):
-        for cur_card in card_lst:
-            card_name = cur_card[0]
-            card_addr = cur_card[1]
-            if ""!=card_name and "" != maker_public.execCmdAndGetOutput("python3 /usr/local"
-                "/dpdk/sbin/dpdk-devbind --status-dev net | grep \"if="+
-                card_name+"\""):
-                os.system("ifconfig "+card_name+" down")
-            if "" != maker_public.execCmdAndGetOutput("python3 /usr/local/dpdk/sbin/dpdk-devbind "
-                "--status-dev net | grep -P \""+card_addr+"[ \\t]+'.+'[ \\t]+drv=.+"
-                "[ \\t]unused=.+\""):
-                os.system("python3 /usr/local/dpdk/sbin/dpdk-devbind -u "
-                    +card_addr)
-            os.system("python3 /usr/local/dpdk/sbin/dpdk-devbind --b "+
-                dirver_name+" "+card_addr)        
-        os.system("python3 /usr/local/dpdk/sbin/dpdk-devbind --status-dev net")
-    else:
-        for cur_card in card_lst:
-            card_name = cur_card[0]
-            os.system("cd /usr/local/dpdk/sbin/driverctl && "\
-                "DEV_UUID=$(basename $(readlink /sys/class/net/"+card_name+"/device)) && "\
-                "./driverctl -b vmbus set-override $DEV_UUID uio_hv_generic")
-        os.system("cd /usr/local/dpdk/sbin/driverctl && ./driverctl -b vmbus list-overrides")
-    return ""
-
-
-#功能：下载胚子f-stack；参数：无；返回：错误码
+#功能：下载配置f-stack；参数：无；返回：错误码
 def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
     if False == os.path.exists(vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
         if 0 != os.system("wget https://ghproxy.com/github.com/F-Stack/f-stack/archive/refs/tags/"
             "v"+fstack_ver+".zip -O "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
             os.system("rm -f "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
             return "Failed to download f-stack-"+fstack_ver
-    if False == os.path.exists(fstack_path+"/f-stack-"+fstack_ver):
+    if False == os.path.exists(fstack_path+"/f-stack"):
         os.system("unzip -d "+fstack_path+"/ "+
             vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
+        if 0!=os.system("mv  "+fstack_path+"/f-stack-"+fstack_ver+" "+fstack_path+"/f-stack"):
+            return "Failed to unzip "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip"
+    if 0 != os.system("cp -rf "+vscode_project_maker+\
+        "/vpp_maker/dpdk_init.py "+fstack_path+"/f-stack"+"/"):
+        return "cp dpdk_init.py failed"
     #修改lib下的makefile
-    lib_make,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/lib/Makefile")
+    lib_make,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack"+"/lib/Makefile")
     if "" != sz_err:
         return "config f-stack failed"
     if 0 >= len(re.findall("\\n#DEBUG[ \\t]*=|\\nDEBUG[ \\t]*=", lib_make)):
@@ -97,14 +56,22 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
         return "can not find FF_IPFW"
     lib_make = re.sub("\\n#DEBUG[ \\t]*=", "\nDEBUG=", lib_make)
     lib_make = re.sub("\\n#FF_IPFW[ \\t]*=[ \\t]*1", "\nFF_IPFW=1", lib_make)
-    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/lib/Makefile", lib_make)
+    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/lib/Makefile", lib_make)
+    if "" != sz_err:
+        return "config f-stack failed"
+    #修改tools下的makefile
+    sz_err = config_tools(fstack_path)
     if "" != sz_err:
         return "config f-stack failed"
     #配置nginx
+    nginx_path = maker_public.execCmdAndGetOutput(\
+        "cd "+fstack_path+"/f-stack"+"/app/nginx-* && pwd").replace("\n", "")
+    if "" == nginx_path:
+        return "config f-stack failed"
     cwd_dir = os.getcwd()
     try:
-        os.chdir(fstack_path+"/f-stack-"+fstack_ver+"/app/nginx-1.16.1")
-        if 0 != os.system("./configure --prefix="+fstack_path+"/f-stack-"+fstack_ver+"/debug "
+        os.chdir(nginx_path)
+        if 0 != os.system("./configure --prefix="+fstack_path+"/f-stack"+"/debug "
             "--with-debug --with-stream --with-stream_ssl_module "
             "--with-ff_module --with-stream_ssl_preread_module "
             "--with-http_v2_module"):
@@ -116,53 +83,56 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
     finally:
         os.chdir(cwd_dir)
     #为f-stack生成总的make文件
+    cpunum = str(os.cpu_count())
     fstack_make = \
         "update:"\
-	        "\n\tcd ./lib && make"\
-	        "\n\tcd ./app/nginx-1.16.1 && make"\
-            "\n\tcp -rf ./app/nginx-1.16.1/objs/nginx "+fstack_path+"/f-stack-"+fstack_ver+"/debug/sbin/"\
+            "\n\trm -rf ./example/helloworld*"\
+            "\n\trm -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx"\
+	        "\n\tcd ./lib && make"+" -j "+cpunum+\
+	        "\n\tcd ./tools && make"+" -j "+cpunum+\
+            "\n\tcd ./example && make"+" -j "+cpunum+\
+	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make"+" -j "+cpunum+\
+            "\n\tcp -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx "+fstack_path+"/f-stack"+"/debug/sbin/"\
             "\n\n"\
         "clean:"\
 	        "\n\tcd ./lib && make clean"\
 	        "\n\tcd ./tools && make clean"\
-	        "\n\tcd ./app/nginx-1.16.1 && make clean"\
-            "\n\tcd ./app/nginx-1.16.1 && ./configure --prefix="+fstack_path+"/f-stack-"+fstack_ver+"/debug "\
+            "\n\tcd ./example && make clean"\
+	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make clean"\
+            "\n\tcd ./app/"+os.path.basename(nginx_path)+" && ./configure --prefix="+fstack_path+"/f-stack"+"/debug "\
             "--with-debug --with-stream --with-stream_ssl_module "\
             "--with-ff_module --with-stream_ssl_preread_module "\
             "--with-http_v2_module"\
-            "\n\tsed -i \"s/ -Os / -O0 /\" ./app/nginx-1.16.1/objs/Makefile"\
-            "\n\tsed -i \"s/ -g / -g3 /\" ./app/nginx-1.16.1/objs/Makefile"\
+            "\n\tsed -i \"s/ -Os / -O0 /\" ./app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
+            "\n\tsed -i \"s/ -g / -g3 /\" ./app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
             "\n\n"\
         "install:"\
-	        "\n\tcd ./lib && make"\
-	        "\n\tcd ./tools && make"\
-            "\n\tcd ./example && make"\
-	        "\n\tcd ./app/nginx-1.16.1 && make"\
-	        "\n\tmkdir -p "+fstack_path+"/f-stack-"+fstack_ver+"/debug/net-tools"\
-	        "\n\tcp -rf ./tools/sbin/* "+fstack_path+"/f-stack-"+fstack_ver+"/debug/net-tools/"\
-	        "\n\tcd ./app/nginx-1.16.1 && make install"\
-            "\n\tcp -rf ./config.ini "+fstack_path+"/f-stack-"+fstack_ver+"/debug/conf/f-stack.conf"\
-            "\n\n"\
-        "uninstall:"\
-	        "\n\trm -rf "+fstack_path+"/f-stack-"+fstack_ver+"/debug/*"\
+            "\n\trm -rf ./example/helloworld*"\
+            "\n\trm -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx"\
+	        "\n\tcd ./lib && make"+" -j "+cpunum+\
+	        "\n\tcd ./tools && make"+" -j "+cpunum+\
+            "\n\tcd ./example && make"+" -j "+cpunum+\
+	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make"+" -j "+cpunum+\
+	        "\n\tmkdir -p "+fstack_path+"/f-stack"+"/debug/net-tools"\
+	        "\n\tcp -rf ./tools/sbin/* "+fstack_path+"/f-stack"+"/debug/net-tools/"\
+	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make install"\
+            "\n\tcp -rf ./config.ini "+fstack_path+"/f-stack"+"/debug/conf/f-stack.conf"\
             "\n"
-    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/makefile", fstack_make)
+    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/makefile", fstack_make)
     if "" != sz_err:
         return "config f-stack failed" 
     return ""
 
 
 #功能：制作f-stack工程；参数：无；返回：错误码
-def create_fstack_project(fstack_ver, fstack_path, vscode_project_maker):
-    if 0 != os.system("python3 "+vscode_project_maker+
-        "/__init__.py c app /tmp/nginx"):
+def create_fstack_project(fstack_path, vscode_project_maker):
+    if 0 != os.system("python3 "+vscode_project_maker+"/__init__.py c app /tmp/nginx"):
         os.system("rm -rf /tmp/nginx")
         return "create f-stack project failed"
-    os.system("cp -rf /tmp/nginx/.vscode "+
-        fstack_path+"/f-stack-"+fstack_ver+"/")
+    os.system("cp -rf /tmp/nginx/.vscode "+fstack_path+"/f-stack"+"/")
     os.system("rm -rf /tmp/nginx")
     #替换工作目录
-    launch,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/.vscode/"
+    launch,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack"+"/.vscode/"\
         "launch.json")
     if "" != sz_err:
         return "create f-stack project failed"
@@ -170,12 +140,12 @@ def create_fstack_project(fstack_ver, fstack_path, vscode_project_maker):
         "${workspaceFolder}/debug/sbin", launch)
     launch = re.sub("\"\\$\\{workspaceFolder\\}\"", 
         "\"${workspaceFolder}/debug/sbin\"", launch)
-    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/.vscode/"
+    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/.vscode/"\
         "launch.json", launch)
     if "" != sz_err:
         return "create f-stack project failed"
     #替换编译TAG
-    tasks,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/.vscode/"
+    tasks,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack"+"/.vscode/"\
         "tasks.json")
     if "" != sz_err:
         return "create f-stack project failed"
@@ -203,15 +173,34 @@ def create_fstack_project(fstack_ver, fstack_path, vscode_project_maker):
             "\n                \"isDefault\": true"\
             "\n            }"\
             "\n        },"
+            "\n        {"\
+            "\n            \"type\": \"shell\","\
+            "\n            \"label\": \"gcc init active file\","\
+            "\n            \"command\": \"/usr/bin/python3\","\
+            "\n            \"args\": ["\
+            "\n                \"${workspaceFolder}/dpdk_init.py\","\
+            "\n                \"f-stack\","\
+            "\n            ],"\
+            "\n            \"options\": {"\
+            "\n                \"cwd\": \"${workspaceFolder}\""\
+            "\n            },"\
+            "\n            \"problemMatcher\": ["\
+            "\n                \"$gcc\""\
+            "\n            ],"\
+            "\n            \"group\": {"\
+            "\n                \"kind\": \"build\","\
+            "\n                \"isDefault\": true"\
+            "\n            }"\
+            "\n        },"
         , tasks)
-    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+"/.vscode/"
+    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/.vscode/"\
         "tasks.json", tasks)
     if "" != sz_err:
         return "create f-stack project failed"
     return ""
 
 #功能：制作f-stack工程；参数：无；返回：错误码
-def correct_fstack_code(fstack_ver, fstack_path):
+def correct_fstack_code(fstack_path):
     match_type = ""
     #查找
     time_path = "/usr/include/x86_64-linux-gnu/sys/time.h"
@@ -235,8 +224,12 @@ def correct_fstack_code(fstack_ver, fstack_path):
     else:
         match_type = "ubuntu"
     #替换
-    ff_mod_cont,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack-"+fstack_ver+
-        "/app/nginx-1.16.1/src/event/modules/ngx_ff_module.c")
+    nginx_path = maker_public.execCmdAndGetOutput(\
+        "cd "+fstack_path+"/f-stack"+"/app/nginx-* && pwd").replace("\n", "")
+    if "" == nginx_path:
+        return "config f-stack failed"
+    ff_mod_cont,sz_err = maker_public.readTxtFile(nginx_path+\
+        "/src/event/modules/ngx_ff_module.c")
     if ""!=sz_err:
         return sz_err
     if "ubuntu" == match_type:
@@ -246,22 +239,22 @@ def correct_fstack_code(fstack_ver, fstack_path):
         ff_mod_cont = re.sub("gettimeofday[ \\t\\n]*\\(([^\\)]+)", 
             "gettimeofday(struct timeval *__restrict tv, __timezone_ptr_t tz", 
             ff_mod_cont, 1)        
-    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack-"+fstack_ver+
-        "/app/nginx-1.16.1/src/event/modules/ngx_ff_module.c", ff_mod_cont)
+    sz_err = maker_public.writeTxtFile(nginx_path+\
+        "/src/event/modules/ngx_ff_module.c", ff_mod_cont)
     return sz_err
 
 #功能：导入路径参数；参数：无；返回：错误码
-def export_path(fstack_ver, fstack_path):
+def export_path(fstack_path):
     #读取
     profile,sz_err = maker_public.readTxtFile(os.environ["HOME"]+"/.bashrc")
     if "" != sz_err:
         return sz_err
     #修改
     if 0 >= len(re.findall("\nexport[ \\t]+FF_PATH[ \\t]*=.+", profile)):
-        profile += "\nexport FF_PATH="+fstack_path+"/f-stack-"+fstack_ver
+        profile += "\nexport FF_PATH="+fstack_path+"/f-stack"
     else:
         profile = re.sub("\nexport[ \\t]+FF_PATH[ \\t]*=.+", 
-            "\nexport FF_PATH="+fstack_path+"/f-stack-"+fstack_ver, profile)
+            "\nexport FF_PATH="+fstack_path+"/f-stack", profile)
     if 0 >= len(re.findall("\nexport[ \\t]+FF_DPDK[ \\t]*=.+", profile)):
         profile += "\nexport FF_DPDK=/usr/local/dpdk"
     else:
@@ -274,40 +267,20 @@ def export_path(fstack_ver, fstack_path):
     return ""
 
 
-#功能：主函数；参数：无；返回：无
+#功能：主函数；参数：无；返回：错误描述
 def makeropensrc():
     fstack_path = os.getcwd()
     if 2<len(sys.argv):
         fstack_path = sys.argv[2]
-    if False==os.path.isdir(fstack_path):
-        print("Invaild f-stack path")
-        return
     fstack_path = os.path.realpath(fstack_path)
+    if False==os.path.isdir(fstack_path):
+        return "Invaild f-stack path"
     #检测是否安装了DPDK
     if False == os.path.exists("/usr/local/dpdk"):
-        print("please install DPDK")
-        return
-    szErr = using_hugepage()
-    if "" != szErr:
-        print(szErr)
-    else:
-        print("using hugepage sucess!")
-    szErr = close_ASLR()
-    if "" != szErr:
-        print(szErr)
-    else:
-        print("close ASLR sucess!")
-    if False == os.path.exists("/usr/local/dpdk/sbin/driverctl"):
-        szErr = load_driver("igb_uio", [["enp0s9","0000:00:09.0"]])
-    else:
-        szErr = load_driver("igb_uio", [["eth2"],["eth3"]])
-    if "" != szErr:
-        print(szErr)
-    else:
-        print("load driver sucess!")
+        return "please install DPDK"
     #初始化f-stack
     need_continue = "y"
-    if True == os.path.exists(fstack_path+"/f-stack-1.21"):
+    if True == os.path.exists(fstack_path+"/f-stack"):
         if re.search("^2\\..*", sys.version):
             need_continue = \
                 raw_input("f-stack is already installed, do you want to continue[y/n]:")
@@ -315,25 +288,21 @@ def makeropensrc():
             need_continue = \
                 input("f-stack is already installed, do you want to continue[y/n]:")
     if "y"==need_continue or "Y"==need_continue:
-        szErr = config_fstack("1.21", fstack_path, 
-            os.environ["HOME"]+"/vscode_project_maker")
+        szErr = config_fstack("1.21", fstack_path, os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
-            print(szErr)
-        else:
-            print("config f-stack sucess!")
-        szErr = create_fstack_project("1.21", fstack_path, 
-            os.environ["HOME"]+"/vscode_project_maker")
+            return szErr
+        print("config f-stack sucess!")
+        szErr = create_fstack_project(fstack_path, os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
-            print(szErr)
-        else:
-            print("create f-stack project sucess!")
-        szErr = correct_fstack_code("1.21", fstack_path)
+            return szErr
+        print("create f-stack project sucess!")
+        szErr = correct_fstack_code(fstack_path)
         if "" != szErr:
-            print(szErr)
-        else:
-            print("correct fstack code sucess!")
-        szErr = export_path("1.21", fstack_path)
+            return szErr
+        print("correct fstack code sucess!")
+        szErr = export_path(fstack_path)
         if "" != szErr:
-            print(szErr)
-        else:
-            print("export path sucess!")
+            return szErr
+        print("export path sucess!")
+    #
+    return ""

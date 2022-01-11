@@ -40,7 +40,7 @@ if __name__ == "__main__":
                 szErr = "Invaild OS"
     elif 1<len(sys.argv) and None==re.match("^\\d+\\.\\d+\\.\\d+\\.\\d+$",
         sys.argv[1]):
-        szErr = "vs_progject_maker: null|config_IP [xx.xx.xx.xx]|"\
+        szErr = "osenv_maker: null|config_IP [xx.xx.xx.xx]|"\
             "config_DPDK [install/uninstall]|config_DPDK-meson [install/uninstall]"
     else:
         if "centos" == szOSName:
@@ -51,6 +51,7 @@ if __name__ == "__main__":
             szErr = "Invaild OS"
     if 0 < len(szErr):
         print(szErr)
+        exit(-1)
     elif 2<len(sys.argv) and "config_IP"==sys.argv[1]:
         print("Config IP finish")
     elif 2<len(sys.argv) and -1!=str(sys.argv[1]).find("config_DPDK"):
@@ -61,3 +62,4 @@ if __name__ == "__main__":
     else:
         input("make development environment of %s finish, press any key to reboot..." %(szOSName))
         os.system("reboot")
+    exit(0)

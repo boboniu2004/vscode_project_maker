@@ -85,3 +85,4 @@ if __name__ == "__main__":
         exit(-1)
     #打印生成成功信息
     print("Create %s_%s_workespace(%s) sucess\n" %(szLangType, szAppType, szProjPath))
+    exit(0)

@@ -9,28 +9,27 @@ import maker_public
 
 
 #功能：安装依赖；参数：无；返回：错误码
-def make_dep(vpp_ver, vpp_path, vscode_project_maker):
+def make_dep(vpp_path):
     if maker_public.getOSName()=="ubuntu":
         os.system("apt-get --purge autoremove vpp-ext-deps.x86_64")
-        os.system("cd "+vpp_path+"/vpp-"+vpp_ver+" && make UNATTENDED=y install-dep")
+        if 0!=os.system("cd "+vpp_path+"/vpp && make UNATTENDED=y install-dep"):
+            return "make install-dep failed!"
     else:
         os.system("yum -y erase vpp-ext-deps.x86_64")
-        os.system("cd "+vpp_path+"/vpp-"+vpp_ver+" && make install-dep")
-    
+        if 0 != os.system("cd "+vpp_path+"/vpp && make install-dep"):
+            return "make install-dep failed!"
     return ""
 
 
 #功能：制作vpp工程；参数：无；返回：错误码
-def create_vpp_project(vpp_ver, vpp_path, vscode_project_maker):
-    if 0 != os.system("python3 "+vscode_project_maker+
-        "/__init__.py c app /tmp/vpp"):
+def create_vpp_project(vpp_path, vscode_project_maker):
+    if 0 != os.system("python3 "+vscode_project_maker+"/__init__.py c app /tmp/vpp"):
         os.system("rm -rf /tmp/vpp")
         return "create vpp project failed"
-    os.system("cp -rf /tmp/vpp/.vscode "+
-        vpp_path+"/vpp-"+vpp_ver+"/")
+    os.system("cp -rf /tmp/vpp/.vscode "+ vpp_path+"/vpp/")
     os.system("rm -rf /tmp/vpp")
     #替换工作目录
-    launch,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+vpp_ver+"/.vscode/"
+    launch,sz_err = maker_public.readTxtFile(vpp_path+"/vpp/.vscode/"
         "launch.json")
     if "" != sz_err:
         return "create vpp project failed"
@@ -40,12 +39,12 @@ def create_vpp_project(vpp_ver, vpp_path, vscode_project_maker):
         "\"${workspaceFolder}/build-root/install-vpp_debug-native/vpp/bin\"", launch)
     launch = re.sub("\"args\"[ \\t]*:[ \\t]*\\[[^\\]]*\\],", 
         "\"args\": [\"-c\",\"${workspaceFolder}/build-root/install-vpp_debug-native/vpp/etc/vpp/startup.conf\"],", launch)
-    sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+"/.vscode/"
+    sz_err = maker_public.writeTxtFile(vpp_path+"/vpp/.vscode/"
         "launch.json", launch)
     if "" != sz_err:
         return "create vpp project failed"
     #替换编译TAG
-    tasks,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+vpp_ver+"/.vscode/"
+    tasks,sz_err = maker_public.readTxtFile(vpp_path+"/vpp/.vscode/"
         "tasks.json")
     if "" != sz_err:
         return "create vpp project failed"
@@ -61,6 +60,7 @@ def create_vpp_project(vpp_ver, vpp_path, vscode_project_maker):
             "\n            \"command\": \"/usr/bin/python3\","\
             "\n            \"args\": ["\
             "\n                \"${workspaceFolder}/dpdk_init.py\","\
+            "\n                \"vpp\","\
             "\n            ],"\
             "\n            \"options\": {"\
             "\n                \"cwd\": \"${workspaceFolder}\""\
@@ -74,7 +74,7 @@ def create_vpp_project(vpp_ver, vpp_path, vscode_project_maker):
             "\n            }"\
             "\n        },"
         , tasks)
-    sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+"/.vscode/"
+    sz_err = maker_public.writeTxtFile(vpp_path+"/vpp/.vscode/"
         "tasks.json", tasks)
     if "" != sz_err:
         return "create vpp project failed"
@@ -170,9 +170,12 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
             " && zip -r "+"vpp-"+vpp_ver+".zip vpp-"+vpp_ver):
             os.system("rm -f "+vscode_project_maker+"/vpp-"+vpp_ver+".zip")
         os.system("rm -rf "+vscode_project_maker+"/vpp-"+vpp_ver) 
-    if False == os.path.exists(vpp_path+"/vpp-"+vpp_ver):
-        os.system("unzip -d "+vpp_path+"/ "+
-            vscode_project_maker+"/vpp-"+vpp_ver+".zip")
+    if False == os.path.exists(vpp_path+"/vpp"):
+        if 0!=os.system("unzip -d "+vpp_path+"/ "+
+            vscode_project_maker+"/vpp-"+vpp_ver+".zip"):
+            return "Failed to unzip "+vscode_project_maker+"/vpp-"+vpp_ver+".zip"
+        if 0!=os.system("mv  "+vpp_path+"/vpp-"+vpp_ver+" "+vpp_path+"/vpp"):
+            return "Failed to unzip "+vscode_project_maker+"/vpp-"+vpp_ver+".zip"
     #设置用户组
     os.system("groupadd -f -r vpp")
     #获取OS版本
@@ -225,18 +228,17 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
     return config_dpdk(vpp_ver, vpp_path, vscode_project_maker)
 
 
-#功能：主函数；参数：无；返回：无
+#功能：主函数；参数：无；返回：错误描述
 def makeropensrc():
     vpp_path = os.getcwd()
     if 2<len(sys.argv):
         vpp_path = sys.argv[2]
-    if False==os.path.isdir(vpp_path):
-        print("Invaild vpp path")
-        exit(-1)
     vpp_path = os.path.realpath(vpp_path)
+    if False==os.path.isdir(vpp_path):
+        return "Invaild vpp path"
     #初始化vpp
     need_continue = "y"
-    if True == os.path.exists(vpp_path+"/vpp-21.10"):
+    if True == os.path.exists(vpp_path+"/vpp"):
         if re.search("^2\\..*", sys.version):
             need_continue = \
                 raw_input("vpp is already installed, do you want to continue[y/n]:")
@@ -244,20 +246,18 @@ def makeropensrc():
             need_continue = \
                 input("vpp is already installed, do you want to continue[y/n]:")
     if "y"==need_continue or "Y"==need_continue:
-        szErr = config_vpp("21.10", vpp_path, 
-            os.environ["HOME"]+"/vscode_project_maker")
+        szErr = config_vpp("21.10", vpp_path, os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
-            print(szErr)
-            exit(-1)
-        szErr = make_dep("21.10", vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
+            return szErr
+        szErr = make_dep(vpp_path)
         if "" != szErr:
-            print(szErr)
-        else:
-            print("config vpp sucess!")
-    #生成工程
-    szErr = create_vpp_project("21.10", vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
-    if "" != szErr:
-        print(szErr)
-    else:
+            return szErr
+        print("config vpp sucess!")
+        #生成工程
+        szErr = create_vpp_project(vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
+        if "" != szErr:
+            return szErr
         print("create vpp project sucess!")
+    #
+    return ""
         

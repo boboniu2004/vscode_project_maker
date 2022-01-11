@@ -88,27 +88,34 @@ def using_hugepage():
     return ""
 
 
-#功能：关闭ASLR；参数：无；返回：错误码
-def close_ASLR():
-    if os.system("echo 0 > /proc/sys/kernel/randomize_va_space"):
-        return "close ASLR failed!"
+#功能：设置ASLR；参数：无；返回：错误码
+def set_ASLR(opt):
+    if os.system("echo "+opt+" > /proc/sys/kernel/randomize_va_space"):
+        return "set ASLR failed!"
     return ""
 
 #功能：加载网卡驱动；参数：dirver_name驱动名称，card_lst网卡名称链表；返回：错误码
 def load_driver(dirver_name, card_lst):
-    if getOSName() == "ubuntu":
-        dirver_path = "build-root/install-vpp_debug-native/external/lib/modules"
-    else:
-        dirver_path =  "build-root/install-vpp_debug-native/external/lib/modules"
+    devbind_path = "build-root/install-vpp_debug-native/external/bin"
+    drvctl_path = "driverctl"
+    dirver_path = "build-root/install-vpp_debug-native/external/lib/modules"
+    if "f-stack" == sys.argv[1]:
+        devbind_path = "/usr/local/dpdk/sbin"
+        drvctl_path = "/usr/local/dpdk/sbin/driverctl"
+        dirver_path = "/usr/local/dpdk/kmod"
+    #插入uio模块
     if "" == execCmdAndGetOutput("lsmod | grep -P \"^uio[ \\t]+\""):
         if 0 != os.system("modprobe uio"):
             return "modprobe uio failed!"
     if "" == execCmdAndGetOutput("lsmod | grep -P \"^"+dirver_name+"[ \\t]+\""):
         if 0 != os.system("insmod "+dirver_path+"/"+dirver_name+".ko"):
             return "insmod "+dirver_name+" failed!"
+    #插入rte_kni模块
+    if "" == execCmdAndGetOutput("lsmod | grep -P \"^rte_kni[ \\t]+\""):
+        if 0 != os.system("insmod /usr/local/dpdk/kmod/rte_kni.ko carrier=on"):
+            os.system("rmmod "+dirver_name)
+            return "insmod rte_kni failed!"
     #绑定网卡
-    drvctl_path = "driverctl"
-    devbind_path = "build-root/install-vpp_debug-native/external/sbin"
     if False == os.path.exists(drvctl_path):
         for cur_card in card_lst:
             card_name = cur_card[0]
@@ -139,17 +146,28 @@ def load_driver(dirver_name, card_lst):
 #函数参数：可执行文件全路径，启动时加入的参数
 #函数返回：执行成功返回0，否则返回负值的错误码
 if __name__ == "__main__":
+    errstr = "dpdk_init: [f-stack|vpp]"
+    #获取发行版本
+    if 2>len(sys.argv):
+        print(errstr)
+        exit(-1)
     errstr = using_hugepage()
     if "" != errstr:
         print(errstr)
+        exit(-1)
+    print("初始化巨页完毕")
+    if "f-stack" == sys.argv[1]:
+        errstr = set_ASLR("0")
     else:
-        print("初始化巨页完毕")
-    #errstr = close_ASLR()
-    #if "" != errstr:
-    #    print(errstr)
-    #else:
-    #    print("关闭ASLR完毕")
-    if False == os.path.exists("driverctl"):
+        errstr = set_ASLR("1")
+    if "" != errstr:
+        print(errstr)
+        exit(-1)
+    print("设置ASLR完毕")
+    drvpath = "driverctl"
+    if "f-stack" == sys.argv:
+        drvpath = "/usr/local/dpdk/sbin/driverctl"
+    if False == os.path.exists(drvpath):
         #这里修改驱动、网卡、pci地址来绑定PCI设备
         errstr = load_driver("igb_uio", [["enp0s9","0000:00:09.0"]])
     else:
@@ -157,5 +175,6 @@ if __name__ == "__main__":
         errstr = load_driver("igb_uio", [["eth2"]])
     if "" != errstr:
         print(errstr)
-    else:
-        print("加载驱动完毕")
+        exit(-1)
+    print("加载驱动完毕")
+    exit(0)
