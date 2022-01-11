@@ -165,7 +165,7 @@ if __name__ == "__main__":
         exit(-1)
     print("设置ASLR完毕")
     drvpath = "driverctl"
-    if "f-stack" == sys.argv:
+    if "f-stack" == sys.argv[1]:
         drvpath = "/usr/local/dpdk/sbin/driverctl"
     if False == os.path.exists(drvpath):
         #这里修改驱动、网卡、pci地址来绑定PCI设备

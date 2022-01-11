@@ -82,13 +82,13 @@ def create_vpp_project(vpp_path, vscode_project_maker):
 
 
 #功能：配置dpdk；参数：无；返回：错误码
-def config_dpdk(vpp_ver, vpp_path, vscode_project_maker):
+def config_dpdk(vpp_path, vscode_project_maker):
     #拷贝dpdk初始化工具
     if 0 != os.system("cp -rf "+vscode_project_maker+\
-        "/vpp_maker/dpdk_init.py "+vpp_path+"/vpp-"+vpp_ver+"/"):
+        "/vpp_maker/dpdk_init.py "+vpp_path+"/vpp"+"/"):
         return "cp dpdk_init.py failed"
     #写入igb_uio的meson文件
-    err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+\
+    err = maker_public.writeTxtFile(vpp_path+"/vpp"+\
         "/dpdk-kmods/linux/igb_uio/meson.build", \
             "# SPDX-License-Identifier: BSD-3-Clause\n"\
             "# Copyright(c) 2017 Intel Corporation\n"\
@@ -120,14 +120,13 @@ def config_dpdk(vpp_ver, vpp_path, vscode_project_maker):
     if ""!=err:
         return err
     #修改DPDK的CMakelist
-    cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+\
-        vpp_ver+"/build/external/packages/dpdk.mk")
+    cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp/build/external/packages/dpdk.mk")
     #打开内核模块编译开关
     dstdat = "\n\nDPDK_MESON_ARGS += \"-Denable_kmods=true\"\n\nPIP_DOWNLOAD_DIR"
     cmakedat = cmakedat.replace("\n\nPIP_DOWNLOAD_DIR", dstdat)
     #打开igb_uio.ko的编译
     dstdat = "\n\ndefine dpdk_config_cmds"+\
-        "\n\tcp -rf "+vpp_path+"/vpp-"+vpp_ver+"/dpdk-kmods/linux/* $(dpdk_src_dir)/kernel/linux/"+\
+        "\n\tcp -rf "+vpp_path+"/vpp"+"/dpdk-kmods/linux/* $(dpdk_src_dir)/kernel/linux/"+\
         " && \\"+\
         "\n\tsed -i 's/\['\"'\"'kni'\"'\"'\]/\['\"'\"'kni'\"'\"','\"'\"'igb_uio'\"'\"'\]/' $(dpdk_src_dir)/kernel/linux/meson.build"+\
         " && \\"
@@ -138,8 +137,7 @@ def config_dpdk(vpp_ver, vpp_path, vscode_project_maker):
         "\n\tcp -rf $(dpdk_build_dir)/kernel/linux/igb_uio/igb_uio.ko $(dpdk_install_dir)/lib/modules/ && \\"+\
         "\n\tcp -rf $(dpdk_build_dir)/kernel/linux/kni/rte_kni.ko $(dpdk_install_dir)/lib/modules/"
     cmakedat = cmakedat.replace("\n\tmeson install", dstdat)
-    sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+\
-        "/build/external/packages/dpdk.mk", 
+    sz_err = maker_public.writeTxtFile(vpp_path+"/vpp/build/external/packages/dpdk.mk", 
         cmakedat)
     if "" != sz_err:
         return sz_err
@@ -183,7 +181,7 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
     if osver == "centos":
         os.system("yum erase -y epel-release.noarch")
     #修改makefile
-    makedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+vpp_ver+"/Makefile")
+    makedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp"+"/Makefile")
     if "" != sz_err:
         return sz_err
     if "centos" == osver:
@@ -195,37 +193,35 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
     makedat = re.sub("_debug,\\$\\(addsuffix[ ]+-install,.*", \
         "_debug,$(addsuffix -install,$(TARGETS)))\n\t"\
         "-rm -rf /etc/ld.so.conf.d/vpp-debug.conf\n\t"\
-        "-echo '"+vpp_path+"/vpp-"+vpp_ver+"/build-root/install-vpp_debug-native/"\
+        "-echo '"+vpp_path+"/vpp"+"/build-root/install-vpp_debug-native/"\
         "vpp/lib64' > /etc/ld.so.conf.d/vpp-debug.conf\n\t"\
         "-ldconfig", makedat)
     makedat = re.sub("_debug,\\$\\(addsuffix[ ]+-wipe,.*", \
         "_debug,$(addsuffix -wipe,$(TARGETS)))\n\t"\
         "-rm -rf /etc/ld.so.conf.d/vpp-debug.conf\n\t"\
         "-ldconfig", makedat)
-    sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+"/Makefile", makedat)
+    sz_err = maker_public.writeTxtFile(vpp_path+"/vpp"+"/Makefile", makedat)
     if "" != sz_err:
         return sz_err
     #替换github.com
-    pkgmkfiles = os.listdir(vpp_path+"/vpp-"+vpp_ver+"/build/external/packages/")
+    pkgmkfiles = os.listdir(vpp_path+"/vpp"+"/build/external/packages/")
     for mkfile in pkgmkfiles:
         if False == os.path.isfile(\
-            vpp_path+"/vpp-"+vpp_ver+"/build/external/packages/"+mkfile):
+            vpp_path+"/vpp"+"/build/external/packages/"+mkfile):
             continue
         if None == re.search(".+\\.mk$", mkfile):
             continue
         mkcont,err = maker_public.readTxtFile(\
-            vpp_path+"/vpp-"+vpp_ver+"/build/external/packages/"+mkfile)
+            vpp_path+"/vpp"+"/build/external/packages/"+mkfile)
         if ""!=err:
             return err
-        mkcont = re.sub("://github\\.com", \
-            "://ghproxy.com/github.com", mkcont)
-        err = maker_public.writeTxtFile(\
-            vpp_path+"/vpp-"+vpp_ver+"/build/external/packages/"+mkfile, 
+        mkcont = re.sub("://github\\.com", "://ghproxy.com/github.com", mkcont)
+        err = maker_public.writeTxtFile(vpp_path+"/vpp"+"/build/external/packages/"+mkfile, 
             mkcont)
         if ""!=err:
             return err
     #修改DPDK的编译文件和打开内核模块
-    return config_dpdk(vpp_ver, vpp_path, vscode_project_maker)
+    return config_dpdk(vpp_path, vscode_project_maker)
 
 
 #功能：主函数；参数：无；返回：错误描述
