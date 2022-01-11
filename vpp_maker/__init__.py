@@ -202,23 +202,6 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
     sz_err = maker_public.writeTxtFile(vpp_path+"/vpp-"+vpp_ver+"/Makefile", makedat)
     if "" != sz_err:
         return sz_err
-    #修改CMakeLists.txt
-    #cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp-"+\
-    #    vpp_ver+"/src/CMakeLists.txt")
-    #if "" != sz_err:
-    #    return sz_err
-    #if "ubuntu" == osver:
-    #    cmakedat = re.sub("VPP_LIB_VERSION[ \\t]+\\${VPP_VERSION}", 
-    #        "VPP_LIB_VERSION \"${VPP_VERSION}\"", cmakedat)
-    #    if None == re.search("CMAKE_REQUIRED_LIBRARIES", cmakedat):
-    #        cmakedat = re.sub(\
-    #            "\\nfind_package[ \\t]*\\([ \\t]*Threads[^\\)]+", 
-    #            "\nset(CMAKE_REQUIRED_LIBRARIES \"-lpthread \")"\
-    #            "\nfind_package(Threads REQUIRED", cmakedat)         
-    #sz_err = maker_public.writeTxtFile(\
-    #    vpp_path+"/vpp-"+vpp_ver+"/src/CMakeLists.txt", cmakedat)
-    #if "" != sz_err:
-    #    return sz_err
     #替换github.com
     pkgmkfiles = os.listdir(vpp_path+"/vpp-"+vpp_ver+"/build/external/packages/")
     for mkfile in pkgmkfiles:
