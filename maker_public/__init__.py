@@ -244,30 +244,31 @@ def install_pc(src_path):
     return build_s_link(src_path, pkg_path)
 
 
-#build_normal_dpdk 编译普通版本的DPDK；参数：无；返回：错误描述
-def build_normal_dpdk():
+#build_normal_dpdk 编译普通版本的DPDK；参数：dpdk源码路径；返回：错误描述
+def build_normal_dpdk(vscode_project_maker, fstack_ver):
     if False==issame_kernel_ver("/usr/local/dpdk") or \
         False==os.path.exists("/usr/local/dpdk"):
         os.system("rm -Rf /usr/local/dpdk")
+        os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
         #解压缩
-        os.system("unzip -d /tmp/ ./f-stack-1.21.zip")
+        os.system("unzip -d /tmp/ "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
         #配置
-        if 0 != os.system("cd /tmp/f-stack-1.21/dpdk && make defconfig"):
-            os.system("rm -Rf /tmp/f-stack-1.21")
+        if 0 != os.system("cd /tmp/f-stack-"+fstack_ver+"/dpdk && make defconfig"):
+            os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
             return "config DPDK failed"
         #编译安装
-        if 0 != os.system("cd /tmp/f-stack-1.21/dpdk && "\
+        if 0 != os.system("cd /tmp/f-stack-"+fstack_ver+"/dpdk && "\
             "make -j"+str(multiprocessing.cpu_count())+
             " && make install prefix=/usr/local/dpdk"):
-            os.system("rm -Rf /tmp/f-stack-1.21")
+            os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
             return "config DPDK failed"
         #设置
         sz_err = build_s_link("/usr/local/dpdk/include/dpdk", 
             "/usr/local/dpdk/include")
         if "" != sz_err:
             return sz_err
-        if 0 != os.system("cp -rf /tmp/f-stack-1.21/dpdk/build/kmod /usr/local/dpdk/"):
-            os.system("rm -Rf /tmp/f-stack-1.21")
+        if 0 != os.system("cp -rf /tmp/f-stack-"+fstack_ver+"/dpdk/build/kmod /usr/local/dpdk/"):
+            os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
             return "config DPDK failed"       
         os.system("rm -rf /usr/local/dpdk/kernel_verion && "\
             "uname -r >> /usr/local/dpdk/kernel_verion")
@@ -275,29 +276,29 @@ def build_normal_dpdk():
 
 
 #build_meson_dpdk 编译meson版本的DPDK；参数：无；返回：错误描述
-def build_meson_dpdk():
+def build_meson_dpdk(vscode_project_maker, fstack_ver):
     if False==issame_kernel_ver("/usr/local/dpdk") or \
         False==os.path.exists("/usr/local/dpdk"):
         os.system("rm -Rf /usr/local/dpdk")
+        os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
         #解压缩
-        if False == os.path.exists("/tmp/f-stack-1.21"):
-            os.system("unzip -d /tmp/ ./f-stack-1.21.zip")
+        os.system("unzip -d /tmp/ "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
         #编译安装meson版本
-        if 0 != os.system("cd /tmp/f-stack-1.21/dpdk && "\
+        if 0 != os.system("cd /tmp/f-stack-"+fstack_ver+"/dpdk && "\
             "meson ./dpdk_build && cd ./dpdk_build && "\
             "meson configure -Dprefix=/usr/local/dpdk "\
             "-Dibverbs_link=static -Ddefault_library=static"):
-            os.system("rm -Rf /tmp/f-stack-1.21")
+            os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
             return "config DPDK failed"
-        if 0 != os.system("cd /tmp/f-stack-1.21/dpdk/dpdk_build && "\
+        if 0 != os.system("cd /tmp/f-stack-"+fstack_ver+"/dpdk/dpdk_build && "\
             "ninja -j"+str(multiprocessing.cpu_count())+" && ninja install"):
-            os.system("rm -Rf /tmp/f-stack-1.21")
+            os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
             return "config DPDK failed"
         #设置
         if 0 != os.system("mkdir -p /usr/local/dpdk/kmod && "\
-            "cp -rf /tmp/f-stack-1.21/dpdk/dpdk_build/kernel/linux/*/*.ko "\
+            "cp -rf /tmp/f-stack-"+fstack_ver+"/dpdk/dpdk_build/kernel/linux/*/*.ko "\
             "/usr/local/dpdk/kmod"):
-            os.system("rm -Rf /tmp/f-stack-1.21")
+            os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
             return "config DPDK failed"  
         os.system("mkdir -p /usr/local/dpdk/sbin")
         os.system("rm -rf /usr/local/dpdk/kernel_verion && "\
@@ -311,32 +312,29 @@ def build_meson_dpdk():
 
 #buildDPDK 编译DPDK；参数：编译方式；返回：错误码
 def buildDPDK(complie_type):
-    #安装 DPDK
-    if False == os.path.exists("./f-stack-1.21.zip"):
-        if 0 != os.system("wget https://ghproxy.com/github.com/F-Stack/f-stack/archive/refs/tags/v1.21.zip "+
-            "-O f-stack-1.21.zip"):
-            os.system("rm -f ./f-stack-1.21.zip")
-            return "Failed to download f-stack-1.21"
+    vscode_project_maker = os.environ["HOME"]+"/vscode_project_maker"
+    fstack_ver = "1.21"
+    if False == os.path.exists(vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
+        os.system("rm -rf "+vscode_project_maker+"/f-stack-"+fstack_ver)
+        if 0 != os.system(\
+            "git clone --branch v"+fstack_ver+" https://ghproxy.com/github.com/F-Stack/f-stack.git "+\
+            vscode_project_maker+"/f-stack-"+fstack_ver):
+            os.system("rm -rf "+vscode_project_maker+"/f-stack-"+fstack_ver)
+            return "Failed to download f-stack-"+fstack_ver
+        if 0 != os.system("cd "+vscode_project_maker+\
+            " && zip -r "+"f-stack-"+fstack_ver+".zip f-stack-"+fstack_ver):
+            os.system("rm -f "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
+        os.system("rm -rf "+vscode_project_maker+"/f-stack-"+fstack_ver) 
     #测试DPDK的版本是否需要更新
     #编译安装DPDK
     sz_err = ""
     if -1 == str(complie_type).find("-meson"):
-        sz_err = build_normal_dpdk()
+        sz_err = build_normal_dpdk(vscode_project_maker, fstack_ver)
     else:
-        sz_err = build_meson_dpdk()
+        sz_err = build_meson_dpdk(vscode_project_maker, fstack_ver)
     if "" != sz_err:
         return sz_err
-    os.system("rm -Rf /tmp/f-stack-1.21")
-    #设置巨页
-    node_info = execCmdAndGetOutput("ls /sys/devices/system/node/"
-        " | grep -P \"^node\\d+$\" | sort -u").split("\n")
-    if 2 >= len(node_info):#这里2的原因是最后结束行是空行
-        os.system("echo 256 > /sys/kernel/mm/hugepages/hugepages-2048kB/"
-            "nr_hugepages")
-    else:
-        for cur_nd in node_info:
-            os.system("echo 256 > /sys/devices/system/node/"+cur_nd+"/"
-                "hugepages/hugepages-2048kB/nr_hugepages")
+    os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
     #下载绑定工具
     first_ver,second_ver,_ = get_kernel_ver()
     if None==first_ver or first_ver<4 or (first_ver==4 and second_ver<18):
@@ -352,15 +350,17 @@ def buildDPDK(complie_type):
 
     #功能：安装hyperscan；参数：无；返回：错误码
 def buildHYPERSCAN():
+    vscode_project_maker = os.environ["HOME"]+"/vscode_project_maker"
     #安装hyperscan
     if False == os.path.exists("./hyperscan-5.4.0.zip"):
         if 0 != os.system("wget https://ghproxy.com/github.com/intel/hyperscan/archive/refs/tags/v"\
-            "5.4.0.zip -O ./hyperscan-5.4.0.zip"):
-            os.system("rm -f ./hyperscan-5.4.0.zip")
+            "5.4.0.zip -O "+vscode_project_maker+"/hyperscan-5.4.0.zip"):
+            os.system("rm -f "+vscode_project_maker+"/hyperscan-5.4.0.zip")
             return "Failed to download hyperscan"
     if False == os.path.exists("/usr/local/hyperscan"):
         #解压缩
-        os.system("unzip -d /tmp/ ./hyperscan-5.4.0.zip")
+        os.system("rm -Rf /tmp/hyperscan-5.4.0")
+        os.system("unzip -d /tmp/ "+vscode_project_maker+"/hyperscan-5.4.0.zip")
         try:
             os.system("rm -Rf /tmp/hyperscan-5.4.0/build")
             os.makedirs("/tmp/hyperscan-5.4.0/build")
