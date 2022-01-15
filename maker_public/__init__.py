@@ -196,7 +196,7 @@ def getOSName():
 #get_kernel_ver 获取内核版本；参数：无；返回：操作系统内核的版本
 def get_kernel_ver():
     szOSName = execCmdAndGetOutput("uname -r")
-    match_ret = re.match("^(\\d+)\\.(\\d+)\\.(\\d+)\\-\\d+", szOSName)
+    match_ret = re.match("^(\\d+)\\.(\\d+)\\.(\\d+)[-\\.]\\d+", szOSName)
     if None == match_ret:
         return None, None, None
     return int(match_ret.group(1)),int(match_ret.group(2)),\

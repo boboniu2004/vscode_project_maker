@@ -128,6 +128,8 @@ def updateSystem():
         return "Install net-tools failed"
     if 0 != os.system("apt-get -y install curl"):
         return "Install curl failed"
+    if 0 != os.system("apt-get -y install zip"):
+        return "Install curl failed"
     return ""
 
 
@@ -149,15 +151,18 @@ def configGcc():
 #configGolang配置GOLANG；参数：无；返回：错误描述
 def configGolang():
     gover = "1.16.12"
+    gomac = "amd64"
+    if "" != maker_public.execCmdAndGetOutput("lscpu | grep -E \"aarch64\""):
+        gomac = "arm64"
     #安装 golang
-    if False == os.path.exists("./go"+gover+".linux-amd64.tar.gz"):
-        if 0 != os.system("wget https://studygolang.com/dl/golang/go"+gover+".linux-amd64.tar.gz"):
+    if False == os.path.exists("./go"+gover+".linux-"+gomac+".tar.gz"):
+        if 0 != os.system("wget https://studygolang.com/dl/golang/go"+gover+".linux-"+gomac+".tar.gz"):
             return "Failed to download go"+gover
     if -1 == maker_public.execCmdAndGetOutput(\
         "su -c \"/usr/local/go/bin/go version\"").find("go"+gover):
         os.system("rm -Rf /usr/local/go")
         os.system("rm -Rf /root/go")
-        if 0 != os.system("tar -C /usr/local -zxvf ./go"+gover+".linux-amd64.tar.gz"):
+        if 0 != os.system("tar -C /usr/local -zxvf ./go"+gover+".linux-"+gomac+".tar.gz"):
             return "Failed to uncompress go"+gover
         #设置环境变量
         szConfig,szErr = maker_public.readTxtFile("/etc/profile")
@@ -338,21 +343,24 @@ def InitEnv():
     #释放apt资源
     releaseApt()
     #打开ROOT
-    szErr = openRoot()
-    if 0 < len(szErr):
-        return("Config Ubuntu failed:%s" %(szErr))
+    if "ubuntu" == szOSName:
+        szErr = openRoot()
+        if 0 < len(szErr):
+            return("Config Ubuntu failed:%s" %(szErr))
     #安装阿里云源
-    szErr = configDebSource()
-    if 0 < len(szErr):
-        return("Config Ubuntu failed:%s" %(szErr))
+    if "ubuntu" == szOSName:
+        szErr = configDebSource()
+        if 0 < len(szErr):
+            return("Config Ubuntu failed:%s" %(szErr))
     #将系统升级到最新版本
     szErr = updateSystem()
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #配置SSHD
-    szErr = configSshd()
-    if 0 < len(szErr):
-        return("Config Ubuntu failed:%s" %(szErr))
+    if "ubuntu" == szOSName:
+        szErr = configSshd()
+        if 0 < len(szErr):
+            return("Config Ubuntu failed:%s" %(szErr))
     #安装GIT
     szErr = configGit()
     if 0 < len(szErr):
@@ -382,16 +390,18 @@ def InitEnv():
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #关闭图形界面
-    if 0 != os.system("systemctl set-default multi-user.target"):
-        return("Config Ubuntu failed: can not disable GNOME")
+    if "ubuntu" == szOSName:
+        if 0 != os.system("systemctl set-default multi-user.target"):
+            return("Config Ubuntu failed: can not disable GNOME")
     #升级PIP
     if 0 != os.system("pip3 install --upgrade pip"):
         return ("Update PIP3 failed")
     #配置内部网络
-    if 1 < len(sys.argv):
-        szErr = configInternalNet("eth1", sys.argv[1])
-        if 0 < len(szErr):
-            return("Config CentOS failed:%s" %(szErr))
+    if "ubuntu" == szOSName:
+        if 1 < len(sys.argv):
+            szErr = configInternalNet("eth1", sys.argv[1])
+            if 0 < len(szErr):
+                return("Config CentOS failed:%s" %(szErr))
     #
     return ""
 
