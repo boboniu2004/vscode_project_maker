@@ -334,13 +334,14 @@ def installHYPERSCAN():
 
 #InitEnv 初始化环境；参数：无；返回：错误描述
 def InitEnv():
+    szOSName = maker_public.getOSName()
     #释放apt资源
     releaseApt()
     #打开ROOT
     szErr = openRoot()
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
-    #安装网易源
+    #安装阿里云源
     szErr = configDebSource()
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))

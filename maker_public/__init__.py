@@ -186,7 +186,11 @@ def getOSName():
     #获取ubuntu版本
     szOSName = execCmdAndGetOutput("lsb_release -a")
     if None != re.search("Distributor[ \\t]+ID[ \\t]*:[ \\t]+Ubuntu.*", szOSName):
-        return "ubuntu"
+        kerver = execCmdAndGetOutput("uname -r")
+        if None != re.search("-WSL2.*", kerver):
+            return "ubuntu-wsl2"
+        else:
+            return "ubuntu"
     return ""
 
 #get_kernel_ver 获取内核版本；参数：无；返回：操作系统内核的版本

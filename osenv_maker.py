@@ -34,7 +34,7 @@ if __name__ == "__main__":
         else:
             if "centos" == szOSName:
                 szErr = centosenv_maker.ConfigDPDK(sys.argv[1], sys.argv[2])
-            elif "ubuntu" == szOSName:
+            elif "ubuntu" == szOSName or "ubuntu-wsl2"==szOSName:
                 szErr = ubuntuenv_maker.ConfigDPDK(sys.argv[1], sys.argv[2])
             else:
                 szErr = "Invaild OS"
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     else:
         if "centos" == szOSName:
             szErr = centosenv_maker.InitEnv()
-        elif "ubuntu" == szOSName:
+        elif "ubuntu"==szOSName or "ubuntu-wsl2"==szOSName:
             szErr = ubuntuenv_maker.InitEnv()
         else:
             szErr = "Invaild OS"
