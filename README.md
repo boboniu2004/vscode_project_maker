@@ -1,7 +1,7 @@
 # vscode_project_maker
 ## 概述
 工作n年了，工作环境一直是台式机，所以整了个双硬盘分别装了windows和linux，平时的开发就在linux下，普通工作就在windows下，虽然经常切换系统感觉比较麻烦，但是凑合下也就算了。不过，在2019年12月，爱折腾的我终于给自己换了一个工作。新公司给我配了一台装好了win10专业版的笔记本，这家伙，就像刘姥姥进大观园，头一遭啊！怎么安装linux？怎么安装开发环境？没办法，经过两个月的折腾，终于使用win10+hyper-v+vscode整合出了一个开发环境，该方法在win10中开启HYPER-V，然后安装CentOS和Ubuntu虚拟机，最后安装vscode，这一切完成后，使用该工程提供的脚本初始化虚拟机，创建C/C++，GO,PYTHON,JAVA工程供主机上的vscode开发。
-接下来从**安装**，**配置网络**，**配置DPDK**，**新建工程**，**编译调试工程**这三个角度来进行说明。
+接下来从**安装**，**配置网络**，**配置DPDK和hyperscan**，**新建工程**，**编译调试工程**，**创建f-stack开发环境**，**创建vpp开发环境**这七个角度来进行说明。
 
 # 安装
 ## 硬件要求
@@ -20,19 +20,31 @@
 对于满足硬件、OS、网络要求的机器：
 第一步，下载vscode_project_maker( https://github.com/boboniu2004/vscode_project_maker )。
 
-第2步，解压缩vscode_project_maker，把**vscode_project_maker\\.ssh**目录拷贝到当前用户的主目录下，进入.ssh目录后选中**inithyper-v.bat**脚本，单击右键以管理员权限运行，如果执行权限不对或者不是windows10专业版，脚本会报错。
+第二步，解压缩vscode_project_maker，把**vscode_project_maker\\.ssh**目录拷贝到当前用户的主目录下，进入.ssh目录后选中**inithyper-v.bat**脚本，单击右键以管理员权限运行，如果执行权限不对或者不是windows10专业版，脚本会报错。
 
 第三步，如果正确开启了hyper-v，则会要求重启，重新启动后进入**vscode_project_maker\\.ssh**目录，以管理员权限再次运行**inithyper-v.bat**脚本，会创建虚拟网卡供后续安装的虚拟机进行通信，同时也会在桌面创建一个**hyper-v管理器快捷方式**。
 
 第四步，双击桌面**hyper-v管理器快捷方式**，在弹出的界面中选中**Hyper-V设置**，修改虚拟硬盘，虚拟机配置文件的存储位置，最好不要存储在C盘，因为会占用大量的存储空间。![set_hyper-v](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/set_hyper-v.jpg) 
 
-第五步，虚拟机管理界面中选中**快速创建...**：在弹出的对话框中点击**更改安装源(I)...**，选择centos7_x86-64、centos8_x86-64、ubuntu18.04_x86-64/ubuntu20.04_x86-64镜像；取消**此虚拟机将运行Windows(启用Windows Secure Boot)**；点击**更多选项(R)**修改虚拟机的名称。上面三步做好后就可以点击**创建虚拟机(V)**按钮来创建虚拟机。这里需要说明一下，因为网络的原因，可能出现一直无法点击**创建虚拟机(V)**的情况，此时只需要断开windows 10的网络，重新创建虚拟机即可。
+#### 快速创建hyper-v虚拟机
+第一步，虚拟机管理界面中选中**快速创建...**：在弹出的对话框中点击**更改安装源(I)...**，选择centos7_x86-64、centos8_x86-64、ubuntu18.04_x86-64/ubuntu20.04_x86-64镜像；取消**此虚拟机将运行Windows(启用Windows Secure Boot)**；点击**更多选项(R)**修改虚拟机的名称。上面三步做好后就可以点击**创建虚拟机(V)**按钮来创建虚拟机。这里需要说明一下，因为网络的原因，可能出现一直无法点击**创建虚拟机(V)**的情况，此时只需要断开windows 10的网络，重新创建虚拟机即可。
 
-第六步，创建成功的页面上点击**编辑设置(S)**。在弹出的界面中依次点击**添加硬件**->**网络适配器**->**添加(D)**，为虚拟机新建一个网卡，网卡的虚拟交换机设置为**HYPER-V-NAT-Network**；点击**检查点**，取消**启用检查点(E)**；点击**处理器**，设置处理器为物理CPU的一半(推荐)，点击**内存**，将**RAM(R)**设置为4096MB，动态内存区间设置为512M~4096M(推荐，编译vpp的虚拟机内存不能低于6144M)；最后点击**确定**完成虚拟机的配置。
+第二步，创建成功的页面上点击**编辑设置(S)**。在弹出的界面中依次点击**添加硬件**->**网络适配器**->**添加(D)**，为虚拟机新建一个网卡，网卡的虚拟交换机设置为**HYPER-V-NAT-Network**；点击**检查点**，取消**启用检查点(E)**；点击**处理器**，设置处理器为物理CPU的一半(推荐)，点击**内存**，将**RAM(R)**设置为4096MB，动态内存区间设置为512M~4096M(推荐，编译vpp的虚拟机内存不能低于6144M)；将**自动停止操作**设置为**强行关闭虚拟机**；最后点击**确定**完成虚拟机的配置。
 
-第七步，如果需要使用DPDK、F-STACK或者VPP，需要添加额外的虚拟网卡。此时需要在hyper-v主界面上点击虚拟机，单机右键选中**设置(E)**。在弹出的界面中依次点击**添加硬件**->**网络适配器**->**添加(D)**，添加新的虚拟网卡，网卡的虚拟交换机设置为**HYPER-V-NAT-Network**；最后点击**确定**完成虚拟机的配置。
+第三步，如果需要使用DPDK、F-STACK或者VPP，需要添加额外的虚拟网卡。此时需要在hyper-v主界面上点击虚拟机，单机右键选中**设置(E)**。在弹出的界面中依次点击**添加硬件**->**网络适配器**->**添加(D)**，添加新的虚拟网卡，网卡的虚拟交换机设置为**HYPER-V-NAT-Network**；最后点击**确定**完成虚拟机的配置。
 
 最后就可以在界面上看见新建的虚拟机了，此时可以选中虚拟机，然后点击**连接**进入虚拟机界面，再点击**启动**开始安装linux。![create_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/create_vm.jpg) ![set_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/set_vm.jpg) ![start_vm](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/start_vm.jpg)
+
+#### 标准创建hyper-v虚拟机
+快速创建的虚拟机的硬盘是动态扩展并且最大为128GB，后续在使用时虚拟硬盘会越来越大，如果要限制虚拟硬盘的大小，则需要按照标准步骤创建虚拟机。
+
+第一步，虚拟机管理界面中选中**新建**-**虚拟机(M)**，在弹出的对话框中依次设置**虚拟机名称**，**虚拟机类型**，**虚拟机内存(要勾选动态内存)**，**虚拟机网络(选择Default Switch)**，**虚拟机硬盘(限制在50GB)**，**虚拟操作系统安装路径**。
+
+第二步，创建成功的页面上点击**编辑设置(S)**。在弹出的界面中依次点击**添加硬件**->**网络适配器**->**添加(D)**，为虚拟机新建一个网卡，网卡的虚拟交换机设置为**HYPER-V-NAT-Network**；取消**安全**-**启用安全启动(E)**；点击**检查点**，取消**启用检查点(E)**；点击**处理器**，设置处理器为物理CPU的一半(推荐)，点击**内存**，将**RAM(R)**设置为4096MB，动态内存区间设置为512M~4096M(推荐，编译vpp的虚拟机内存不能低于6144M)；将**自动停止操作**设置为**强行关闭虚拟机**；最后点击**确定**完成虚拟机的配置。
+
+第三步，如果需要使用DPDK、F-STACK或者VPP，需要添加额外的虚拟网卡。此时需要在hyper-v主界面上点击虚拟机，单机右键选中**设置(E)**。在弹出的界面中依次点击**添加硬件**->**网络适配器**->**添加(D)**，添加新的虚拟网卡，网卡的虚拟交换机设置为**HYPER-V-NAT-Network**；最后点击**确定**完成虚拟机的配置。
+
+最后就可以在界面上看见新建的虚拟机了，此时可以选中虚拟机，然后点击**连接**进入虚拟机界面，再点击**启动**开始安装linux。![https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/create_vm_stand1.jpg] ![https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/create_vm_stand2.jpg] ![https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/create_vm_stand3.jpg] ![https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/create_vm_stand4.jpg] ![https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/create_vm_stand5.jpg] ![https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/create_vm_stand6.jpg] ![https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/create_vm_stand7.jpg] ![https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/create_vm_stand8.jpg] 
 
 ### 安装virtual box
 第一步，从( https://www.virtualbox.org/wiki/Downloads )下载virtu box 6.1及以上版本。
