@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
+from ast import Return
 import re
 import os
 import sys
@@ -302,14 +303,28 @@ def configWSLmodules():
     match_ret = re.match("([\d\\.]+)-", szOSName)
     if None == match_ret:
         return "Can not get WSL kernel version"
+    #安装依赖包
+    if 0 != os.system("apt-get -y install build-essential flex bison libssl-dev libelf-dev"):
+        return "Install build-essential flex bison libssl-dev libelf-dev failed"
+    #下载内核
     if False == os.path.isfile(vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
-        if 0 != os.system("wget -d "+vscode_project_maker+" https://ghproxy.com/github.com/microsoft/"\
-            "WSL2-Linux-Kernel/archive/refs/tags/linux-msft-wsl-"+match_ret.group(1)+".zip"):
+        if 0 != os.system("wget https://ghproxy.com/github.com/microsoft/"\
+            "WSL2-Linux-Kernel/archive/refs/tags/linux-msft-wsl-"+match_ret.group(1)+\
+            ".zip -O "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
+            os.system("rm -rf "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip")
             return "failed to download linux-msft-wsl-"+match_ret.group(1)+".zip"
-    os.system("rm -rf /tmp/linux-msft-wsl-"+match_ret.group(1))
-    if 0!=os.system("unzip -d /tmp/ "+
-        vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
-        return "Failed to unzip "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"
+    if False == os.path.isdir("/lib/modules/"+match_ret.group(1)+"-microsoft-standard-WSL2"):
+        os.system("rm -rf /tmp/WSL2-Linux-Kernel-linux-msft-wsl-"+match_ret.group(1))
+        if 0 != os.system("unzip -d /tmp/ "+
+            vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
+            return "Failed to unzip "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"
+        #编译内核
+        if 0 != os.system("cd /tmp/WSL2-Linux-Kernel-linux-msft-wsl-"+match_ret.group(1)+" && zcat /proc/config.gz > .config "\
+            "&& make -j $(nproc) scripts && make -j $(nproc) modules && make -j $(nproc) modules_install"):
+            os.system("rm -rf /tmp/WSL2-Linux-Kernel-linux-msft-wsl-"+match_ret.group(1))
+            return "Failed to make kmod"
+        os.system("rm -rf /tmp/WSL2-Linux-Kernel-linux-msft-wsl-"+match_ret.group(1))
+    return ""
     
 
 #installDPDK配置DPDK；参数：编译参数；返回：错误描述
@@ -352,6 +367,9 @@ def installHYPERSCAN():
     #安装boost
     if 0 != os.system("apt-get -y install libboost-dev"):
         return "Install libboost-dev failed"
+    #安装boost
+    if 0 != os.system("apt-get -y install pkg-config"):
+        return "Install pkg-config failed"
     #安装 HYPERSCAN
     return maker_public.buildHYPERSCAN()
 
@@ -419,6 +437,10 @@ def InitEnv():
             szErr = configInternalNet("eth1", sys.argv[1])
             if 0 < len(szErr):
                 return("Config CentOS failed:%s" %(szErr))
+    if "ubuntu-wsl2" == szOSName:
+        szErr = configWSLmodules()
+        if 0 < len(szErr):
+            return("Config Ubuntu failed:%s" %(szErr))
     #
     return ""
 
