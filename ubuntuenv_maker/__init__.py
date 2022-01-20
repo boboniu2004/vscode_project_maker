@@ -76,40 +76,41 @@ def openRoot():
     return ""
 
 
-#configDebSource配置扩展源；参数：无；返回：错误描述
-def configDebSource():
-    #获取Ubuntu的版本名称
-    CodeNameObj = re.match("^Codename[ \\t]*\\:[ \\t]*([\\S]+)", \
-        maker_public.execCmdAndGetOutput("lsb_release -c"))
-    if None == CodeNameObj:
-        return "Can not find codename!"
-    szCodeName = CodeNameObj.group(1)
-    #安装网易源
-    szAptSource = \
-        "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-            " main restricted universe multiverse\n"\
-        "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-            "-security main restricted universe multiverse\n"\
-        "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-            "-updates main restricted universe multiverse\n"\
-        "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-            "-proposed main restricted universe multiverse\n"\
-        "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-            "-backports main restricted universe multiverse\n"\
-        "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-            " main restricted universe multiverse\n"\
-        "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-            "-security main restricted universe multiverse\n"\
-        "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-            "-updates main restricted universe multiverse\n"\
-        "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-            "-proposed main restricted universe multiverse\n"\
-        "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-            "-backports main restricted universe multiverse\n"
-    #
-    szErr = maker_public.writeTxtFile("/etc/apt/sources.list", szAptSource)
-    if 0 < len(szErr):
-        return szErr
+#configDebSource配置扩展源；参数：os类型；返回：错误描述
+def configDebSource(szOSName):
+    if "ubuntu" == szOSName:
+        #获取Ubuntu的版本名称
+        CodeNameObj = re.match("^Codename[ \\t]*\\:[ \\t]*([\\S]+)", \
+            maker_public.execCmdAndGetOutput("lsb_release -c"))
+        if None == CodeNameObj:
+            return "Can not find codename!"
+        szCodeName = CodeNameObj.group(1)
+        #安装阿里源
+        szAptSource = \
+            "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
+                " main restricted universe multiverse\n"\
+            "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
+                "-security main restricted universe multiverse\n"\
+            "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
+                "-updates main restricted universe multiverse\n"\
+            "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
+                "-proposed main restricted universe multiverse\n"\
+            "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
+                "-backports main restricted universe multiverse\n"\
+            "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
+                " main restricted universe multiverse\n"\
+            "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
+                "-security main restricted universe multiverse\n"\
+            "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
+                "-updates main restricted universe multiverse\n"\
+            "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
+                "-proposed main restricted universe multiverse\n"\
+            "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
+                "-backports main restricted universe multiverse\n"
+        #
+        szErr = maker_public.writeTxtFile("/etc/apt/sources.list", szAptSource)
+        if 0 < len(szErr):
+            return szErr
     if 0 != os.system("apt-get update"):
         return "Update sources.list failed"
     return ""
@@ -294,6 +295,23 @@ def configInternalNet(szEthEnName, szIpAddr):
     #
     return ""
 
+#configWSLmodules 添加内核模块编译功能；参数：无；返回：错误描述
+def configWSLmodules():
+    vscode_project_maker = os.environ["HOME"]+"/vscode_project_maker"
+    szOSName = maker_public.execCmdAndGetOutput("uname -r")
+    match_ret = re.match("([\d\\.]+)-", szOSName)
+    if None == match_ret:
+        return "Can not get WSL kernel version"
+    if False == os.path.isfile(vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
+        if 0 != os.system("wget -d "+vscode_project_maker+" https://ghproxy.com/github.com/microsoft/"\
+            "WSL2-Linux-Kernel/archive/refs/tags/linux-msft-wsl-"+match_ret.group(1)+".zip"):
+            return "failed to download linux-msft-wsl-"+match_ret.group(1)+".zip"
+    os.system("rm -rf /tmp/linux-msft-wsl-"+match_ret.group(1))
+    if 0!=os.system("unzip -d /tmp/ "+
+        vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
+        return "Failed to unzip "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"
+    
+
 #installDPDK配置DPDK；参数：编译参数；返回：错误描述
 def installDPDK(complie_type):
     #安装gawk
@@ -347,11 +365,10 @@ def InitEnv():
         szErr = openRoot()
         if 0 < len(szErr):
             return("Config Ubuntu failed:%s" %(szErr))
-    #安装阿里云源
-    if "ubuntu" == szOSName:
-        szErr = configDebSource()
-        if 0 < len(szErr):
-            return("Config Ubuntu failed:%s" %(szErr))
+    #初始化源
+    szErr = configDebSource(szOSName)
+    if 0 < len(szErr):
+        return("Config Ubuntu failed:%s" %(szErr))
     #将系统升级到最新版本
     szErr = updateSystem()
     if 0 < len(szErr):
