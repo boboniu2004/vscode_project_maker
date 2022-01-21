@@ -1,7 +1,7 @@
 # vscode_project_maker
 ## 概述
 工作n年了，工作环境一直是台式机，所以整了个双硬盘分别装了windows和linux，平时的开发就在linux下，普通工作就在windows下，虽然经常切换系统感觉比较麻烦，但是凑合下也就算了。不过，在2019年12月，爱折腾的我终于给自己换了一个工作。新公司给我配了一台装好了win10专业版的笔记本，这家伙，就像刘姥姥进大观园，头一遭啊！怎么安装linux？怎么安装开发环境？没办法，经过两个月的折腾，终于使用win10+hyper-v+vscode整合出了一个开发环境，该方法在win10中开启HYPER-V，然后安装CentOS和Ubuntu虚拟机，最后安装vscode，这一切完成后，使用该工程提供的脚本初始化虚拟机，创建C/C++，GO,PYTHON,JAVA工程供主机上的vscode开发。
-接下来从**安装**，**配置网络**，**配置DPDK和hyperscan**，**新建工程**，**编译调试工程**，**创建f-stack开发环境**，**创建vpp开发环境**这七个角度来进行说明。
+接下来从**安装**，**备份**，**配置网络**，**配置DPDK和hyperscan**，**新建工程**，**编译调试工程**，**创建f-stack开发环境**，**创建vpp开发环境**这八个角度来进行说明。
 
 # 安装
 ## 硬件要求
@@ -129,6 +129,9 @@ ubuntu安装时默认不开启root账号，所以只能已普通账号进入系�
 ## 设置虚拟机自启动
 hyper-v可以在管理界面设置开机自启动；virtualbox需要修改**vscode_project_maker/.ssh/autostarts-vm.bat**脚本的**虚拟机安装目录**和**自启动虚拟机名称**，然后放置到**C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp**目录下。
 ![hyper-v_set_start](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/hyper-v_set_start.jpg) ![virtualbox_set_start](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_start.jpg)
+
+# 备份
+
 
 # 配置网络
 在hyper-v环境下，可能需要对第二块内部网卡独立配置IP，此时可以在vscode_project_maker目录下运行如下命令：

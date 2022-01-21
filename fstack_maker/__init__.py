@@ -50,7 +50,7 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
         if 0!=os.system("mv  "+fstack_path+"/f-stack-"+fstack_ver+" "+fstack_path+"/f-stack"):
             return "Failed to unzip "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip"
     if 0 != os.system("cp -rf "+vscode_project_maker+\
-        "/vpp_maker/dpdk_init.py "+fstack_path+"/f-stack"+"/"):
+        "/vpp_maker/dpdk_scrits "+fstack_path+"/f-stack"+"/"):
         return "cp dpdk_init.py failed"
     #修改lib下的makefile
     lib_make,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack"+"/lib/Makefile")
@@ -184,7 +184,8 @@ def create_fstack_project(fstack_path, vscode_project_maker):
             "\n            \"label\": \"gcc init active file\","\
             "\n            \"command\": \"/usr/bin/python3\","\
             "\n            \"args\": ["\
-            "\n                \"${workspaceFolder}/dpdk_init.py\","\
+            "\n                \"${workspaceFolder}/dpdk_scrits/__init__.py\","\
+            "\n                \"envinit\","\
             "\n                \"f-stack\","\
             "\n            ],"\
             "\n            \"options\": {"\

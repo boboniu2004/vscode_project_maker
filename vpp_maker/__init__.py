@@ -59,7 +59,8 @@ def create_vpp_project(vpp_path, vscode_project_maker):
             "\n            \"label\": \"gcc init active file\","\
             "\n            \"command\": \"/usr/bin/python3\","\
             "\n            \"args\": ["\
-            "\n                \"${workspaceFolder}/dpdk_init.py\","\
+            "\n                \"${workspaceFolder}/dpdk_scrits/__init__.py\","\
+            "\n                \"envinit\","\
             "\n                \"vpp\","\
             "\n            ],"\
             "\n            \"options\": {"\
@@ -81,11 +82,11 @@ def create_vpp_project(vpp_path, vscode_project_maker):
     return ""
 
 
-#功能：配置dpdk；参数：无；返回：错误码
+#功能：配置dpdk；参数：vpp路径、工程路径；返回：错误码
 def config_dpdk(vpp_path, vscode_project_maker):
     #拷贝dpdk初始化工具
     if 0 != os.system("cp -rf "+vscode_project_maker+\
-        "/vpp_maker/dpdk_init.py "+vpp_path+"/vpp"+"/"):
+        "/vpp_maker/dpdk_scrits "+vpp_path+"/vpp"+"/"):
         return "cp dpdk_init.py failed"
     #写入igb_uio的meson文件
     err = maker_public.writeTxtFile(vpp_path+"/vpp"+\
