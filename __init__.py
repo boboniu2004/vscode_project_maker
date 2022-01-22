@@ -33,6 +33,8 @@ def addGitignore(szProjPath):
 def configGit(szProjPath):
     #配置口令自动保存
     #os.system("cd "+szProjPath+" && "+"git config  credential.helper store")
+    #os.system("cd "+szProjPath+" && "+"git config --global user.email xxx@yy.zz")
+    #os.system("cd "+szProjPath+" && "+"git config --global user.name xx")
     return addGitignore(szProjPath)
 
 #函数功能：主函数
