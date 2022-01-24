@@ -4,6 +4,7 @@
 
 import os
 import re
+import sys
 import multiprocessing
 
 
@@ -249,6 +250,23 @@ def install_pc(src_path):
     if ""==sz_err:
         os.system("ldconfig")
     return sz_err
+
+
+#功能：重启；参数：重启提示信息；返回：无
+def do_reboot(msg):
+    if re.search("^2\\..*", sys.version):
+        raw_input(msg)
+    else:
+        input(msg)
+    os.system("reboot")
+
+
+#功能：获取pyhon命令；参数：无；返回：python命令
+def get_python():
+    if re.search("^2\\..*", sys.version):
+        return "python"
+    else:
+        return "python3"
 
 
 #build_normal_dpdk 编译普通版本的DPDK；参数：dpdk源码路径；返回：错误描述
