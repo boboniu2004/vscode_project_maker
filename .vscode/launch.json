@@ -8,10 +8,10 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/opensrc_maker.py",
+            "program": "${workspaceFolder}/dpdk_opt.py",
             "args": [
-                "vpp",
-                "/root/other_workspace/"
+                "uninstall",
+                "./dpdk_log.log"
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"

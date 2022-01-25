@@ -4,20 +4,42 @@
 
 import os
 import re
-import psutil
+import logging
 import maker_public
 
 
 ####################################安装####################################################
+#功能：获取系统总的内存大小；参数：无；返回：内存字节大小
+def get_memory():
+    total_mem = 0
+    meminf = maker_public.execCmdAndGetOutput("dmidecode | grep -P -A5 \"Memory\\s+Device\" "\
+        "| grep Size | grep -v Range | grep -P \"Size:\\s+\\d.*\"").split("\n")
+    for slotmeme in meminf:
+        sizeret = re.search("Size:[ \\t]+(\d+)[ \\t]+", slotmeme)
+        baseret = re.search("Size:[ \\t]+\d+[ \\t]+(KB|MB|GB)", slotmeme)
+        if None == baseret:
+            continue
+        base = baseret.group(1)
+        memsize = int(sizeret.group(1))
+        if "KB" == base:
+            total_mem += memsize*1024
+        elif "MB" == base:
+            total_mem += memsize*1024*1024
+        elif "GB" == base:
+            total_mem += memsize*1024*1024*1024
+    return total_mem
+
+
 #功能：获取grub-mkconfig命令；参数：无；返回：命令、错误描述
 def get_mkconfcmd():
-    if "" == maker_public.execCmdAndGetOutput("grub2-mkconfig --version | "\
-        "grep -P\"^grub2-mkconfig[ ]+\\(GRUB\\)\""):
+    if "" != maker_public.execCmdAndGetOutput("grub2-mkconfig --version | "\
+        "grep -P \"^grub2-mkconfig[ ]+\\(GRUB\\)\""):
         return "grub2-mkconfig", ""
-    elif "" == maker_public.execCmdAndGetOutput("grub-mkconfig --version | "\
-        "grep -P\"^grub-mkconfig[ ]+\\(GRUB\\)\""):
+    elif "" != maker_public.execCmdAndGetOutput("grub-mkconfig --version | "\
+        "grep -P \"^grub-mkconfig[ ]+\\(GRUB\\)\""):
         return "grub-mkconfig", ""
     return "", "Failed to find grub2-mkconfig|grub-mkconfig"
+
 
 #功能：禁止一个服务；参数：服务名；返回：错误描述
 def disable_onesrv(srv_name):
@@ -39,40 +61,69 @@ def disable_services():
     all_err += disable_onesrv("bluetooth.service")
     all_err += disable_onesrv("ksm.service")
     all_err += disable_onesrv("ksmtuned.service")
-    all_err += disable_onesrv("NetworkManager.service")
+    #这个服务关闭会导致无法远程连接，所以不开启
+    #all_err += disable_onesrv("NetworkManager.service")
     return all_err
 
 
-#功能：隔离CPU；参数：需要隔离的CPU清单；返回：错误描述
-def isolate_cpu(cpu_lst):
+#功能：检查CPU参数；参数：需要隔离的CPU清单；返回：错误描述
+def check_cpuflg(cpu_lst):
+    if ""!=cpu_lst and None == re.search("^(\\d+,)*\\d+$", cpu_lst):
+        return "The format of cpu_list is 1,2,5,7)"
+    if "" == cpu_lst:
+        return ""
+    all_cpu = sorted(str(cpu_lst).split(","))
+    last_cpu = ""
+    for cpu in all_cpu:
+        if int(cpu) >= os.cpu_count():
+            return "Invaild cpu "+cpu
+        if last_cpu == cpu:
+            return "Repetitive cpu "+cpu
+        last_cpu = cpu
+    return ""
+
+
+#功能：隔离CPU；参数：需要隔离的CPU清单、巨页参数；返回：错误描述
+def isolate_cpu(cpu_lst, page_size):
     #检测cpu_lst的格式
     cpu_lst = str(cpu_lst).strip()
-    if None == re.search("^(\\d+,)*\\d+$", cpu_lst):
-        return "The format of cpu_list is 1,2,5,7)"
+    sz_err = check_cpuflg(cpu_lst)
+    if "" != sz_err:
+        return sz_err
+    #检查巨页参数
+    if 2048!=page_size and 1048576!=page_size:
+        return "page_size must be 2048 or 1048576"
     #获取grub-mkconfig命令
     mkconfig,sz_err = get_mkconfcmd()
     if "" != sz_err:
         return sz_err
-    #设置启动参数，ARM下默认开启，不需要设置
-    iommu_flg = ""
+    #设置iommu，ARM下默认开启smmu
+    iommu_flg = "nmi_watchdog=0 selinux=0 nosoftlockup "
     if "" != maker_public.execCmdAndGetOutput("lscpu | grep -P \" vmx \""):
         iommu_flg += "iommu=pt intel_iommu=on "
     elif "" != maker_public.execCmdAndGetOutput("lscpu | grep -P \" svm \""):
         iommu_flg += "iommu=pt amd_iommu=on "
+    #设置巨页参数
+    if 2048 == page_size:
+        iommu_flg += "default_hugepagesz=2M "
+    else:
+        iommu_flg += "default_hugepagesz=1G "
+    #设置核隔离参数
     cpu_flg = ""
     if "" != cpu_lst:
-        cpu_flg = "isolCPUS="+cpu_lst+" "
+        cpu_flg += "isolCPUS="+cpu_lst+" "
+        cpu_flg += "nohz_full="+cpu_lst+" "
     #读取grub配置文件
     grub,err = maker_public.readTxtFile("/etc/default/grub")
     if "" != err:
         return err
     #替换配置文件
-    if None != re.search("\nGRUB_CMDLINE_LINUX_DEFAULT.*\nGRUB_CMDLINE_LINUX[ \\t]*=.*"):
+    if None != re.search("\nGRUB_CMDLINE_LINUX_DEFAULT.*\nGRUB_CMDLINE_LINUX[ \\t]*=.*",grub):
         grub = re.sub("\nGRUB_CMDLINE_LINUX[ \\t]*=.*", \
-            ("\nGRUB_CMDLINE_LINUX=\"%s%s\"" %(iommu_flg, cpu_flg) ) )
-    elif None != re.search("\nGRUB_CMDLINE_LINUX[ \\t]*=.+rhgb[ \\t]+quiet[ \\t]+.*"):
+            ("\nGRUB_CMDLINE_LINUX=\"%s%s\"" %(iommu_flg, cpu_flg) ),grub )
+    elif None != re.search("\nGRUB_CMDLINE_LINUX[ \\t]*=.+rhgb[ \\t]+quiet[ \\t]+.*",grub):
         grub = re.sub("[ \\t]+rhgb[ \\t]+quiet[ \\t]+.*", \
-            (" rhgb quiet %s%s\"" %(iommu_flg, cpu_flg) ) )
+            (" rhgb quiet %s%s\"" %(iommu_flg, cpu_flg) ),grub )
     else:
         return "Failed to make grub.cfg"
     #写入grub配置文件
@@ -87,13 +138,14 @@ def isolate_cpu(cpu_lst):
 
 #功能：注册计划任务；参数：脚本位置；返回：错误描述
 def register_cron(monitor_scrits):
+    python = maker_public.get_python()
     szret = maker_public.execCmdAndGetOutput("crontab -l")
     pyregpath = monitor_scrits.replace(".", "\\.")
-    if None != re.search(".+python[ \\t]+"+pyregpath+"[\\s]+monitor", szret):
-        szret = re.sub(".+python[ \\t]+"+pyregpath+"[\\s]+monitor", \
-            "*/1 * * * * python "+monitor_scrits+" monitor", szret)
+    if None != re.search(".+python\\d*[ \\t]+"+pyregpath+"[\\s]+monitor", szret):
+        szret = re.sub(".+python\\d*[ \\t]+"+pyregpath+"[\\s]+monitor", \
+            "*/1 * * * * "+python+" "+monitor_scrits+" monitor", szret)
     elif 0>=len(szret) or "\n" == szret[len(szret)-1]:
-        szret += "*/1 * * * * python "+monitor_scrits+" monitor\n"
+        szret += "*/1 * * * * "+python+" "+monitor_scrits+" monitor\n"
     sz_err = maker_public.writeTxtFile("/tmp/dpdk_scrits_crontab", szret)
     if 0 < len(sz_err):
         os.system("rm -Rf /tmp/dpdk_scrits_crontab")
@@ -105,24 +157,29 @@ def register_cron(monitor_scrits):
     return ""
     
 
-#功能：安装dpdk的环境；参数：cpu清单，格式化为1,2,5,7,8；返回：错误描述
-def Install_dpdkenv(monitor_scrits, cpu_lst):
+#功能：安装dpdk的环境；参数：监控脚本、cpu清单(格式化为1,2,5,7,8)、巨页信息；返回：错误描述
+def Install_dpdkenv(monitor_scrits, cpu_lst, page_size):
+    monitor_scrits = os.path.abspath(monitor_scrits)
     #关闭服务
     sz_err = disable_services()
     if "" != sz_err:
         return sz_err
+    #关闭UI
+    if "ubuntu-wsl2" != maker_public.getOSName():
+        if 0 != os.system("systemctl set-default multi-user.target"):
+            return "Failed to close UI"
     #挂载定时任务  
     sz_err = register_cron(monitor_scrits)
     if "" != sz_err:
         enable_onesrv("irqbalance.service")
         return sz_err 
     #核隔离和开启iommu
-    sz_err = isolate_cpu(cpu_lst)
-    if "" != sz_err:
-        enable_onesrv("irqbalance.service")
-        unregister_cron(monitor_scrits)
-        return sz_err 
-    maker_public.do_reboot("press any key to reboot...")
+    if "ubuntu-wsl2" != maker_public.getOSName():
+        sz_err = isolate_cpu(cpu_lst, page_size)
+        if "" != sz_err:
+            enable_onesrv("irqbalance.service")
+            unregister_cron(monitor_scrits)
+            return sz_err 
     return ""
 
 
@@ -147,10 +204,10 @@ def free_cpu():
     if "" != err:
         return err
     #替换配置文件
-    if None != re.search("\nGRUB_CMDLINE_LINUX_DEFAULT.*\nGRUB_CMDLINE_LINUX[ \\t]*=.*"):
-        grub = re.sub("\nGRUB_CMDLINE_LINUX[ \\t]*=.*", "\nGRUB_CMDLINE_LINUX=\"" )
-    elif None != re.search("\nGRUB_CMDLINE_LINUX[ \\t]*=.+rhgb[ \\t]+quiet[ \\t]+.*"):
-        grub = re.sub("[ \\t]+rhgb[ \\t]+quiet[ \\t]+.*", " rhgb quiet\"")
+    if None != re.search("\nGRUB_CMDLINE_LINUX_DEFAULT.*\nGRUB_CMDLINE_LINUX[ \\t]*=.*",grub):
+        grub = re.sub("\nGRUB_CMDLINE_LINUX[ \\t]*=.*", "\nGRUB_CMDLINE_LINUX=\"\"",grub )
+    elif None != re.search("\nGRUB_CMDLINE_LINUX[ \\t]*=.+rhgb[ \\t]+quiet[ \\t]+.*",grub):
+        grub = re.sub("[ \\t]+rhgb[ \\t]+quiet[ \\t]+.*", " rhgb quiet\"",grub)
     else:
         return "Failed to make grub.cfg"
     #写入grub配置文件
@@ -167,8 +224,8 @@ def free_cpu():
 def unregister_cron(monitor_scrits):
     szret = maker_public.execCmdAndGetOutput("crontab -l")
     pyregpath = monitor_scrits.replace(".", "\\.")
-    if None != re.search(".+python[ \\t]+"+pyregpath+"[^\\n]+\\n", szret):
-        szret = re.sub(".+python[ \\t]+"+monitor_scrits+"[^\\n]+\\n", "", szret)
+    if None != re.search(".+python\\d*[ \\t]+"+pyregpath+"[^\\n]+\\n", szret):
+        szret = re.sub(".+python\\d*[ \\t]+"+monitor_scrits+"[^\\n]+\\n", "", szret)
     sz_err = maker_public.writeTxtFile("/tmp/dpdk_scrits_crontab", szret)
     if 0 < len(sz_err):
         os.system("rm -Rf /tmp/dpdk_scrits_crontab")
@@ -189,7 +246,7 @@ def do_killproc(app_lst):
             return []
         app_name = os.path.basename(os.path.abspath(appinfo[0]))
         kill_cmd += "killall -9 "+app_name+" || "
-        proc_lst.append("app_name")
+        proc_lst.append(app_name)
     kill_cmd = str(kill_cmd).rstrip(" || ")
     os.system(kill_cmd)
     return proc_lst
@@ -219,10 +276,10 @@ def close_proc(app_lst):
     return do_waitproc(proc_lst)
 
     
-#功能：卸载dpdk的环境；参数：无；返回：错误描述
-def Uinstall_dpdkenv(app_lst):
+#功能：卸载dpdk的环境；参数：监控脚本和监控的进程；返回：错误描述
+def Uinstall_dpdkenv(monitor_scrits, app_lst):
     #注销定时任务
-    sz_err = unregister_cron()
+    sz_err = unregister_cron(monitor_scrits)
     if "" != sz_err:
         return sz_err
     #关闭全部进程
@@ -237,14 +294,13 @@ def Uinstall_dpdkenv(app_lst):
     sz_err = free_cpu()
     if "" != sz_err:
         return sz_err
-    maker_public.do_reboot("press any key to reboot...")
     return ""
 
 
 ####################################初始化#################################################
 #功能：设置ASLR；参数：无；返回：错误码
 def set_ASLR(opt):
-    if "0"!=opt or "1"!=opt:
+    if "0"!=opt and "1"!=opt:
         return "ASLR_FLG must be 0 or 1"
     if os.system("echo "+opt+" > /proc/sys/kernel/randomize_va_space"):
         return "set ASLR failed!"
@@ -275,17 +331,17 @@ def set_hugepage(page_size, page_cnt):
     highest_1 = 0
     cnt_1 = 0
     cur_pos = 0
-    while 0 < page_cnt:
-        if page_cnt%1:
+    tmp_page_cnt = page_cnt
+    while 0 < tmp_page_cnt:
+        if tmp_page_cnt%2:
             cnt_1 = cnt_1+1
             highest_1 = cur_pos
         cur_pos = cur_pos+1
-        page_cnt = page_cnt/2
+        tmp_page_cnt = int(tmp_page_cnt/2)
     if 1 != cnt_1:
-        page_cnt = pow(2*(highest_1+1))
+        page_cnt = pow(2, highest_1+1)
     #检测内存是否超出
-    total_mem = (psutil.virtual_memory()).total
-    if page_size*page_cnt >= total_mem:
+    if page_size*page_cnt*1024 >= get_memory():
         return "hugpage limit exceeded"
     #设置巨页
     node_info = maker_public.execCmdAndGetOutput("ls /sys/devices/system/node/"
