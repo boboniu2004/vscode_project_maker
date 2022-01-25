@@ -247,8 +247,9 @@ def do_killproc(app_lst):
         app_name = os.path.basename(os.path.abspath(appinfo[0]))
         kill_cmd += "killall -9 "+app_name+" || "
         proc_lst.append(app_name)
-    kill_cmd = str(kill_cmd).rstrip(" || ")
-    os.system(kill_cmd)
+    if "" != kill_cmd:
+        kill_cmd = str(kill_cmd).rstrip(" || ")
+        os.system(kill_cmd)
     return proc_lst
 
 
@@ -291,9 +292,10 @@ def Uinstall_dpdkenv(monitor_scrits, app_lst):
     if "" != sz_err:
         return sz_err
     #核隔离和关闭iommu
-    sz_err = free_cpu()
-    if "" != sz_err:
-        return sz_err
+    if "ubuntu-wsl2" != maker_public.getOSName():
+        sz_err = free_cpu()
+        if "" != sz_err:
+            return sz_err
     return ""
 
 
@@ -309,17 +311,12 @@ def set_ASLR(opt):
 
 #功能：加载巨页；参数：巨页大小、巨页数量；返回：错误码
 def set_one_hugepage(node_path, page_name, page_cnt):
-    all_pages = os.listdir(node_path)
-    sz_err = ""
-    #关闭原先设置的巨页
-    for page in all_pages:
-        if page != page_name:
-            os.system("echo 0 > "+node_path+"/"+page+"/nr_hugepages")
-        else:
-            if 0 != os.system("echo "+page_cnt+" > "+node_path+"/"+page+"/nr_hugepages"):
-                sz_err = "Failed to set "+\
-                    page_cnt+" > "+node_path+"/"+page+"/nr_hugepages"
-    return sz_err  
+    if 0 != os.system("echo "+str(page_cnt)+" > "+node_path+"/"+page_name+"/nr_hugepages"):
+        return "Failed to set "+str(page_cnt)+" > "+node_path+"/"+page_name+"/nr_hugepages"
+    cur_pagcnt = maker_public.execCmdAndGetOutput("grep HugePages_Total /proc/meminfo | grep -P \"\\d+\"")
+    if ""==cur_pagcnt or int(cur_pagcnt)!=page_cnt:
+        return "Failed to set "+str(page_cnt)+" > "+node_path+"/"+page_name+"/nr_hugepages"
+    return ""  
 
 
 #功能：加载巨页；参数：巨页大小、巨页数量；返回：错误码
@@ -344,6 +341,11 @@ def set_hugepage(page_size, page_cnt):
     if page_size*page_cnt*1024 >= get_memory():
         return "hugpage limit exceeded"
     #设置巨页
+    if False == os.path.isdir("/sys/devices/system/node"):
+        sz_err = set_one_hugepage("/sys/kernel/mm/hugepages", \
+            ("hugepages-%dkB" %page_size), ("%d" %page_cnt))
+        if "" != sz_err:
+            return sz_err        
     node_info = maker_public.execCmdAndGetOutput("ls /sys/devices/system/node/"
         " | grep -P \"^node\\d+$\" | sort -u").split("\n")
     if 2 >= len(node_info):#这里2的原因是最后结束行是空行
