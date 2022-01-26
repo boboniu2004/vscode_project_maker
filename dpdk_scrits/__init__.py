@@ -311,19 +311,6 @@ def set_ASLR(opt):
 
 #功能：加载巨页；参数：巨页大小、巨页数量；返回：错误码
 def set_one_hugepage(node_path, page_name, page_cnt):
-    if 0 != os.system("echo "+str(page_cnt)+" > "+node_path+"/"+page_name+"/nr_hugepages"):
-        return "Failed to set "+str(page_cnt)+" > "+node_path+"/"+page_name+"/nr_hugepages"
-    cur_pagcnt = maker_public.execCmdAndGetOutput("grep HugePages_Total /proc/meminfo | grep -P \"\\d+\"")
-    if ""==cur_pagcnt or int(cur_pagcnt)!=page_cnt:
-        return "Failed to set "+str(page_cnt)+" > "+node_path+"/"+page_name+"/nr_hugepages"
-    return ""  
-
-
-#功能：加载巨页；参数：巨页大小、巨页数量；返回：错误码
-def set_hugepage(page_size, page_cnt):
-    #检测类型大小
-    if 2048!=page_size and 1048576!=page_size:
-        return "page_size must be 2048 or 1048576"
     #检测page_cnt是否是2的幂次方，并且修正到2的幂次方
     highest_1 = 0
     cnt_1 = 0
@@ -337,28 +324,42 @@ def set_hugepage(page_size, page_cnt):
         tmp_page_cnt = int(tmp_page_cnt/2)
     if 1 != cnt_1:
         page_cnt = pow(2, highest_1+1)
-    #检测内存是否超出
-    if page_size*page_cnt*1024 >= get_memory():
-        return "hugpage limit exceeded"
-    #设置巨页
-    if False == os.path.isdir("/sys/devices/system/node"):
-        sz_err = set_one_hugepage("/sys/kernel/mm/hugepages", \
-            ("hugepages-%dkB" %page_size), ("%d" %page_cnt))
-        if "" != sz_err:
-            return sz_err        
-    node_info = maker_public.execCmdAndGetOutput("ls /sys/devices/system/node/"
-        " | grep -P \"^node\\d+$\" | sort -u").split("\n")
-    if 2 >= len(node_info):#这里2的原因是最后结束行是空行
-        sz_err = set_one_hugepage("/sys/kernel/mm/hugepages", \
-            ("hugepages-%dkB" %page_size), ("%d" %page_cnt))
-        if "" != sz_err:
-            return sz_err
-    else:
-        for cur_nd in node_info:
-            sz_err = set_one_hugepage("/sys/devices/system/node/"+cur_nd+"/hugepages", \
-                ("hugepages-%dkB" %page_size), ("%d" %page_cnt))
-        if "" != sz_err:
-            return sz_err
+    #设置
+    if False == os.path.isfile(node_path+"/"+page_name+"/nr_hugepages"):
+        return "Failed to set "+node_path+"/"+page_name+"/nr_hugepages"
+    old_hugepages = maker_public.execCmdAndGetOutput(\
+        "grep -P \"\\d+\" "+node_path+"/"+page_name+"/nr_hugepages").replace("\n", "")
+    if "" == old_hugepages:
+        return "Failed to set "+node_path+"/"+page_name+"/nr_hugepages"
+    if 0 != os.system("echo "+str(page_cnt)+" > "+node_path+"/"+page_name+"/nr_hugepages"):
+        os.system("echo "+old_hugepages+" > "+node_path+"/"+page_name+"/nr_hugepages")
+        return "Failed to set "+node_path+"/"+page_name+"/nr_hugepages"
+    cur_hugepages = maker_public.execCmdAndGetOutput(\
+        "grep -P \"\\d+\" "+node_path+"/"+page_name+"/nr_hugepages").replace("\n", "")
+    if cur_hugepages != str(page_cnt):
+        os.system("echo "+old_hugepages+" > "+node_path+"/"+page_name+"/nr_hugepages")
+        return "Failed to set "+node_path+"/"+page_name+"/nr_hugepages"
+    return ""  
+
+
+#功能：加载巨页；参数：巨页大小、巨页数量；返回：错误码
+def set_hugepage(page_size, page_cnt_lst):
+    #检测类型大小
+    if 2048!=page_size and 1048576!=page_size:
+        return "page_size must be 2048 or 1048576"
+    #逐个设置
+    for  page_info in page_cnt_lst:
+        if False == os.path.isdir("/sys/devices/system/node"):
+            sz_err = set_one_hugepage("/sys/kernel/mm/hugepages", \
+                ("hugepages-%dkB" %page_size), page_info[1])
+            if "" != sz_err:
+                return sz_err
+            return ""
+        else:
+            sz_err = set_one_hugepage("/sys/devices/system/node/"+page_info[0]+"/hugepages", \
+                ("hugepages-%dkB" %page_size), page_info[1])
+            if "" != sz_err:
+                return sz_err
     #加载巨页文件
     if True == os.path.isdir("/mnt/huge"):
         os.system("umount -f /mnt/huge")
@@ -385,7 +386,7 @@ def bind_device(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
             os.system(imsmod_cmd)
         if "" == maker_public.execCmdAndGetOutput("lsmod | grep "+kmod):
             return "Failed to load "+kmod
-    kmod = kmod[0]
+    kmod = kmod_list[0]
     #绑定网卡设备
     python = maker_public.get_python()
     all_err = ""
@@ -396,36 +397,42 @@ def bind_device(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
             if "" == dev_addr:
                 all_err += "No PCI address\n"
                 continue
-            if ""!=dev_name and "" != maker_public.execCmdAndGetOutput(\
-                python+" "+devbind_path+
+            if ""!=dev_name and "" != maker_public.execCmdAndGetOutput(python+" "+devbind_path+
                 "/dpdk-devbind --status-dev net | grep \"if="+dev_name+"\""):
                 os.system("ifconfig "+dev_name+" down")
             if "" != maker_public.execCmdAndGetOutput(\
                 python+" "+devbind_path+"/dpdk-devbind --status-dev net | "\
                 "grep -P \""+dev_addr+"[ \\t]+'.+'[ \\t]+drv=.+[ \\t]unused=.+\""):
-                all_err = "Failed to find "+dev_addr+"\n"
                 os.system(python+" "+devbind_path+"/dpdk-devbind -u "+dev_addr)
             if 0 != os.system(python+" "+devbind_path+"/dpdk-devbind --b "+kmod+" "+dev_addr):
-                all_err = "Failed to bind "+dev_addr+"\n"
+                all_err += "Failed to bind "+dev_addr+"\n"
         os.system("python3 "+devbind_path+"/dpdk-devbind --status-dev net")
     else:
         for dev in dev_lst:
-            if 0 != os.system("cd "+drvctl_path+" && "\
-                "DEV_UUID=$(basename $(readlink /sys/class/net/"+dev[0]+"/device)) && "\
-                "./driverctl -b vmbus set-override $DEV_UUID "+kmod):
-                all_err = "Failed to bind "+dev[0]+"\n"
+            dev_name = dev[0]
+            if "" == dev_name:
+                all_err += "No device name\n"
+                continue
+            if False == os.path.exists("/sys/class/net/"+dev_name+"/device"):
+                logging.warning("Failed to find "+dev_name)
+            else:
+                if 0 != os.system("cd "+drvctl_path+" && "\
+                    "DEV_UUID=$(basename $(readlink /sys/class/net/"+dev_name+"/device)) && "\
+                    "./driverctl -b vmbus set-override $DEV_UUID "+kmod):
+                    all_err += "Failed to bind "+dev_name+"\n"
         os.system("cd "+drvctl_path+" && ./driverctl -b vmbus list-overrides")
+    return all_err
 
 
 #功能：设置DPDK的环境参数；参数：巨页大小、巨页数量、是否开启地址随机化；返回：错误码
-def Set_dpdkenv(ASLR_flg, page_size, page_cnt, devbind_path, drvctl_path, \
+def Set_dpdkenv(ASLR_flg, page_size, page_cnt_lst, devbind_path, drvctl_path, \
     kmod_path, kmod_list, dev_lst):
     #设置地址随机化
     sz_err = set_ASLR(ASLR_flg)
     if "" != sz_err:
         return sz_err
     #设置巨页
-    sz_err = set_hugepage(page_size, page_cnt)
+    sz_err = set_hugepage(page_size, page_cnt_lst)
     if "" != sz_err:
         return sz_err
     #绑定设备
@@ -435,17 +442,20 @@ def Set_dpdkenv(ASLR_flg, page_size, page_cnt, devbind_path, drvctl_path, \
 ####################################监控进程################################################
 #功能：监控一个应用；参数：app名称-app启动路径及参数；返回：错误码
 def monitor_oneapp(appinfo):
-    if False == os.path.isfile(os.path.abspath(appinfo[0])):
+    if False == os.path.isfile(appinfo[0]):
         return "Failed to find "+appinfo[0]
+    if ""!=appinfo[1] and False == os.path.isdir(appinfo[1]):
+        return ("Failed to find work_dir(%s)" %appinfo[1])
     app_path = os.path.abspath(appinfo[0])
-    app_name = os.path.basename(os.path.abspath(appinfo[0]))
+    app_name = str(app_path).replace(".", "\\.")
     work_dir = os.path.abspath(appinfo[1])
     app_param = appinfo[2]
     #检测进程是否存在
     app_stat = maker_public.execCmdAndGetOutput("ps -aux | grep "+app_name)
-    app_stat = re.sub(".*grep[ \\t]+--color=auto.*($|\\n)", "", app_stat)
+    app_stat = re.sub(".*grep[ \\t]+"+app_name+".*\\n", "", app_stat)
     if ""==app_stat:
-        os.system("cd "+work_dir+" && "+app_path+" "+app_param)
+        logging.warning("try to start ("+app_path+" "+app_param+")")
+        os.system("cd "+work_dir+" && "+app_path+" "+app_param+" &")
     return ""
 
 

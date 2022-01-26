@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/dpdk_opt.py",
             "args": [
-                "uninstall",
+                "monitor",
                 "./dpdk_log.log"
             ],
             "cwd": "${workspaceFolder}",
