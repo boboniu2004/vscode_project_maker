@@ -30,15 +30,15 @@ def get_memory():
     return total_mem
 
 
-#功能：获取grub-mkconfig命令；参数：无；返回：命令、错误描述
+#功能：获取grub-mkconfig命令；参数：无；返回：grub版本、命令、错误描述
 def get_mkconfcmd():
     if "" != maker_public.execCmdAndGetOutput("grub2-mkconfig --version | "\
         "grep -P \"^grub2-mkconfig[ ]+\\(GRUB\\)\""):
-        return "grub2-mkconfig", ""
+        return "grub2", "grub2-mkconfig", ""
     elif "" != maker_public.execCmdAndGetOutput("grub-mkconfig --version | "\
         "grep -P \"^grub-mkconfig[ ]+\\(GRUB\\)\""):
-        return "grub-mkconfig", ""
-    return "", "Failed to find grub2-mkconfig|grub-mkconfig"
+        return "grub", "grub-mkconfig", ""
+    return "", "", "Failed to find grub2-mkconfig|grub-mkconfig"
 
 
 #功能：禁止一个服务；参数：服务名；返回：错误描述
@@ -94,7 +94,7 @@ def isolate_cpu(cpu_lst, page_size):
     if 2048!=page_size and 1048576!=page_size:
         return "page_size must be 2048 or 1048576"
     #获取grub-mkconfig命令
-    mkconfig,sz_err = get_mkconfcmd()
+    grubver,mkconfig,sz_err = get_mkconfcmd()
     if "" != sz_err:
         return sz_err
     #设置iommu，ARM下默认开启smmu
@@ -131,7 +131,7 @@ def isolate_cpu(cpu_lst, page_size):
     if "" != err:
         return err
     #重新生成启动文件
-    if 0 != os.system(mkconfig+" -o /boot/grub/grub.cfg"):
+    if 0 != os.system(mkconfig+" -o /boot/"+grubver+"/grub.cfg"):
         return "Failed to make grub.cfg"
     return ""
 
@@ -196,7 +196,7 @@ def enable_onesrv(srv_name):
 #功能：释放CPU；参数：无；返回：错误描述
 def free_cpu():
     #获取grub-mkconfig命令
-    mkconfig,sz_err = get_mkconfcmd()
+    grubver,mkconfig,sz_err = get_mkconfcmd()
     if "" != sz_err:
         return sz_err
     #读取grub配置文件
@@ -206,8 +206,8 @@ def free_cpu():
     #替换配置文件
     if None != re.search("\nGRUB_CMDLINE_LINUX_DEFAULT.*\nGRUB_CMDLINE_LINUX[ \\t]*=.*",grub):
         grub = re.sub("\nGRUB_CMDLINE_LINUX[ \\t]*=.*", "\nGRUB_CMDLINE_LINUX=\"\"",grub )
-    elif None != re.search("\nGRUB_CMDLINE_LINUX[ \\t]*=.+rhgb[ \\t]+quiet[ \\t]+.*",grub):
-        grub = re.sub("[ \\t]+rhgb[ \\t]+quiet[ \\t]+.*", " rhgb quiet\"",grub)
+    elif None != re.search("\nGRUB_CMDLINE_LINUX[ \\t]*=.+rhgb[ \\t]+quiet.*",grub):
+        grub = re.sub("[ \\t]+rhgb[ \\t]+quiet.*", " rhgb quiet\"",grub)
     else:
         return "Failed to make grub.cfg"
     #写入grub配置文件
@@ -215,7 +215,7 @@ def free_cpu():
     if "" != err:
         return err
     #重新生成启动文件
-    if 0 != os.system(mkconfig+" -o /boot/grub/grub.cfg"):
+    if 0 != os.system(mkconfig+" -o /boot/"+grubver+"/grub.cfg"):
         return "Failed to make grub.cfg"
     return ""    
 
@@ -244,7 +244,7 @@ def do_killproc(app_lst):
     for appinfo in app_lst:    
         if False == os.path.isfile(os.path.abspath(appinfo[0])):
             return []
-        app_name = os.path.basename(os.path.abspath(appinfo[0]))
+        app_name = os.path.abspath(appinfo[0])
         kill_cmd += "killall -9 "+app_name+" || "
         proc_lst.append(app_name)
     if "" != kill_cmd:
@@ -259,7 +259,6 @@ def do_waitproc(proc_lst):
     while exists:
         curexiste = 0
         app_stat = maker_public.execCmdAndGetOutput("ps -aux")
-        app_stat = re.sub(".*grep[ \\t]+--color=auto.*($|\\n)", "", app_stat)
         for proc in proc_lst:
             if None != re.search("[ \\t]+"+proc+"[ \\t]+|[ \\t]+"+proc+"$", app_stat):
                 curexiste = curexiste+1
@@ -454,7 +453,7 @@ def monitor_oneapp(appinfo):
     app_stat = maker_public.execCmdAndGetOutput("ps -aux | grep "+app_name)
     app_stat = re.sub(".*grep[ \\t]+"+app_name+".*\\n", "", app_stat)
     if ""==app_stat:
-        logging.warning("try to start ("+app_path+" "+app_param+")")
+        logging.info("try to start ("+app_path+" "+app_param+")")
         os.system("cd "+work_dir+" && "+app_path+" "+app_param+" &")
     return ""
 

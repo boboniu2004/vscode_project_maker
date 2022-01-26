@@ -46,7 +46,7 @@ if __name__ == "__main__":
     #需要隔离的CPU清单，从0开始，格式为1,4,5,6
     cpu_list = ""
     #需要监控的进程的信息，两层list，内层list每个节点有三个参数：程序路径、工作路径、启动参数
-    app_list = [["/usr/bin/more", "s", "/etc/default/grub"]]
+    app_list = [["/usr/bin/more", "", "/etc/default/grub"]]
     #动态库路径清单，每个元素代表一个应用需要的动态库路径，他们会被添加到系统中，供启动时查找
     dll_list = [""]
     #地址随机化开启标志：1表示开启、0表示关闭
