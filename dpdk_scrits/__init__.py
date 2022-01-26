@@ -113,6 +113,7 @@ def isolate_cpu(cpu_lst, page_size):
     if "" != cpu_lst:
         cpu_flg += "isolCPUS="+cpu_lst+" "
         cpu_flg += "nohz_full="+cpu_lst+" "
+        cpu_flg += "rcu_nocbs="+cpu_lst+" "
     #读取grub配置文件
     grub,err = maker_public.readTxtFile("/etc/default/grub")
     if "" != err:
