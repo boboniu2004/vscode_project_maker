@@ -121,8 +121,8 @@ def isolate_cpu(cpu_lst, page_size):
     if None != re.search("\nGRUB_CMDLINE_LINUX_DEFAULT.*\nGRUB_CMDLINE_LINUX[ \\t]*=.*",grub):
         grub = re.sub("\nGRUB_CMDLINE_LINUX[ \\t]*=.*", \
             ("\nGRUB_CMDLINE_LINUX=\"%s%s\"" %(iommu_flg, cpu_flg) ),grub )
-    elif None != re.search("\nGRUB_CMDLINE_LINUX[ \\t]*=.+rhgb[ \\t]+quiet[ \\t]+.*",grub):
-        grub = re.sub("[ \\t]+rhgb[ \\t]+quiet[ \\t]+.*", \
+    elif None != re.search("\nGRUB_CMDLINE_LINUX[ \\t]*=.+rhgb[ \\t]+quiet.*",grub):
+        grub = re.sub("[ \\t]+rhgb[ \\t]+quiet.*", \
             (" rhgb quiet %s%s\"" %(iommu_flg, cpu_flg) ),grub )
     else:
         return "Failed to make grub.cfg"
@@ -158,7 +158,7 @@ def register_cron(monitor_scrits):
     
 
 #功能：安装dpdk的环境；参数：监控脚本、cpu清单(格式化为1,2,5,7,8)、巨页信息；返回：错误描述
-def Install_dpdkenv(monitor_scrits, cpu_lst, page_size):
+def Install_dpdkenv(monitor_scrits, cpu_lst, page_size, dll_list):
     monitor_scrits = os.path.abspath(monitor_scrits)
     #关闭服务
     sz_err = disable_services()
