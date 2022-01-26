@@ -5,6 +5,7 @@
 import os
 import re
 import logging
+import multiprocessing
 import maker_public
 
 
@@ -75,7 +76,7 @@ def check_cpuflg(cpu_lst):
     all_cpu = sorted(str(cpu_lst).split(","))
     last_cpu = ""
     for cpu in all_cpu:
-        if int(cpu) >= os.cpu_count():
+        if int(cpu) >= multiprocessing.cpu_count():
             return "Invaild cpu "+cpu
         if last_cpu == cpu:
             return "Repetitive cpu "+cpu

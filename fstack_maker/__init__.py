@@ -4,6 +4,7 @@
 import sys
 import re
 import os
+import multiprocessing
 import maker_public
 
 
@@ -89,7 +90,7 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
     finally:
         os.chdir(cwd_dir)
     #为f-stack生成总的make文件
-    cpunum = str(os.cpu_count())
+    cpunum = str(multiprocessing.cpu_count())
     fstack_make = \
         "update:"\
             "\n\trm -rf ./example/helloworld*"\
