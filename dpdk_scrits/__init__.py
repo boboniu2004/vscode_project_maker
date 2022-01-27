@@ -69,11 +69,25 @@ def disable_services():
 
 #功能：检查CPU参数；参数：需要隔离的CPU清单；返回：错误描述
 def check_cpuflg(cpu_lst):
-    if ""!=cpu_lst and None == re.search("^(\\d+,)*\\d+$", cpu_lst):
-        return "The format of cpu_list is 1,2,5,7)"
+    if ""!=cpu_lst and None == re.search("^(\\d+|\\d+-\\d+,)*(\\d+|\\d+-\\d+)$", cpu_lst):
+        return "The format of cpu_list is 1,2,5,7,4-5)"
     if "" == cpu_lst:
         return ""
-    all_cpu = sorted(str(cpu_lst).split(","))
+    cpu_param = str(cpu_lst).split(",")
+    all_cpu = []
+    for cpu in cpu_param:
+        ret = re.search("(\\d+)-(\\d+)", cpu)
+        if None != ret:
+            beg = int(ret.group(1))
+            end = int(ret.group(1))
+            if beg>end:
+                return ("Invaild cpu_list (%s)" %cpu)
+        else:
+            beg = int(cpu)
+            end = int(cpu)
+        while beg <= end:
+            all_cpu.append(str(beg))
+            beg = beg+1
     last_cpu = ""
     for cpu in all_cpu:
         if int(cpu) >= multiprocessing.cpu_count():
@@ -159,8 +173,22 @@ def register_cron(monitor_scrits):
     return ""
     
 
+#功能：设置DPDK及其APP的链接库路径；参数：链接库路径；返回：错误描述
+def set_dpdkapplib(dllpath_list):
+    path_info = ""
+    sz_err = ""
+    for dllpath in dllpath_list:
+        if False == os.path.isdir(os.path.abspath(dllpath)):
+            return "Failed to find "+dllpath
+        path_info += os.path.abspath(dllpath)+"\n"
+    if "" != path_info:
+        sz_err = maker_public.writeTxtFile("/etc/ld.so.conf.d/dpdkapp_lib.conf", path_info)
+        os.system("ldconfig")
+    return sz_err
+
+
 #功能：安装dpdk的环境；参数：监控脚本、cpu清单(格式化为1,2,5,7,8)、巨页信息；返回：错误描述
-def Install_dpdkenv(monitor_scrits, cpu_lst, page_size, dll_list):
+def Install_dpdkenv(monitor_scrits, cpu_lst, page_size, dllpath_list):
     monitor_scrits = os.path.abspath(monitor_scrits)
     #关闭服务
     sz_err = disable_services()
@@ -182,6 +210,10 @@ def Install_dpdkenv(monitor_scrits, cpu_lst, page_size, dll_list):
             enable_onesrv("irqbalance.service")
             unregister_cron(monitor_scrits)
             return sz_err 
+    #设置动态库链接
+    sz_err = set_dpdkapplib(dllpath_list)
+    if "" != sz_err:
+        return sz_err
     return ""
 
 
@@ -297,6 +329,8 @@ def Uinstall_dpdkenv(monitor_scrits, app_lst):
         sz_err = free_cpu()
         if "" != sz_err:
             return sz_err
+    #删除动态库链接路径配置
+    os.system("rm -rf /etc/ld.so.conf.d/dpdkapp_lib.conf && ldconfig")
     return ""
 
 

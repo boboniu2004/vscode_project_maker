@@ -38,17 +38,17 @@ def init_log(file_size, error):
 if __name__ == "__main__":
     #错误描述
     error = "dpdk_opt: [install|uninstall|initenv|monitor] [log file]"
-
     #初始化日志文件，大小限制为512MB
     init_log(512*1024*1024, error)
 
+
     #所有的参数
-    #需要隔离的CPU清单，从0开始，格式为1,4,5,6
+    #需要隔离的CPU清单，从0开始，格式为1,4,5,6,2-3
     cpu_list = "3"
     #需要监控的进程的信息，两层list，内层list每个节点有三个参数：程序路径、工作路径、启动参数
     app_list = [["/usr/bin/more", "", "/etc/default/grub"]]
     #动态库路径清单，每个元素代表一个应用需要的动态库路径，他们会被添加到系统中，供启动时查找
-    dll_list = [""]
+    dllpath_list = [""]
     #地址随机化开启标志：1表示开启、0表示关闭
     ASLR_flg = "1"
     #需要开启的巨页的尺寸，有2048kb和1048576kb两种
@@ -73,9 +73,11 @@ if __name__ == "__main__":
     #需要绑定的设备，两层list，内层list每个节点有两个参数：网卡名、网卡的PCI地址。在PCI环境中，
     # 网卡的PCI地址是必须的；在VMBUS环境中，网卡名是必须的。
     dev_lst = [["eth2", "04:00.3"]]
+
+
     #解析参数
     if "install"==sys.argv[1]:
-        error = dpdk_scrits.Install_dpdkenv(sys.argv[0], cpu_list, page_size, dll_list)
+        error = dpdk_scrits.Install_dpdkenv(sys.argv[0], cpu_list, page_size, dllpath_list)
     elif "uninstall"==sys.argv[1]:
         error  = dpdk_scrits.Uinstall_dpdkenv(sys.argv[0], app_list)
     elif "initenv"==sys.argv[1]:
