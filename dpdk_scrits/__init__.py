@@ -355,7 +355,7 @@ def set_hugepage(page_size, page_cnt_lst):
                 ("hugepages-%dkB" %page_size), page_info[1])
             if "" != sz_err:
                 return sz_err
-            return ""
+            break
         else:
             sz_err = set_one_hugepage("/sys/devices/system/node/"+page_info[0]+"/hugepages", \
                 ("hugepages-%dkB" %page_size), page_info[1])
