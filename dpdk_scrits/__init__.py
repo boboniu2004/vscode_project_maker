@@ -79,21 +79,21 @@ def check_cpuflg(cpu_lst):
         ret = re.search("(\\d+)-(\\d+)", cpu)
         if None != ret:
             beg = int(ret.group(1))
-            end = int(ret.group(1))
-            if beg>end:
+            end = int(ret.group(2))
+            if beg>=end:
                 return ("Invaild cpu_list (%s)" %cpu)
         else:
             beg = int(cpu)
             end = int(cpu)
         while beg <= end:
-            all_cpu.append(str(beg))
+            all_cpu.append(beg)
             beg = beg+1
-    last_cpu = ""
+    last_cpu = -1
     for cpu in all_cpu:
-        if int(cpu) >= multiprocessing.cpu_count():
-            return "Invaild cpu "+cpu
+        if cpu >= multiprocessing.cpu_count():
+            return "Invaild cpu "+str(cpu)
         if last_cpu == cpu:
-            return "Repetitive cpu "+cpu
+            return "Repetitive cpu "+str(cpu)
         last_cpu = cpu
     return ""
 
@@ -418,6 +418,8 @@ def bind_device(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
             imsmod_cmd = "insmod "+kmod_path+"/"+kmod+".ko"
             if "rte_kni" == kmod:
                 imsmod_cmd += " carrier=on"
+            if "" == maker_public.execCmdAndGetOutput("lsmod | grep uio"):
+                os.system("modprobe uio")
             os.system(imsmod_cmd)
         if "" == maker_public.execCmdAndGetOutput("lsmod | grep "+kmod):
             return "Failed to load "+kmod
@@ -426,22 +428,25 @@ def bind_device(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
     python = maker_public.get_python()
     all_err = ""
     if False == os.path.exists(drvctl_path):
+        dpdk_devbind = devbind_path+"/dpdk-devbind"
+        if False == os.path.isfile(dpdk_devbind):
+            dpdk_devbind = devbind_path+"/dpdk-devbind.py"
         for dev in dev_lst:
             dev_name = dev[0]
             dev_addr = dev[1]
             if "" == dev_addr:
                 all_err += "No PCI address\n"
                 continue
-            if ""!=dev_name and "" != maker_public.execCmdAndGetOutput(python+" "+devbind_path+
-                "/dpdk-devbind --status-dev net | grep \"if="+dev_name+"\""):
+            if ""!=dev_name and "" != maker_public.execCmdAndGetOutput(python+" "+dpdk_devbind+\
+                " --status-dev net | grep \"if="+dev_name+"\""):
                 os.system("ifconfig "+dev_name+" down")
             if "" != maker_public.execCmdAndGetOutput(\
-                python+" "+devbind_path+"/dpdk-devbind --status-dev net | "\
+                python+" "+dpdk_devbind+" --status-dev net | "\
                 "grep -P \""+dev_addr+"[ \\t]+'.+'[ \\t]+drv=.+[ \\t]unused=.+\""):
-                os.system(python+" "+devbind_path+"/dpdk-devbind -u "+dev_addr)
-            if 0 != os.system(python+" "+devbind_path+"/dpdk-devbind --b "+kmod+" "+dev_addr):
+                os.system(python+" "+dpdk_devbind+" -u "+dev_addr)
+            if 0 != os.system(python+" "+dpdk_devbind+" --b "+kmod+" "+dev_addr):
                 all_err += "Failed to bind "+dev_addr+"\n"
-        os.system("python3 "+devbind_path+"/dpdk-devbind --status-dev net")
+        os.system(python+" "+dpdk_devbind+" --status-dev net")
     else:
         for dev in dev_lst:
             dev_name = dev[0]
