@@ -126,7 +126,7 @@ def isolate_cpu(cpu_lst, page_size):
     #设置核隔离参数
     cpu_flg = ""
     if "" != cpu_lst:
-        cpu_flg += "isolCPUS="+cpu_lst+" "
+        cpu_flg += "isolcpus="+cpu_lst+" "
         cpu_flg += "nohz_full="+cpu_lst+" "
         cpu_flg += "rcu_nocbs="+cpu_lst+" "
     #读取grub配置文件
