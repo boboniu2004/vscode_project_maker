@@ -452,3 +452,26 @@ def uninstallDPDK():
     #删除其他文件
     os.system("rm -rf /usr/local/dpdk")
     os.system("rm -rf /usr/local/hyperscan")
+
+
+#获取DPDK管理脚本；参数：管理脚本存储路径，会在该路径下创建dpdk_scrits目录；返回：错误码
+def get_DPDKopt(store_path):
+    vscode_project_maker = os.environ["HOME"]+"/vscode_project_maker"
+    #创建目录
+    if False == os.path.isdir(store_path):
+        return ("Faile to find dir %s" %store_path)
+    store_path = os.path.abspath(store_path)+"/dpdk_scrits"
+    if False == os.path.isdir(store_path):
+        try:
+            os.makedirs(store_path)
+        except:
+            return ("Faile to make dir %s" %store_path)
+    #拷贝数据
+    if 0 != os.system("mkdir -p "+store_path+"/maker_public && cp -rf "+\
+        vscode_project_maker+"/maker_public/*.py "+store_path+"/maker_public/"):
+        return "Faile to cp maker_public"
+    if 0 != os.system("cp -rf "+vscode_project_maker+"/dpdk_scrits.py "+\
+        store_path+"/__init__.py"):
+        return "Faile to cp dpdk_scrits"
+    return ""
+    

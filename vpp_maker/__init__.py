@@ -60,8 +60,7 @@ def create_vpp_project(vpp_path, vscode_project_maker):
             "\n            \"command\": \"/usr/bin/python3\","\
             "\n            \"args\": ["\
             "\n                \"${workspaceFolder}/dpdk_scrits/__init__.py\","\
-            "\n                \"envinit\","\
-            "\n                \"vpp\","\
+            "\n                \"initenv\","\
             "\n            ],"\
             "\n            \"options\": {"\
             "\n                \"cwd\": \"${workspaceFolder}\""\

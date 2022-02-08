@@ -186,8 +186,7 @@ def create_fstack_project(fstack_path, vscode_project_maker):
             "\n            \"command\": \"/usr/bin/python3\","\
             "\n            \"args\": ["\
             "\n                \"${workspaceFolder}/dpdk_scrits/__init__.py\","\
-            "\n                \"envinit\","\
-            "\n                \"f-stack\","\
+            "\n                \"initenv\","\
             "\n            ],"\
             "\n            \"options\": {"\
             "\n                \"cwd\": \"${workspaceFolder}\""\
