@@ -1,9 +1,10 @@
 #check windows version
+$IsArm64 = systeminfo | where{$_ -match "ARM64-based"}
 $OsInfo = systeminfo | where{$_ -match "OS.+Microsoft Windows"}
 $OsInfo
-if ([String]::IsNullOrEmpty($OsInfo) -or $OsInfo -notmatch "OS.+Microsoft Windows 10")
+if ([String]::IsNullOrEmpty($OsInfo) -or ($OsInfo -notmatch "OS.+Microsoft Windows 10" -and $OsInfo -notmatch "OS.+Microsoft Windows 11"))
 {
-    "This script must run in win10"
+    "This script must run in win10 or win11"
     pause
     exit
 }
@@ -14,13 +15,21 @@ $Features = dism /online  /Get-Features /Format:Table | where{$_ -match "Microso
 $Features
 if ([String]::IsNullOrEmpty($Features))
 {
-    "Can not find Hyper-V,if you windows is ""win10 home"",you can run this cmd(have no testing): pushd ""%~dp0"" dir /b %SystemRoot%\servicing\Packages\*Hyper-V*.mum >hyper-v.txt for /f %%i in ('findstr /i . hyper-v.txt 2^>nul') do dism /online /norestart /add-package:""%SystemRoot%\servicing\Packages\%%i"" del hyper-v.txt Dism /online /enable-feature /featurename:Microsoft-Hyper-V-All /LimitAccess /ALL"
+    "Can not find Hyper-V,if you windows is ""win10/win11 home"",you can run this cmd(have no testing): pushd ""%~dp0"" dir /b %SystemRoot%\servicing\Packages\*Hyper-V*.mum >hyper-v.txt for /f %%i in ('findstr /i . hyper-v.txt 2^>nul') do dism /online /norestart /add-package:""%SystemRoot%\servicing\Packages\%%i"" del hyper-v.txt Dism /online /enable-feature /featurename:Microsoft-Hyper-V-All /LimitAccess /ALL"
     pause
     exit
 }
 if ($Features -match "Microsoft-Hyper-V-All.+已禁用")
 {
     Dism /Online /Enable-Feature /FeatureName:Microsoft-Hyper-V-All /All
+}
+#start Microsoft-Windows-Subsystem-Linux
+if (![String]::IsNullOrEmpty($IsArm64))
+{
+    if ($Features -match "Microsoft-Windows-Subsystem-Linux.+已禁用")
+    {
+        Dism /Online /Enable-Feature /FeatureName:Microsoft-Windows-Subsystem-Linux /All
+    }
 }
 "Open hyper-v finish"
 
@@ -44,7 +53,10 @@ if ($HaveShortcut -like "False")
 #create NAT network
 #stop all virtual machines
 Get-VM | where{$_.State -eq "Running"} | foreach{Stop-VM $_.Name}
-Get-NetNat | Remove-NetNat
+if ([String]::IsNullOrEmpty($IsArm64))
+{
+    Get-NetNat | Remove-NetNat
+}
 $VMSwitchInfo = Get-NetAdapter -Name "*HYPER-V-NAT-Network*"
 if ([String]::IsNullOrEmpty($VMSwitchInfo))
 {
@@ -56,5 +68,15 @@ if ($VMSwitchInfo)
     Remove-NetIPAddress -InterfaceIndex $VMSwitchInfo.ifIndex
     New-NetIPAddress -InterfaceIndex $VMSwitchInfo.ifIndex -IpAddress 192.168.137.1 -PrefixLength 24
 }
-New-NetNat -Name "HYPER-V-NAT-Network" -InternalIPInterfaceAddressPrefix "192.168.137.0/24"
+if ([String]::IsNullOrEmpty($IsArm64))
+{
+    New-NetNat -Name "HYPER-V-NAT-Network" -InternalIPInterfaceAddressPrefix "192.168.137.0/24"
+}
 "Create NAT network finish"
+
+#Set wsl2
+if (![String]::IsNullOrEmpty($IsArm64))
+{
+    wsl --update
+    wsl --set-default-version 2
+}
