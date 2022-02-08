@@ -9,7 +9,7 @@ import multiprocessing
 import maker_public
 
 
-####################################安装##################################################
+####################################优化LINUX#############################################
 #功能：获取系统总的内存大小；参数：无；返回：内存字节大小
 def get_memory():
     total_mem = 0
@@ -152,44 +152,8 @@ def isolate_cpu(cpu_lst, page_size):
     return ""
 
 
-#功能：注册计划任务；参数：脚本位置；返回：错误描述
-def register_cron(monitor_scrits):
-    python = maker_public.get_python()
-    szret = maker_public.execCmdAndGetOutput("crontab -l")
-    pyregpath = monitor_scrits.replace(".", "\\.")
-    if None != re.search(".+python\\d*[ \\t]+"+pyregpath+"[\\s]+monitor", szret):
-        szret = re.sub(".+python\\d*[ \\t]+"+pyregpath+"[\\s]+monitor", \
-            "*/1 * * * * "+python+" "+monitor_scrits+" monitor", szret)
-    elif 0>=len(szret) or "\n" == szret[len(szret)-1]:
-        szret += "*/1 * * * * "+python+" "+monitor_scrits+" monitor\n"
-    sz_err = maker_public.writeTxtFile("/tmp/dpdk_scrits_crontab", szret)
-    if 0 < len(sz_err):
-        os.system("rm -Rf /tmp/dpdk_scrits_crontab")
-        return sz_err
-    if 0 != os.system("crontab /tmp/dpdk_scrits_crontab"):
-        os.system("rm -Rf /tmp/dpdk_scrits_crontab")
-        return "Failed to register cron"
-    os.system("rm -Rf /tmp/dpdk_scrits_crontab")
-    return ""
-    
-
-#功能：设置DPDK及其APP的链接库路径；参数：链接库路径；返回：错误描述
-def set_dpdkapplib(dllpath_list):
-    path_info = ""
-    sz_err = ""
-    for dllpath in dllpath_list:
-        if False == os.path.isdir(os.path.abspath(dllpath)):
-            return "Failed to find "+dllpath
-        path_info += os.path.abspath(dllpath)+"\n"
-    if "" != path_info:
-        sz_err = maker_public.writeTxtFile("/etc/ld.so.conf.d/dpdkapp_lib.conf", path_info)
-        os.system("ldconfig")
-    return sz_err
-
-
-#功能：安装dpdk的环境；参数：监控脚本、cpu清单(格式化为1,2,5,7,8)、巨页信息；返回：错误描述
-def Install_dpdkenv(monitor_scrits, cpu_lst, page_size, dllpath_list):
-    monitor_scrits = os.path.abspath(monitor_scrits)
+#功能：优化系统；参数：监控脚本、cpu清单(格式化为1,2,5,7,8)、巨页信息；返回：错误描述
+def Optim_system(cpu_lst, page_size):
     #关闭服务
     sz_err = disable_services()
     if "" != sz_err:
@@ -198,26 +162,16 @@ def Install_dpdkenv(monitor_scrits, cpu_lst, page_size, dllpath_list):
     if "ubuntu-wsl2" != maker_public.getOSName():
         if 0 != os.system("systemctl set-default multi-user.target"):
             return "Failed to close UI"
-    #挂载定时任务  
-    sz_err = register_cron(monitor_scrits)
-    if "" != sz_err:
-        enable_onesrv("irqbalance.service")
-        return sz_err 
     #核隔离和开启iommu
     if "ubuntu-wsl2" != maker_public.getOSName():
         sz_err = isolate_cpu(cpu_lst, page_size)
         if "" != sz_err:
             enable_onesrv("irqbalance.service")
-            unregister_cron(monitor_scrits)
             return sz_err 
-    #设置动态库链接
-    sz_err = set_dpdkapplib(dllpath_list)
-    if "" != sz_err:
-        return sz_err
     return ""
 
 
-####################################卸载####################################################
+####################################恢复针对DPDK的优化##########################################
 #功能：启动一个服务；参数：服务名；返回：错误描述
 def enable_onesrv(srv_name):
     if "" != maker_public.execCmdAndGetOutput(\
@@ -253,73 +207,9 @@ def free_cpu():
         return "Failed to make grub.cfg"
     return ""    
 
-
-#功能：注册计划任务；参数：脚本位置；返回：错误描述
-def unregister_cron(monitor_scrits):
-    szret = maker_public.execCmdAndGetOutput("crontab -l")
-    pyregpath = monitor_scrits.replace(".", "\\.")
-    if None != re.search(".+python\\d*[ \\t]+"+pyregpath+"[^\\n]+\\n", szret):
-        szret = re.sub(".+python\\d*[ \\t]+"+monitor_scrits+"[^\\n]+\\n", "", szret)
-    sz_err = maker_public.writeTxtFile("/tmp/dpdk_scrits_crontab", szret)
-    if 0 < len(sz_err):
-        os.system("rm -Rf /tmp/dpdk_scrits_crontab")
-        return sz_err
-    if 0 != os.system("crontab /tmp/dpdk_scrits_crontab"):
-        os.system("rm -Rf /tmp/dpdk_scrits_crontab")
-        return "Failed to unregister cron"
-    os.system("rm -Rf /tmp/dpdk_scrits_crontab")
-    return ""
-
-
-#功能：关闭一个进程；参数：进程信息；返回：已经执行了关闭操作的进程
-def do_killproc(app_lst):
-    kill_cmd = ""
-    proc_lst = []
-    for appinfo in app_lst:    
-        if False == os.path.isfile(os.path.abspath(appinfo[0])):
-            return []
-        app_name = os.path.abspath(appinfo[0])
-        kill_cmd += "killall -9 "+app_name+" || "
-        proc_lst.append(app_name)
-    if "" != kill_cmd:
-        kill_cmd = str(kill_cmd).rstrip(" || ")
-        os.system(kill_cmd)
-    return proc_lst
-
-
-#功能：等待进程关闭；参数：进程信息；返回：错误描述
-def do_waitproc(proc_lst):
-    exists = True
-    while exists:
-        curexiste = 0
-        app_stat = maker_public.execCmdAndGetOutput("ps -aux")
-        for proc in proc_lst:
-            if None != re.search("[ \\t]+"+proc+"[ \\t]+|[ \\t]+"+proc+"$", app_stat):
-                curexiste = curexiste+1
-                break
-        if 0 >= curexiste:
-            exists = False
-    return ""
-
-
-#功能：关闭进程；参数：进程名称清单；返回：错误描述
-def close_proc(app_lst):
-    proc_lst = do_killproc(app_lst)
-    if 0 >= len(proc_lst):
-        return ""
-    return do_waitproc(proc_lst)
-
     
-#功能：卸载dpdk的环境；参数：监控脚本和监控的进程；返回：错误描述
-def Uinstall_dpdkenv(monitor_scrits, app_lst):
-    #注销定时任务
-    sz_err = unregister_cron(monitor_scrits)
-    if "" != sz_err:
-        return sz_err
-    #关闭全部进程
-    sz_err = close_proc(app_lst)
-    if "" != sz_err:
-        return sz_err
+#功能：复原针对DPDK的优化；参数：监控脚本和监控的进程；返回：错误描述
+def Recov_system():
     #开启服务
     sz_err = enable_onesrv("irqbalance.service")
     if "" != sz_err:
@@ -464,8 +354,8 @@ def bind_device(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
     return all_err
 
 
-#功能：设置DPDK的环境参数；参数：巨页大小、巨页数量、是否开启地址随机化；返回：错误码
-def Set_dpdkenv(ASLR_flg, page_size, page_cnt_lst, devbind_path, drvctl_path, \
+#功能：启动后初始化DPDK的环境参数；参数：巨页大小、巨页数量、是否开启地址随机化；返回：错误码
+def Init_dpdkenv(ASLR_flg, page_size, page_cnt_lst, devbind_path, drvctl_path, \
     kmod_path, kmod_list, dev_lst):
     #设置地址随机化
     sz_err = set_ASLR(ASLR_flg)
@@ -479,6 +369,136 @@ def Set_dpdkenv(ASLR_flg, page_size, page_cnt_lst, devbind_path, drvctl_path, \
     return bind_device(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst)
 
 
+####################################安装程序################################################
+#功能：根据app_list计算MD5值；参数：app路径；返回：MD5值，错误描述
+def get_appname(app_list):
+    return "",""
+
+#功能：注册计划任务；参数：脚本位置；返回：错误描述
+def register_cron(monitor_scrits):
+    python = maker_public.get_python()
+    szret = maker_public.execCmdAndGetOutput("crontab -l")
+    pyregpath = monitor_scrits.replace(".", "\\.")
+    if None != re.search(".+python\\d*[ \\t]+"+pyregpath+"[\\s]+monitor", szret):
+        szret = re.sub(".+python\\d*[ \\t]+"+pyregpath+"[\\s]+monitor", \
+            "*/1 * * * * "+python+" "+monitor_scrits+" monitor", szret)
+    elif 0>=len(szret) or "\n" == szret[len(szret)-1]:
+        szret += "*/1 * * * * "+python+" "+monitor_scrits+" monitor\n"
+    sz_err = maker_public.writeTxtFile("/tmp/dpdk_scrits_crontab", szret)
+    if 0 < len(sz_err):
+        os.system("rm -Rf /tmp/dpdk_scrits_crontab")
+        return sz_err
+    if 0 != os.system("crontab /tmp/dpdk_scrits_crontab"):
+        os.system("rm -Rf /tmp/dpdk_scrits_crontab")
+        return "Failed to register cron"
+    os.system("rm -Rf /tmp/dpdk_scrits_crontab")
+    return ""
+    
+
+#功能：设置DPDK及其APP的链接库路径；参数：链接库路径；返回：错误描述
+def set_dpdkapplib(app_name, dllpath_list):
+    path_info = ""
+    sz_err = ""
+    for dllpath in dllpath_list:
+        if False == os.path.isdir(os.path.abspath(dllpath)):
+            return "Failed to find "+dllpath
+        path_info += os.path.abspath(dllpath)+"\n"
+    if "" != path_info:
+        sz_err = maker_public.writeTxtFile(\
+            ("/etc/ld.so.conf.d/dpdkapp_%s_lib.conf" %app_name), path_info)
+        os.system("ldconfig")
+    return sz_err
+
+
+def Install_app(monitor_scrits, app_lst, dllpath_list):
+    #挂载定时任务  
+    sz_err = register_cron(monitor_scrits)
+    if "" != sz_err:
+        enable_onesrv("irqbalance.service")
+        return sz_err
+    #设置动态库链接路径
+    app_name,sz_err = get_appname(app_lst)
+    if "" != sz_err:
+        return sz_err
+    sz_err = set_dpdkapplib(app_name, dllpath_list)
+    if "" != sz_err:
+        return sz_err
+    return ""
+    
+####################################卸载程序################################################
+#功能：关闭一个进程；参数：进程信息；返回：已经执行了关闭操作的进程
+def do_killproc(app_lst):
+    kill_cmd = ""
+    proc_lst = []
+    for appinfo in app_lst:    
+        if False == os.path.isfile(os.path.abspath(appinfo[0])):
+            return []
+        app_name = os.path.abspath(appinfo[0])
+        kill_cmd += "killall -9 "+app_name+" || "
+        proc_lst.append(app_name)
+    if "" != kill_cmd:
+        kill_cmd = str(kill_cmd).rstrip(" || ")
+        os.system(kill_cmd)
+    return proc_lst
+
+
+#功能：等待进程关闭；参数：进程信息；返回：错误描述
+def do_waitproc(proc_lst):
+    exists = True
+    while exists:
+        curexiste = 0
+        app_stat = maker_public.execCmdAndGetOutput("ps -aux")
+        for proc in proc_lst:
+            if None != re.search("[ \\t]+"+proc+"[ \\t]+|[ \\t]+"+proc+"$", app_stat):
+                curexiste = curexiste+1
+                break
+        if 0 >= curexiste:
+            exists = False
+    return ""
+
+
+#功能：关闭进程；参数：进程名称清单；返回：错误描述
+def close_proc(app_lst):
+    proc_lst = do_killproc(app_lst)
+    if 0 >= len(proc_lst):
+        return ""
+    return do_waitproc(proc_lst)
+
+
+#功能：注册计划任务；参数：脚本位置；返回：错误描述
+def unregister_cron(monitor_scrits):
+    szret = maker_public.execCmdAndGetOutput("crontab -l")
+    pyregpath = monitor_scrits.replace(".", "\\.")
+    if None != re.search(".+python\\d*[ \\t]+"+pyregpath+"[^\\n]+\\n", szret):
+        szret = re.sub(".+python\\d*[ \\t]+"+monitor_scrits+"[^\\n]+\\n", "", szret)
+    sz_err = maker_public.writeTxtFile("/tmp/dpdk_scrits_crontab", szret)
+    if 0 < len(sz_err):
+        os.system("rm -Rf /tmp/dpdk_scrits_crontab")
+        return sz_err
+    if 0 != os.system("crontab /tmp/dpdk_scrits_crontab"):
+        os.system("rm -Rf /tmp/dpdk_scrits_crontab")
+        return "Failed to unregister cron"
+    os.system("rm -Rf /tmp/dpdk_scrits_crontab")
+    return ""
+
+
+#功能：卸载应用；参数：监控脚本和监控的进程；返回：错误描述
+def Uninstall_app(monitor_scrits, app_lst):
+    #注销定时任务
+    sz_err = unregister_cron(monitor_scrits)
+    if "" != sz_err:
+        return sz_err
+    #关闭全部进程
+    sz_err = close_proc(app_lst)
+    if "" != sz_err:
+        return sz_err
+    #删除动态库链接路径配置
+    app_name,sz_err = get_appname(app_lst)
+    if "" != sz_err:
+        return sz_err
+    os.system(\
+        ("rm -rf /etc/ld.so.conf.d/dpdkapp_%s_lib.conf && ldconfig" %app_name) )
+    return ""
 ####################################监控进程################################################
 #功能：监控一个应用；参数：app名称-app启动路径及参数；返回：错误码
 def monitor_oneapp(appinfo):
@@ -537,7 +557,7 @@ def init_log(file_size, error):
 #函数返回：执行成功返回0，否则返回负值的错误码
 if __name__ == "__main__":
     #错误描述
-    error = "dpdk_opt: [install|uninstall|initenv|monitor] [log file]"
+    error = "dpdk_opt: [optimsys|recovsys|initenv|install|uninstall|monitor] [log file]"
     #初始化日志文件，大小限制为512MB
     init_log(512*1024*1024, error)
 
@@ -576,13 +596,17 @@ if __name__ == "__main__":
 
 
     #解析参数
-    if "install"==sys.argv[1]:
-        error = Install_dpdkenv(sys.argv[0], cpu_list, page_size, dllpath_list)
-    elif "uninstall"==sys.argv[1]:
-        error  = Uinstall_dpdkenv(sys.argv[0], app_list)
+    if "optimsys"==sys.argv[1]:
+        error = Optim_system(cpu_list, page_size)
+    elif "recovsys"==sys.argv[1]:
+        error  = Recov_system()
     elif "initenv"==sys.argv[1]:
-        error  = Set_dpdkenv(ASLR_flg, page_size, page_cnt_lst, devbind_path, \
+        error  = Init_dpdkenv(ASLR_flg, page_size, page_cnt_lst, devbind_path, \
             drvctl_path, kmod_path, kmod_list, dev_lst)
+    elif "install"==sys.argv[1]:
+        error  = Install_app(sys.argv[0], app_list, dllpath_list)
+    elif "uninstall"==sys.argv[1]:
+        error  = Uninstall_app(sys.argv[0], app_list)
     elif "monitor"==sys.argv[1]:
         error  = Monitor_dpdkapp(app_list)
     if ""!=error:

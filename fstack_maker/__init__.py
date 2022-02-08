@@ -50,9 +50,9 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
             vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
         if 0!=os.system("mv  "+fstack_path+"/f-stack-"+fstack_ver+" "+fstack_path+"/f-stack"):
             return "Failed to unzip "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip"
-    if 0 != os.system("cp -rf "+vscode_project_maker+\
-        "/vpp_maker/dpdk_scrits "+fstack_path+"/f-stack"+"/"):
-        return "cp dpdk_init.py failed"
+    sz_err = maker_public.get_DPDKopt(fstack_path+"/f-stack")
+    if "" != sz_err:
+        return sz_err
     #修改lib下的makefile
     lib_make,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack"+"/lib/Makefile")
     if "" != sz_err:

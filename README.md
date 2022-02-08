@@ -137,7 +137,7 @@ ubuntu安装时默认不开启root账号，所以只能已普通账号进入系�
 
     在hyper-v/wsl环境下：
         python3 osenv_maker.py 192.168.137.xx/24
-    其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。
+    其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。在wsl模式下，运行完脚本后不会重启，此时需要在windows10 arm64/windows11 arm64下已管理员权限运行.ssh中的restartwsl2.bat来使设置生效。
     在virtualbox环境下：
         python3 osenv_maker.py
     系统会自动将第一张网卡设置为10.0.2.15/24，第二张网卡设置为192.168.56.xx/24。
