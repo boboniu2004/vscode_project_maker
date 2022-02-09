@@ -56,7 +56,7 @@ if __name__ == "__main__":
     if 0>=len(szProjPath) or "."==szProjPath[0]:
         print("vs_progject_maker: Invalid workspace(%s)" %(szProjPath))
         exit(-1)
-    if True==os.path.exists(szProjPath) and False==os.path.isdir( os.path.realpath(szProjPath) ):
+    if True==os.path.exists(szProjPath) and False==os.path.isdir( os.path.abspath(szProjPath) ):
         print("vs_progject_maker: Invalid workspace(%s)" %(szProjPath))
         exit(-1)
     if False == os.path.exists(szProjPath):
