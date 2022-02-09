@@ -84,7 +84,7 @@ def create_vpp_project(vpp_path, vscode_project_maker):
 #功能：配置dpdk；参数：vpp路径、工程路径；返回：错误码
 def config_dpdk(vpp_path, vscode_project_maker):
     #拷贝dpdk初始化工具
-    sz_err = maker_public.get_DPDKopt(vpp_path+"/vpp")
+    sz_err = maker_public.get_DPDKscrits(vpp_path+"/vpp")
     if "" != sz_err:
         return sz_err
     #写入igb_uio的meson文件
@@ -229,7 +229,7 @@ def makeropensrc():
     vpp_path = os.getcwd()
     if 2<len(sys.argv):
         vpp_path = sys.argv[2]
-    vpp_path = os.path.realpath(vpp_path)
+    vpp_path = os.path.abspath(vpp_path)
     if False==os.path.isdir(vpp_path):
         return "Invaild vpp path"
     #初始化vpp

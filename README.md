@@ -53,13 +53,13 @@
 
 第二步，安装完毕后，打开windows终端(windows徽标+x)，输入命令wsl --list，就可以看到已经安装的WSL虚拟机，然后将虚拟机导出到非系统盘，否则虚拟机越用越大，可能会把系统盘撑爆了，在windows终端输入以下命令：
 
-    mkdir -P D:\bark
-    mkdir -P D:\WSL\ubuntu2004
-    wsl -t Ubuntu20.04
-    wsl --export Ubuntu20.04 D:\bark\ubuntu2004.tar
-    wsl --unregister Ubuntu20.04
-    wsl --import Ubuntu20.04 D:\WSL\ubuntu2004 D:\bark\ubuntu2004.tar
-    ubuntu2004.exe config --default-user root
+        mkdir -P D:\bark
+        mkdir -P D:\WSL\ubuntu2004
+        wsl -t Ubuntu20.04
+        wsl --export Ubuntu20.04 D:\bark\ubuntu2004.tar
+        wsl --unregister Ubuntu20.04
+        wsl --import Ubuntu20.04 D:\WSL\ubuntu2004 D:\bark\ubuntu2004.tar
+        ubuntu2004.exe config --default-user root
 
 上述命令第一第二行在D盘下创建了bark目录和WSL/ubuntu2004目录，分别用于存储备份出来的虚拟机和重新安装的位置；第三行是关闭已经安装的ubuntu虚拟机，虚拟机名称来源自wsl --list；第四行是将虚拟机导出到D:\bark中，文件名为ubuntu2004.tar；第五行是注销已备份的虚拟机；第六行是从D:\bark\ubuntu2004.tar中重新安装虚拟机到D:\WSL\ubuntu2004，并且命名为Ubuntu20.04；第七行是将虚拟机的默认登录账号设置为root，其中ubuntu2004.exe是虚拟机的配置程序，输入命令时可以按tab键选择。
 
@@ -97,10 +97,10 @@
 ### 设置centos7开发环境
 以root账号进入系统，打开终端，运行一下命令：
 
-    cd /root/
-    wget https://github.com/boboniu2004/vscode_project_maker/archive/refs/heads/master.zip -O ./vscode_project_maker.zip
-    unzip ./vscode_project_maker.zip
-    cd ./vscode_project_maker-master
+        cd /root/
+        wget https://github.com/boboniu2004/vscode_project_maker/archive/refs/heads/master.zip -O ./vscode_project_maker.zip
+        unzip ./vscode_project_maker.zip
+        cd ./vscode_project_maker-master
 
     在hyper-v环境下：
         python osenv_maker.py 192.168.137.xx/24
@@ -112,10 +112,10 @@
 ### 设置centos8开发环境
 以root账号进入系统，打开终端，运行一下命令：
 
-    cd /root/
-    wget https://github.com/boboniu2004/vscode_project_maker/archive/refs/heads/master.zip -O ./vscode_project_maker.zip
-    unzip ./vscode_project_maker.zip
-    cd ./vscode_project_maker-master
+        cd /root/
+        wget https://github.com/boboniu2004/vscode_project_maker/archive/refs/heads/master.zip -O ./vscode_project_maker.zip
+        unzip ./vscode_project_maker.zip
+        cd ./vscode_project_maker-master
 
     在hyper-v环境下：
         python3 osenv_maker.py 192.168.137.xx/24
@@ -129,11 +129,11 @@
 ### 设置ubuntu开发环境
 ubuntu安装时默认不开启root账号，所以只能已普通账号进入系统，打开终端，运行一下命令：
 
-    sudo bash
-    cd /root/
-    wget https://github.com/boboniu2004/vscode_project_maker/archive/refs/heads/master.zip -O ./vscode_project_maker.zip
-    unzip ./vscode_project_maker.zip
-    cd ./vscode_project_maker-master
+        sudo bash
+        cd /root/
+        wget https://github.com/boboniu2004/vscode_project_maker/archive/refs/heads/master.zip -O ./vscode_project_maker.zip
+        unzip ./vscode_project_maker.zip
+        cd ./vscode_project_maker-master
 
     在hyper-v/wsl环境下：
         python3 osenv_maker.py 192.168.137.xx/24
@@ -166,16 +166,16 @@ hyper-v可以在管理界面设置开机自启动；virtualbox需要修改**vsco
 
 一，在WSL下，可以运行如下命令导出虚拟机：
 
-    mkdir -P D:\bark
-    wsl -t Ubuntu20.04
-    wsl --export Ubuntu20.04 D:\bark\ubuntu2004.tar
+        mkdir -P D:\bark
+        wsl -t Ubuntu20.04
+        wsl --export Ubuntu20.04 D:\bark\ubuntu2004.tar
 
 wsl虚拟机Ubuntu20.04就会被备份到D:\bark\ubuntu2004.tar中。
 
 二，如果要恢复虚拟机，则运行如下命令：
 
-    mkdir -P D:\WSL\ubuntu2004
-    wsl --import Ubuntu20.04 D:\WSL\ubuntu2004 D:\bark\ubuntu2004.tar
+        mkdir -P D:\WSL\ubuntu2004
+        wsl --import Ubuntu20.04 D:\WSL\ubuntu2004 D:\bark\ubuntu2004.tar
 
 会将虚拟机Ubuntu20.04还原到D:\WSL\ubuntu2004中。
 
@@ -242,8 +242,57 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 # DPDK管理脚本
 DPDK应用运行在linux系统中时，为了保证CPU尽可能的运行应用代码，需要对宿主linux做一系列的优化。同时还要进行设置巨页，绑定网卡，监控进程等一系列操作。为了降低DPDK使用的复杂度，开发了一众脚本来自动化完成上述工作，目前已经在ubuntu和centos下通过了测试。这是它的参数说明。![dpdk_opt](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/dpdk_opt.jpg)
 
+## 脚本生成
+DPDK脚本目前是vscode_project_maker的一部分，体量较大。如果想把这部分代码单独抽取出来，嵌入到自己的DPDK应用目录中去使用，可以在vscode_project_maker目录下运行如下命令：
+
+        python3 dpdk_scrits.py make [scrits path]
+
+该命令会将DPDK脚本的代码从vscode_project_maker中抽取出来，然后存储在[scrits path]/dpdk_scrits目录中，该目录下的__init__.py为脚本主入口。
+
 ## 系统优化
+针对宿主linux系统的优化主要有三点：关闭消耗CPU的服务、关闭图形界面，设置默认的巨页尺寸，开启iommu，隔离CPU核心。其中iommu/smmu为x86/arm64体系下的设备虚拟化功能，它允许虚拟设备进行DMA操作。隔离出来的CPU不会再被操作系统分派进程，除非显式的进行线核亲缘性绑定，DPDK应用可以绑定在这些核心上。可以在vscode_project_maker|dpdk_scrits目录下运行如下命令：
+
+        python3 [dpdk_scrits|__init__].py optimsys [log file]
+
+运行前需要配置cpu_list、page_size参数。cpu_list参数为需要隔离的CPU核心清单，从0开始，格式为1,4,5,6,2-3，不能大于等于系统CPU数目，不需要时可以配置为空串。page_size参数为需要开启的巨页的尺寸，有2048kb和1048576kb两种。[log file]为脚本可选参数，表示将运行时发生的错误记录到参数指明的日志文件中去，不设置的话会将错误打印到shell终端。
+
+可以在vscode_project_maker|dpdk_scrits目录下运行如下命令来停止上述优化：
+
+        python3 [dpdk_scrits|__init__].py recovsys [log file]
+
+**注意：优化和恢复操作都需要重启操作系统后才能生效**
 
 ## 环境设置
+在运行dpdk应用前，需要设置宿主linux中的巨页数量、绑定网卡。可以在vscode_project_maker|dpdk_scrits目录下运行如下命令：
 
+        python3 [dpdk_scrits|__init__].py initenv [log file]
+
+运行前需要配置ASLR_flg、page_size、page_cnt_lst、devbind_path、drvctl_path、kmod_path、kmod_list、 dev_lst参数。
+
+ASLR_flg参数为地址随机化开启标志：1表示开启、0表示关闭。只能配置为0或者1。page_cnt_lst参数为需要设置的巨页的数量，按照NUMA节点进行分配，在非NUMA结构下，只能配置node0。
+
+devbind_path参数为PCI设备的DPDK绑定脚本所在的路径，一般在DPDK安装路径的usertools下。如果配置为相对目录，则最后的绝对目录为：脚本所在目录的上一级/配置的路径。不需要时可以配置为None。
+    
+drvctl_path参数为VMBUS设备的DPDK绑定脚本所在的路径，该设备是微软hyper-v虚拟机的绑定程序，可以从https://gitlab.com/driverctl/driverctl下载。如果配置为相对目录，则最后的绝对目录为：脚本所在目录的上一级/配置的路径。devbind_path和drvctl_path不能同时生效，如果drvctl_path是有效的目录，则devbind_path会被忽略。不需要时可以配置为None。
+    
+kmod_path参数为DPDK内核模块所在的路径，主要是igb_uio.ko和rte_kni.ko所在的路径，在编译DPDK时获取。注意：在DPDK20以后版本中默认是不打开igb_uio的，需要额外下载igb_uio源代码并且构建编译脚本，具体可以参见本工程中对VPP的DPDK的编译方法。如果配置为相对目录，则最后的绝对目录为：脚本所在目录的上一级/配置的路径。不需要时可以配置为None。
+    
+kmod_list参数为需要加载的内核模块，可以是igb_uio、rte_kni、uio_pci_generic、vfio_pci、uio_hv_generic。其中uio_pci_generic是linux提供的uio驱动，大部分场景可以替代igb_uio，只有一些比较老的设备才会需要igb_uio驱动；vfio_pci是3.6之后的内核提供的一种uio驱动，可以支持IO虚拟化技术，如INTEL的VT-d、AMD的AMD-V、ARM的SMMU；uio_hv_generic是微软hyper-v虚拟机中的uio驱动。
+    
+dev_lst参数为需要绑定的设备，两层list，内层list每个节点有两个参数：网卡名、网卡的PCI地址。在PCI环境中，
+网卡的PCI地址是必须的；在VMBUS环境中，网卡名是必须的。
+    
 ## 进程监控
+可以把vscode_project_maker拷贝到dpdk程序的安装目录下，然后dpdk_scrits下运行如下命令来初始化dpdk应用：
+
+        python3 __init__.py install [log file]
+
+运行前需要配置app_list和dllpath_list参数。
+
+app_list参数为需要初始化的程序的信息，两层list，内层list每个节点有三个参数：程序路径、工作路径、启动参数。如果程序路径、工作路径配置为相对目录，则最后的绝对目录为：脚本所在目录的上一级/配置的路径。脚本会将这些程序加入计划任务，保证开机后将其全部加载起来，后续还会每隔一分钟检查一下进程是否存在，不存在就重新拉起来。
+
+dllpath_list程序依赖的动态库路径清单，每个元素代表一个应用需要的动态库路径，他们会被添加到系统中，供启动时查找。如果配置为相对目录，则最后的绝对目录为：dpdk程序的安装目录/配置的路径。
+
+如果不再需要运行dpdk应用，则可以在安装目录下的dpdk_scrits中运行如下命令来卸载dpdk应用：
+
+        python3 __init__.py uninstall [log file]

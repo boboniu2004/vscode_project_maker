@@ -8,10 +8,9 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/dpdk_opt.py",
+            "program": "${workspaceFolder}/dpdk_scrits.py",
             "args": [
-                "monitor",
-                "./dpdk_log.log"
+                "initenv",
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"

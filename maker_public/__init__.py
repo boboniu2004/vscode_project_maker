@@ -220,8 +220,8 @@ def issame_kernel_ver(dpdk_path):
 #build_s_link 将源目录中的全部文件在目的目录中建立软链接；参数：源目录、目标目录；
 #返回：错误描述
 def build_s_link(src_dir, dst_dir):
-    src_dir = os.path.realpath(src_dir)
-    dst_dir = os.path.realpath(dst_dir)
+    src_dir = os.path.abspath(src_dir)
+    dst_dir = os.path.abspath(dst_dir)
     src_dir_list = os.listdir(src_dir)
     for cur_dir in src_dir_list:
         if "."==cur_dir or ".."==cur_dir:
@@ -418,8 +418,8 @@ def buildHYPERSCAN():
 #remove_s_link 将源目录中的全部文件对应的软链接删除；参数：源目录、目标目录；
 #返回：错误描述
 def remove_s_link(src_dir, dst_dir):
-    src_dir = os.path.realpath(src_dir)
-    dst_dir = os.path.realpath(dst_dir)
+    src_dir = os.path.abspath(src_dir)
+    dst_dir = os.path.abspath(dst_dir)
     src_dir_list = os.listdir(src_dir)
     for cur_dir in src_dir_list:
         if "."==cur_dir or ".."==cur_dir:
@@ -455,7 +455,7 @@ def uninstallDPDK():
 
 
 #获取DPDK管理脚本；参数：管理脚本存储路径，会在该路径下创建dpdk_scrits目录；返回：错误码
-def get_DPDKopt(store_path):
+def get_DPDKscrits(store_path):
     vscode_project_maker = os.environ["HOME"]+"/vscode_project_maker"
     #创建目录
     if False == os.path.isdir(store_path):

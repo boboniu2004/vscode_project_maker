@@ -32,6 +32,22 @@ def config_tools(fstack_path):
         return "config f-stack tools failed"
     return ""
 
+#功能：配置dpdk；参数：fstack路径、工程路径；返回：错误码
+def config_dpdk(fstack_path, vscode_project_maker):
+    sz_err = maker_public.get_DPDKscrits(fstack_path+"/f-stack")
+    if "" != sz_err:
+        return sz_err
+    #
+    scrits,sz_err = maker_public.readTxtFile(\
+        fstack_path+"/f-stack/dpdk_scrits/__init__.py")
+    if "" != sz_err:
+        return sz_err
+    scrits = re.sub("\\n[ \\t]+ASLR_flg[ \\t]+=.*", \
+        "\n    ASLR_flg = \"0\"", scrits)    
+    return maker_public.writeTxtFile(fstack_path+"/f-stack/dpdk_scrits/__init__.py", 
+        scrits)
+
+
 #功能：下载配置f-stack；参数：无；返回：错误码
 def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
     if False == os.path.exists(vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
@@ -50,7 +66,8 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
             vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
         if 0!=os.system("mv  "+fstack_path+"/f-stack-"+fstack_ver+" "+fstack_path+"/f-stack"):
             return "Failed to unzip "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip"
-    sz_err = maker_public.get_DPDKopt(fstack_path+"/f-stack")
+    #构建dpdk初始化脚本
+    sz_err = config_dpdk(fstack_path, vscode_project_maker)
     if "" != sz_err:
         return sz_err
     #修改lib下的makefile
@@ -279,7 +296,7 @@ def makeropensrc():
     fstack_path = os.getcwd()
     if 2<len(sys.argv):
         fstack_path = sys.argv[2]
-    fstack_path = os.path.realpath(fstack_path)
+    fstack_path = os.path.abspath(fstack_path)
     if False==os.path.isdir(fstack_path):
         return "Invaild f-stack path"
     #检测是否安装了DPDK

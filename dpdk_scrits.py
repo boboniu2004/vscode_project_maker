@@ -1,6 +1,7 @@
 #!/usr/python/bin
 # -*- coding: utf-8 -*-
 
+import hashlib
 import os
 import re
 import sys
@@ -219,8 +220,6 @@ def Recov_system():
         sz_err = free_cpu()
         if "" != sz_err:
             return sz_err
-    #删除动态库链接路径配置
-    os.system("rm -rf /etc/ld.so.conf.d/dpdkapp_lib.conf && ldconfig")
     return ""
 
 
@@ -298,26 +297,47 @@ def set_hugepage(page_size, page_cnt_lst):
     return ""
 
 
+#功能：改变工作目录为脚本所在目录的上一级；参数：无；返回：原先的工作目录
+def ch_workdir():
+    old_workdir = os.getcwd()
+    last_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+    last_dir = os.path.dirname(last_dir)
+    os.chdir(last_dir)
+    return old_workdir
+    
+
 #功能：绑定网卡；参数：绑定参数、内核模块名称清单、网卡名称-pci地址；返回：错误码
 def bind_device(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
+    all_err = ""
     #加载内核模块
     for kmod in kmod_list:
+        if "" != maker_public.execCmdAndGetOutput("lsmod | grep "+kmod):
+            continue
         if "uio_pci_generic"==kmod or "vfio_pci"==kmod or "uio_hv_generic"==kmod:
             os.system("modprobe "+kmod)
         else:
-            imsmod_cmd = "insmod "+kmod_path+"/"+kmod+".ko"
+            if None==kmod_path or False==os.path.isdir(kmod_path):
+                all_err += "Failed to find kmod_path\n"
+                continue
+            imsmod_cmd = "insmod "+os.path.abspath(kmod_path)+"/"+kmod+".ko"
             if "rte_kni" == kmod:
                 imsmod_cmd += " carrier=on"
             if "" == maker_public.execCmdAndGetOutput("lsmod | grep uio"):
                 os.system("modprobe uio")
             os.system(imsmod_cmd)
         if "" == maker_public.execCmdAndGetOutput("lsmod | grep "+kmod):
-            return "Failed to load "+kmod
+            all_err += "Failed to load "+kmod+"\n"
+    if "" != all_err:
+        return all_err
+    if 0 >= len(kmod_list):
+        return "Can not load anly kmod!"
     kmod = kmod_list[0]
     #绑定网卡设备
     python = maker_public.get_python()
-    all_err = ""
-    if False == os.path.exists(drvctl_path):
+    if None==drvctl_path or False==os.path.exists(drvctl_path):
+        if None==devbind_path or False==os.path.isdir(devbind_path):
+            return "Failed to find devbind_path"
+        devbind_path = os.path.abspath(devbind_path)
         dpdk_devbind = devbind_path+"/dpdk-devbind"
         if False == os.path.isfile(dpdk_devbind):
             dpdk_devbind = devbind_path+"/dpdk-devbind.py"
@@ -338,6 +358,7 @@ def bind_device(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
                 all_err += "Failed to bind "+dev_addr+"\n"
         os.system(python+" "+dpdk_devbind+" --status-dev net")
     else:
+        drvctl_path = os.path.abspath(drvctl_path)
         for dev in dev_lst:
             dev_name = dev[0]
             if "" == dev_name:
@@ -365,17 +386,21 @@ def Init_dpdkenv(ASLR_flg, page_size, page_cnt_lst, devbind_path, drvctl_path, \
     sz_err = set_hugepage(page_size, page_cnt_lst)
     if "" != sz_err:
         return sz_err
+    old_workdir = ch_workdir()
+    sz_err = bind_device(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst)
+    os.chdir(old_workdir)
     #绑定设备
-    return bind_device(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst)
+    return sz_err
 
 
 ####################################安装程序################################################
-#功能：根据app_list计算MD5值；参数：app路径；返回：MD5值，错误描述
-def get_appname(app_list):
-    return "",""
+#功能：根据app_list计算MD5值；参数：app路径；返回：MD5值
+def get_appname(app_dir):
+    return hashlib.md5(str(app_dir).encode("utf-8")).hexdigest()
 
 #功能：注册计划任务；参数：脚本位置；返回：错误描述
-def register_cron(monitor_scrits):
+def register_cron(app_name, monitor_scrits):
+    crontab = ("/tmp/dpdkapp_%s_crontab" %app_name)
     python = maker_public.get_python()
     szret = maker_public.execCmdAndGetOutput("crontab -l")
     pyregpath = monitor_scrits.replace(".", "\\.")
@@ -384,14 +409,14 @@ def register_cron(monitor_scrits):
             "*/1 * * * * "+python+" "+monitor_scrits+" monitor", szret)
     elif 0>=len(szret) or "\n" == szret[len(szret)-1]:
         szret += "*/1 * * * * "+python+" "+monitor_scrits+" monitor\n"
-    sz_err = maker_public.writeTxtFile("/tmp/dpdk_scrits_crontab", szret)
+    sz_err = maker_public.writeTxtFile(crontab, szret)
     if 0 < len(sz_err):
-        os.system("rm -Rf /tmp/dpdk_scrits_crontab")
+        os.system("rm -Rf "+crontab)
         return sz_err
-    if 0 != os.system("crontab /tmp/dpdk_scrits_crontab"):
-        os.system("rm -Rf /tmp/dpdk_scrits_crontab")
+    if 0 != os.system("crontab "+crontab):
+        os.system("rm -Rf "+crontab)
         return "Failed to register cron"
-    os.system("rm -Rf /tmp/dpdk_scrits_crontab")
+    os.system("rm -Rf "+crontab)
     return ""
     
 
@@ -410,21 +435,20 @@ def set_dpdkapplib(app_name, dllpath_list):
     return sz_err
 
 
-def Install_app(monitor_scrits, app_lst, dllpath_list):
+def Install_app(dllpath_list):
+    monitor_scrits = os.path.abspath(sys.argv[0])
+    app_name = get_appname(os.path.dirname(monitor_scrits))
     #挂载定时任务  
-    sz_err = register_cron(monitor_scrits)
+    sz_err = register_cron(app_name, monitor_scrits)
     if "" != sz_err:
-        enable_onesrv("irqbalance.service")
         return sz_err
     #设置动态库链接路径
-    app_name,sz_err = get_appname(app_lst)
-    if "" != sz_err:
-        return sz_err
+    old_workdir = ch_workdir()
     sz_err = set_dpdkapplib(app_name, dllpath_list)
-    if "" != sz_err:
-        return sz_err
-    return ""
+    os.chdir(old_workdir)
+    return sz_err
     
+
 ####################################卸载程序################################################
 #功能：关闭一个进程；参数：进程信息；返回：已经执行了关闭操作的进程
 def do_killproc(app_lst):
@@ -459,33 +483,38 @@ def do_waitproc(proc_lst):
 
 #功能：关闭进程；参数：进程名称清单；返回：错误描述
 def close_proc(app_lst):
+    old_workdir = ch_workdir()
     proc_lst = do_killproc(app_lst)
+    os.chdir(old_workdir)
     if 0 >= len(proc_lst):
         return ""
     return do_waitproc(proc_lst)
 
 
 #功能：注册计划任务；参数：脚本位置；返回：错误描述
-def unregister_cron(monitor_scrits):
+def unregister_cron(app_name, monitor_scrits):
+    crontab = ("/tmp/dpdkapp_%s_crontab" %app_name)
     szret = maker_public.execCmdAndGetOutput("crontab -l")
     pyregpath = monitor_scrits.replace(".", "\\.")
     if None != re.search(".+python\\d*[ \\t]+"+pyregpath+"[^\\n]+\\n", szret):
         szret = re.sub(".+python\\d*[ \\t]+"+monitor_scrits+"[^\\n]+\\n", "", szret)
-    sz_err = maker_public.writeTxtFile("/tmp/dpdk_scrits_crontab", szret)
+    sz_err = maker_public.writeTxtFile(crontab, szret)
     if 0 < len(sz_err):
-        os.system("rm -Rf /tmp/dpdk_scrits_crontab")
+        os.system("rm -Rf "+crontab)
         return sz_err
-    if 0 != os.system("crontab /tmp/dpdk_scrits_crontab"):
-        os.system("rm -Rf /tmp/dpdk_scrits_crontab")
+    if 0 != os.system("crontab "+crontab):
+        os.system("rm -Rf "+crontab)
         return "Failed to unregister cron"
-    os.system("rm -Rf /tmp/dpdk_scrits_crontab")
+    os.system("rm -Rf "+crontab)
     return ""
 
 
 #功能：卸载应用；参数：监控脚本和监控的进程；返回：错误描述
-def Uninstall_app(monitor_scrits, app_lst):
+def Uninstall_app(app_lst):
+    monitor_scrits = os.path.abspath(sys.argv[0])
+    app_name = get_appname(os.path.dirname(monitor_scrits))
     #注销定时任务
-    sz_err = unregister_cron(monitor_scrits)
+    sz_err = unregister_cron(app_name, monitor_scrits)
     if "" != sz_err:
         return sz_err
     #关闭全部进程
@@ -493,9 +522,6 @@ def Uninstall_app(monitor_scrits, app_lst):
     if "" != sz_err:
         return sz_err
     #删除动态库链接路径配置
-    app_name,sz_err = get_appname(app_lst)
-    if "" != sz_err:
-        return sz_err
     os.system(\
         ("rm -rf /etc/ld.so.conf.d/dpdkapp_%s_lib.conf && ldconfig" %app_name) )
     return ""
@@ -522,8 +548,10 @@ def monitor_oneapp(appinfo):
 #功能：监控DPDK的应用；参数：app列表，包括app名称-app启动路径及参数；返回：错误码
 def Monitor_dpdkapp(app_lst):
     sz_err = ""
+    old_workdir = ch_workdir()
     for appinfo in app_lst:
         sz_err += monitor_oneapp(appinfo)
+    os.chdir(old_workdir)
     return sz_err
     
 
@@ -557,33 +585,40 @@ def init_log(file_size, error):
 #函数返回：执行成功返回0，否则返回负值的错误码
 if __name__ == "__main__":
     #错误描述
-    error = "dpdk_opt: [optimsys|recovsys|initenv|install|uninstall|monitor] [log file]"
+    error = "dpdk_opt: [optimsys|recovsys|initenv|install|uninstall|monitor|make] [log file]"
+    if 2<len(sys.argv) and "make"==sys.argv[1]:
+        error = maker_public.get_DPDKscrits(sys.argv[2])
+        if ""!=error:
+            print(error)
+            exit(-1)
+        else:
+            exit(0)
     #初始化日志文件，大小限制为512MB
     init_log(512*1024*1024, error)
 
 
     #所有的参数
-    #需要隔离的CPU清单，从0开始，格式为1,4,5,6,2-3
-    cpu_list = "2-3"
-    #需要监控的进程的信息，两层list，内层list每个节点有三个参数：程序路径、工作路径、启动参数
-    app_list = [["/usr/bin/more", "", "/etc/default/grub"]]
-    #动态库路径清单，每个元素代表一个应用需要的动态库路径，他们会被添加到系统中，供启动时查找
-    dllpath_list = [""]
-    #地址随机化开启标志：1表示开启、0表示关闭
+    #需要隔离的CPU清单，从0开始，格式为1,4,5,6,2-3。不能大于等于系统CPU数目。不需要时可以
+    # 配置为空串。
+    cpu_list = "" #"2-3"
+    #地址随机化开启标志：1表示开启、0表示关闭。只能配置为0或者1。
     ASLR_flg = "1"
-    #需要开启的巨页的尺寸，有2048kb和1048576kb两种
+    #需要开启的巨页的尺寸，有2048kb和1048576kb两种。
     page_size = 2048
-    #需要开启的巨页的数量，按照NUMA节点进行分配，在非NUMA结构下，只能配置node0
+    #需要开启的巨页的数量，按照NUMA节点进行分配，在非NUMA结构下，只能配置node0。
     page_cnt_lst = [["node0", 128]]
-    #PCI设备的DPDK绑定脚本所在的路径，一般在DPDK安装路径的usertools下
-    devbind_path = ""#"/usr/local/dpdk/share/dpdk/usertools"
+    #PCI设备的DPDK绑定脚本所在的路径，一般在DPDK安装路径的usertools下。如果配置为相对目录，
+    # 则最后的绝对目录为：脚本所在目录的上一级/配置的路径。不需要时可以配置为None。
+    devbind_path = None #"/usr/local/dpdk/sbin"
     #VMBUS设备的DPDK绑定脚本所在的路径，该设备是微软hyper-v虚拟机的绑定程序，
-    # 可以从https://gitlab.com/driverctl/driverctl下载。devbind_path和drvctl_path
-    # 不能同时配置，必须配置一个，置为空串一个。
+    # 可以从https://gitlab.com/driverctl/driverctl下载。如果配置为相对目录，
+    # 则最后的绝对目录为：脚本所在目录的上一级/配置的路径。devbind_path和drvctl_path
+    # 不能同时生效，如果drvctl_path是有效的目录，则devbind_path会被忽略。不需要时可以配置为None。
     drvctl_path = "/usr/local/dpdk/sbin/driverctl"
     #DPDK内核模块所在的路径，主要是igb_uio.ko和rte_kni.ko所在的路径，在编译DPDK时获取。
     # 注意：在DPDK20以后版本中默认是不打开igb_uio的，需要额外下载igb_uio源代码并且构建
-    # 编译脚本，具体可以参见本工程中对VPP的DPDK的编译方法。
+    # 编译脚本，具体可以参见本工程中对VPP的DPDK的编译方法。如果配置为相对目录，
+    # 则最后的绝对目录为：脚本所在目录的上一级/配置的路径。不需要时可以配置为None。
     kmod_path = "/usr/local/dpdk/kmod"
     #需要加载的内核模块，可以是igb_uio、rte_kni、uio_pci_generic、vfio_pci、uio_hv_generic。
     # 其中uio_pci_generic是linux提供的uio驱动，大部分场景可以替代igb_uio，只有一些比较老的设备
@@ -592,7 +627,13 @@ if __name__ == "__main__":
     kmod_list = ["uio_hv_generic"]
     #需要绑定的设备，两层list，内层list每个节点有两个参数：网卡名、网卡的PCI地址。在PCI环境中，
     # 网卡的PCI地址是必须的；在VMBUS环境中，网卡名是必须的。
-    dev_lst = [["eth2", "04:00.3"]]
+    dev_lst = [["eth2", ""]] #[["eth2", "04:00.3"]]
+    #需要监控的进程的信息，两层list，内层list每个节点有三个参数：程序路径、工作路径、启动参数。
+    # 如果程序路径、工作路径配置为相对目录，则最后的绝对目录为：脚本所在目录的上一级/配置的路径。
+    app_list = [] #[["/usr/bin/more", "", "/etc/default/grub"]]
+    #动态库路径清单，每个元素代表一个应用需要的动态库路径，他们会被添加到系统中，供启动时查找。
+    # 如果配置为相对目录，则最后的绝对目录为：脚本所在目录的上一级/配置的路径。
+    dllpath_list = [] #[""]
 
 
     #解析参数
@@ -601,17 +642,17 @@ if __name__ == "__main__":
     elif "recovsys"==sys.argv[1]:
         error  = Recov_system()
     elif "initenv"==sys.argv[1]:
-        error  = Init_dpdkenv(ASLR_flg, page_size, page_cnt_lst, devbind_path, \
+        error = Init_dpdkenv(ASLR_flg, page_size, page_cnt_lst, devbind_path, \
             drvctl_path, kmod_path, kmod_list, dev_lst)
     elif "install"==sys.argv[1]:
-        error  = Install_app(sys.argv[0], app_list, dllpath_list)
+        error = Install_app(dllpath_list)
     elif "uninstall"==sys.argv[1]:
-        error  = Uninstall_app(sys.argv[0], app_list)
+        error = Uninstall_app(app_list)
     elif "monitor"==sys.argv[1]:
-        error  = Monitor_dpdkapp(app_list)
+        error = Monitor_dpdkapp(app_list)
     if ""!=error:
         logging.error(error)
         exit(-1)
-    if "install"==sys.argv[1] or "uninstall"==sys.argv[1]:
+    if "optimsys"==sys.argv[1] or "recovsys"==sys.argv[1]:
         maker_public.do_reboot("press any key to reboot...")
     exit(0)

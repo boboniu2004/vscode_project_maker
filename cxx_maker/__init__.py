@@ -14,7 +14,7 @@ import maker_public
 def make_nomal_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
     #读取基础的makefile文件
     szMakeCont,szErr = maker_public.readTxtFile( 
-        os.path.dirname(os.path.realpath(sys.argv[0]))+"/cxx_maker/makefile.conf" )
+        os.path.dirname(os.path.abspath(sys.argv[0]))+"/cxx_maker/makefile.conf" )
     if 0 < len(szErr):
         return szErr
     #替换编译器
@@ -98,7 +98,7 @@ def make_nomal_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
 def make_dpdk_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
     #读取基础的makefile文件
     szMakeCont,szErr = maker_public.readTxtFile( 
-        os.path.dirname(os.path.realpath(sys.argv[0]))+"/cxx_maker/makefile-dpdk.conf" )
+        os.path.dirname(os.path.abspath(sys.argv[0]))+"/cxx_maker/makefile-dpdk.conf" )
     if 0 < len(szErr):
         return szErr
     #替换编译器
