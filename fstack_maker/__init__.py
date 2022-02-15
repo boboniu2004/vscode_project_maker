@@ -150,7 +150,8 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
 
 #功能：制作f-stack工程；参数：无；返回：错误码
 def create_fstack_project(fstack_path, vscode_project_maker):
-    if 0 != os.system("python3 "+vscode_project_maker+"/__init__.py c app /tmp/nginx"):
+    if 0 != os.system(maker_public.get_python()+" "+vscode_project_maker+\
+        "/__init__.py c app /tmp/nginx"):
         os.system("rm -rf /tmp/nginx")
         return "create f-stack project failed"
     os.system("cp -rf /tmp/nginx/.vscode "+fstack_path+"/f-stack"+"/")

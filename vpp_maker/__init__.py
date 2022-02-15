@@ -23,7 +23,8 @@ def make_dep(vpp_path):
 
 #功能：制作vpp工程；参数：无；返回：错误码
 def create_vpp_project(vpp_path, vscode_project_maker):
-    if 0 != os.system("python3 "+vscode_project_maker+"/__init__.py c app /tmp/vpp"):
+    if 0 != os.system(maker_public.get_python()+" "+vscode_project_maker+\
+        "/__init__.py c app /tmp/vpp"):
         os.system("rm -rf /tmp/vpp")
         return "create vpp project failed"
     os.system("cp -rf /tmp/vpp/.vscode "+ vpp_path+"/vpp/")
