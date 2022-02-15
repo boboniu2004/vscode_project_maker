@@ -240,7 +240,7 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 ![set_vpp_memory](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/set_vpp_memory.jpg) ![virtualbox_set_vpp_memory](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vpp_memory.jpg)
 
 # DPDK管理脚本
-DPDK应用运行在linux系统中时，为了保证CPU尽可能的运行应用代码，需要对宿主linux做一系列的优化。同时还要进行设置巨页，绑定网卡，监控进程等一系列操作。为了降低DPDK使用的复杂度，开发了一众脚本来自动化完成上述工作，目前已经在ubuntu和centos下通过了测试。这是它的参数说明。![dpdk_opt](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/dpdk_opt.jpg)
+DPDK应用运行在linux系统中时，为了保证CPU尽可能的运行应用代码，需要对宿主linux做一系列的优化。同时还要设置巨页，绑定网卡，监控进程等一系列操作。为了降低DPDK使用的复杂度，开发了一众脚本来自动化完成上述工作，目前已经在ubuntu和centos下通过了测试。这是它的参数说明。![dpdk_opt](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/dpdk_opt.jpg)
 
 ## 脚本生成
 DPDK脚本目前是vscode_project_maker的一部分，体量较大。如果想把这部分代码单独抽取出来，嵌入到自己的DPDK应用目录中去使用，可以在vscode_project_maker目录下运行如下命令：
@@ -250,7 +250,7 @@ DPDK脚本目前是vscode_project_maker的一部分，体量较大。如果想�
 该命令会将DPDK脚本的代码从vscode_project_maker中抽取出来，然后存储在[scrits path]/dpdk_scrits目录中，该目录下的__init__.py为脚本主入口。
 
 ## 系统优化
-针对宿主linux系统的优化主要有三点：关闭消耗CPU的服务、关闭图形界面，设置默认的巨页尺寸，开启iommu，隔离CPU核心。其中iommu/smmu为x86/arm64体系下的设备虚拟化功能，它允许虚拟设备进行DMA操作。隔离出来的CPU不会再被操作系统分派进程，除非显式的进行线核亲缘性绑定，DPDK应用可以绑定在这些核心上。可以在vscode_project_maker|dpdk_scrits目录下运行如下命令：
+针对宿主linux系统的优化主要有五点：关闭消耗CPU的服务、关闭图形界面，设置默认的巨页尺寸，开启iommu，隔离CPU核心。其中关闭消耗CPU的服务和图形界面是为了降低CPU开销；iommu/smmu是x86/arm64体系下的设备虚拟化功能，它允许虚拟设备进行DMA操作；隔离CPU是为了保证这些CPU核心在运行DPDK应用时不会被中断和调度。可以在vscode_project_maker|dpdk_scrits目录下运行如下命令：
 
         python3 [dpdk_scrits|__init__].py optimsys [log file]
 
@@ -269,7 +269,9 @@ DPDK脚本目前是vscode_project_maker的一部分，体量较大。如果想�
 
 运行前需要配置ASLR_flg、page_size、page_cnt_lst、devbind_path、drvctl_path、kmod_path、kmod_list、 dev_lst参数。
 
-ASLR_flg参数为地址随机化开启标志：1表示开启、0表示关闭。只能配置为0或者1。page_cnt_lst参数为需要设置的巨页的数量，按照NUMA节点进行分配，在非NUMA结构下，只能配置node0。
+ASLR_flg参数为linux地址随机化开启标志：1表示开启、0表示关闭。只能配置为0或者1。默认情况下是开启的，但是f-stack需要关闭该功能。
+
+page_cnt_lst参数为需要设置的巨页的数量，按照NUMA节点进行分配，在非NUMA结构下，只能配置node0。
 
 devbind_path参数为PCI设备的DPDK绑定脚本所在的路径，一般在DPDK安装路径的usertools下。如果配置为相对目录，则最后的绝对目录为：脚本所在目录的上一级/配置的路径。不需要时可以配置为None。
     
@@ -285,7 +287,7 @@ dev_lst参数为需要绑定的设备，两层list，内层list每个节点有�
 ## 进程监控
 可以把vscode_project_maker拷贝到dpdk程序的安装目录下，然后dpdk_scrits下运行如下命令来初始化dpdk应用：
 
-        python3 __init__.py install [log file]
+        python3 [dpdk_scrits|__init__].py install [log file]
 
 运行前需要配置app_list和dllpath_list参数。
 
@@ -295,4 +297,4 @@ dllpath_list程序依赖的动态库路径清单，每个元素代表一个应�
 
 如果不再需要运行dpdk应用，则可以在安装目录下的dpdk_scrits中运行如下命令来卸载dpdk应用：
 
-        python3 __init__.py uninstall [log file]
+        python3 [dpdk_scrits|__init__].py uninstall [log file]
