@@ -6,6 +6,7 @@ import re
 import os
 import multiprocessing
 import maker_public
+import platform
 
 
 #功能：配置f-stack下的tools中的makefile；参数：无；返回：错误码
@@ -226,9 +227,10 @@ def create_fstack_project(fstack_path, vscode_project_maker):
 
 #功能：制作f-stack工程；参数：无；返回：错误码
 def correct_fstack_code(fstack_path):
+    cpuarch = platform.machine()
     match_type = ""
     #查找
-    time_path = "/usr/include/x86_64-linux-gnu/sys/time.h"
+    time_path = "/usr/include/"+cpuarch+"-linux-gnu/sys/time.h"
     if False == os.path.isfile(time_path):
         time_path = "/usr/include/sys/time.h"
     if False == os.path.isfile(time_path):

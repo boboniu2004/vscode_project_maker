@@ -6,6 +6,7 @@ import os
 import sys
 import re
 import maker_public
+import platform
 
 
 #make_nomal_makefile 制作c语言的makefile文件；
@@ -233,7 +234,7 @@ def makePropertiesfile(szAppType, szProjPath, szLangType):
     #获取GCC
     GccVersion = maker_public.execCmdAndGetOutput("gcc -dumpversion").replace('\n', '')
     CppVersion = maker_public.execCmdAndGetOutput("g++ -dumpversion").replace('\n', '')
-    cpuarch = maker_public.execCmdAndGetOutput("uname -m").replace("\n", "")
+    cpuarch = platform.machine()
     #获取GCC的include路径
     GccIncPath = ""
     other_inc_path = "\n"

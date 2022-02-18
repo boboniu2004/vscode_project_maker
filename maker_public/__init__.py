@@ -6,6 +6,7 @@ import os
 import re
 import sys
 import multiprocessing
+import platform
 
 
 #函数功能：读取一个文本文件
@@ -194,6 +195,7 @@ def getOSName():
             return "ubuntu"
     return ""
 
+
 #get_kernel_ver 获取内核版本；参数：无；返回：操作系统内核的版本
 def get_kernel_ver():
     szOSName = execCmdAndGetOutput("uname -r")
@@ -263,10 +265,11 @@ def do_reboot(msg):
 
 #功能：获取pyhon命令；参数：无；返回：python命令
 def get_python():
-    if re.search("^2\\..*", sys.version):
+    man_ver = re.search("^(\d+)\\..*", sys.version)
+    if None==man_ver or "2"==man_ver.group(1):
         return "python"
     else:
-        return "python3"
+        return "python"+man_ver.group(1)
 
 
 #build_normal_dpdk 编译普通版本的DPDK；参数：dpdk源码路径；返回：错误描述

@@ -2,20 +2,22 @@
 # -*- coding: utf-8 -*-
 
 import os
-from posixpath import basename
 import re
 import sys
 import maker_public
+import platform
 
 
 #功能：安装依赖；参数：无；返回：错误码
 def make_dep(vpp_path):
+    cpuarch = platform.machine()
+
     if maker_public.getOSName()=="ubuntu":
-        os.system("apt-get --purge autoremove vpp-ext-deps.x86_64")
+        os.system("apt-get --purge autoremove vpp-ext-deps."+cpuarch)
         if 0!=os.system("cd "+vpp_path+"/vpp && make UNATTENDED=y install-dep"):
             return "make install-dep failed!"
     else:
-        os.system("yum -y erase vpp-ext-deps.x86_64")
+        os.system("yum -y erase vpp-ext-deps."+cpuarch)
         if 0 != os.system("cd "+vpp_path+"/vpp && make install-dep"):
             return "make install-dep failed!"
     return ""
