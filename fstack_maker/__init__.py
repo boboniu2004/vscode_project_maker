@@ -79,8 +79,14 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
         return "can not find DEBUG"
     if 0 >= len(re.findall("\\n#FF_IPFW[ \\t]*=[ \\t]*1|\\nFF_IPFW[ \\t]*=[ \\t]*1", lib_make)):
         return "can not find FF_IPFW"
+    if 0 >= len(re.findall("\\nifndef[ \\t]+DEBUG\\nHOST_CFLAGS[ \\t]*=", lib_make)):
+        return "can not find HOST_CFLAGS"
     lib_make = re.sub("\\n#DEBUG[ \\t]*=", "\nDEBUG=", lib_make)
     lib_make = re.sub("\\n#FF_IPFW[ \\t]*=[ \\t]*1", "\nFF_IPFW=1", lib_make)
+    if None == re.search(\
+        "\\nifndef[ \\t]+DEBUG\\nHOST_CFLAGS[ \\t]*=[ \\t]*-DNDEBUG[ \\t] ", lib_make):
+        lib_make = re.sub("\\nifndef[ \\t]+DEBUG\\nHOST_CFLAGS[ \\t]*=", 
+            "\nifndef DEBUG\nHOST_CFLAGS = -DNDEBUG ", lib_make)
     sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/lib/Makefile", lib_make)
     if "" != sz_err:
         return "config f-stack failed"
