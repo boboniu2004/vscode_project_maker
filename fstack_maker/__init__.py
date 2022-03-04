@@ -155,10 +155,26 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
     return ""
 
 
+#功能：制作f-stack工程的c_cpp_properties.json文件；参数：DPDK和hyperscan路径；返回：错误码
+def create_fstack_properties(fstack_path):
+    properties,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack"+"/.vscode/"\
+        "c_cpp_properties.json")
+    if "" != sz_err:
+        return "create f-stack project failed"
+    properties = re.sub("\\n                [^/]/usr/local/dpdk/include", 
+        "\n                \"${FF_DPDK}/include\","\
+        "\n                \"${FF_HS}/include", properties)
+    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/.vscode/"\
+        "c_cpp_properties.json", properties)
+    if "" != sz_err:
+        return "create f-stack project failed"
+    return ""
+
+
 #功能：制作f-stack工程；参数：无；返回：错误码
 def create_fstack_project(fstack_path, vscode_project_maker):
     if 0 != os.system(maker_public.get_python()+" "+vscode_project_maker+\
-        "/__init__.py c app /tmp/nginx"):
+        "/__init__.py c app-dpdk /tmp/nginx"):
         os.system("rm -rf /tmp/nginx")
         return "create f-stack project failed"
     os.system("cp -rf /tmp/nginx/.vscode "+fstack_path+"/f-stack"+"/")
@@ -229,7 +245,8 @@ def create_fstack_project(fstack_path, vscode_project_maker):
         "tasks.json", tasks)
     if "" != sz_err:
         return "create f-stack project failed"
-    return ""
+    return create_fstack_properties(fstack_path)
+
 
 #功能：制作f-stack工程；参数：无；返回：错误码
 def correct_fstack_code(fstack_path):
@@ -276,23 +293,32 @@ def correct_fstack_code(fstack_path):
         "/src/event/modules/ngx_ff_module.c", ff_mod_cont)
     return sz_err
 
+
 #功能：导入路径参数；参数：无；返回：错误码
-def export_path(fstack_path):
+def export_path(fstack_path, dpdk_path, hs_path):
     #读取
     profile,sz_err = maker_public.readTxtFile(os.environ["HOME"]+"/.bashrc")
     if "" != sz_err:
         return sz_err
     #修改
-    if 0 >= len(re.findall("\nexport[ \\t]+FF_PATH[ \\t]*=.+", profile)):
+    if 0 >= len(re.findall("\\nexport[ \\t]+FF_PATH[ \\t]*=.+", profile)):
         profile += "\nexport FF_PATH="+fstack_path+"/f-stack"
     else:
-        profile = re.sub("\nexport[ \\t]+FF_PATH[ \\t]*=.+", 
+        profile = re.sub("\\nexport[ \\t]+FF_PATH[ \\t]*=.+", 
             "\nexport FF_PATH="+fstack_path+"/f-stack", profile)
-    if 0 >= len(re.findall("\nexport[ \\t]+FF_DPDK[ \\t]*=.+", profile)):
-        profile += "\nexport FF_DPDK=/usr/local/dpdk"
+    if 0 >= len(re.findall("\\nexport[ \\t]+FF_DPDK[ \\t]*=.+", profile)):
+        profile += "\nexport FF_DPDK="+dpdk_path
     else:
-        profile = re.sub("\nexport[ \\t]+FF_DPDK[ \\t]*=.+", 
-            "\nexport FF_DPDK=/usr/local/dpdk", profile)
+        profile = re.sub("\\nexport[ \\t]+FF_DPDK[ \\t]*=.+", 
+            "\nexport FF_DPDK="+dpdk_path, profile)
+    if "" != hs_path:
+        if 0 >= len(re.findall("\\nexport[ \\t]+FF_HS[ \\t]*=.+", profile)):
+            profile += "\nexport FF_HS="+hs_path
+        else:
+            profile = re.sub("\\nexport[ \\t]+FF_HS[ \\t]*=.+", 
+                "\nexport FF_HS="+hs_path, profile)
+    else:
+            profile = re.sub("\\nexport[ \\t]+FF_HS[ \\t]*=.+", "", profile)        
     #写入
     sz_err = maker_public.writeTxtFile(os.environ["HOME"]+"/.bashrc", profile)
     if "" != sz_err:
@@ -305,12 +331,22 @@ def makeropensrc():
     fstack_path = os.getcwd()
     if 2<len(sys.argv):
         fstack_path = sys.argv[2]
-    fstack_path = os.path.abspath(fstack_path)
     if False==os.path.isdir(fstack_path):
         return "Invaild f-stack path"
-    #检测是否安装了DPDK
-    if False == os.path.exists("/usr/local/dpdk"):
-        return "please install DPDK"
+    fstack_path = os.path.abspath(fstack_path)
+    dpdk_path = "/usr/local/dpdk"
+    if 3<len(sys.argv):
+        dpdk_path = sys.argv[3]
+    if False==os.path.isdir(dpdk_path):
+        return "Invaild dpdk path"
+    dpdk_path = os.path.abspath(dpdk_path)
+    hs_path = ""
+    if 4<len(sys.argv):
+        hs_path = sys.argv[4]
+    if "" != hs_path:
+        if False==os.path.isdir(hs_path):
+            return "Invaild hyperscan path"
+        hs_path = os.path.abspath(hs_path)
     #初始化f-stack
     need_continue = "y"
     if True == os.path.exists(fstack_path+"/f-stack"):
@@ -333,7 +369,7 @@ def makeropensrc():
         if "" != szErr:
             return szErr
         print("correct fstack code sucess!")
-        szErr = export_path(fstack_path)
+        szErr = export_path(fstack_path, dpdk_path, hs_path)
         if "" != szErr:
             return szErr
         print("export path sucess!")

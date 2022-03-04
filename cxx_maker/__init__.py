@@ -270,7 +270,7 @@ def makePropertiesfile(szAppType, szProjPath, szLangType):
         "            \"compilerPath\": \"/usr/bin/gcc\",\n"\
         "            \"cStandard\": \"c11\",\n"\
         "            \"cppStandard\": \"c++11\",\n"\
-        "            \"intelliSenseMode\": \"gcc-x64\"\n"\
+        "            \"intelliSenseMode\": \"${default}\"\n"\
         "        }\n"\
         "    ],\n"\
         "    \"version\": 4\n"\

@@ -8,9 +8,12 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/dpdk_scrits.py",
+            "program": "${workspaceFolder}/opensrc_maker.py",
             "args": [
-                "initenv",
+                "f-stack",
+                "/root/nginx-extend",
+                "/usr/local/dpdk",
+                "/usr/local/hyperscan"
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"

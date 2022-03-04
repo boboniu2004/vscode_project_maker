@@ -12,7 +12,7 @@ import vpp_maker
 #函数参数：可执行文件全路径，启动时加入的参数
 #函数返回：执行成功返回0，否则返回负值的错误码
 if __name__ == "__main__":
-    error = "opensrc_maker: [f-stack|vpp] [private parameter]"
+    error = "opensrc_maker: [ vpp [vpp path] ] | [ f-stack [dpdk path] [hyperscan path] ]"
     #获取发行版本
     if 2>len(sys.argv):
         print(error)
