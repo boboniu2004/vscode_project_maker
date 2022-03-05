@@ -196,9 +196,9 @@ wsl虚拟机Ubuntu20.04就会被备份到D:\bark\ubuntu2004.tar中。
 # 新建工程
 目前可以通过vscode_project_maker创建c、c++、python、java、golang开发工程。可以在vscode_project_maker目录下运行如下命令创建：
 
-        python3 __init__.py language[c|c++|python|java|golang] output[app|static|shared] workspace
+        python3 __init__.py language[c|c++|python|java|golang] output[app|static|shared|app-dpdk|static-dpdk|shared-dpdk] workspace
 
-c、c++、golang可以创建可执行程序、动态库、静态库工程，python、java只能创建可执行程序工程。
+c、c++、golang可以创建可执行程序、动态库、静态库工程，python、java只能创建可执行程序工程。-dpdk后缀的意思是创建DPDK工程，只在c、c++下有效。
 
 工程创建完毕后，使用vscode连接上虚拟机，依次点击"File"->"Open Folder"，然后远程打开该工程目录，进行相应的开发。
 ![vscode_open_folder_1](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/vscode_open_folder_1.jpg) ![vscode_open_folder_2](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/vscode_open_folder_2.jpg)
@@ -208,7 +208,7 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 # 创建f-stack开发环境
 在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，且已经正确安装了DPDK到/usr/local/dpdk下，则可以配置f-stack开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
 
-        python3 opensrc_maker.py f-stack [f-stack_project_path]
+        python3 opensrc_maker.py f-stack [f-stack_project_path] [dpdk_install_path] [hyperscan_install_path]
 
 安装完毕后，需要重启虚拟机，然后就可以使用vscode打开f-stack开发目录，首先运行**gcc clean active file**任务重新配置，然后运行**gcc install active file**任务生成debug调试目录，该目录中可以修改f-stack和nginx的配置。后续就可以使用vscode进行集成开发和调试了，非常方便。开机后第一次调试前需要运行**gcc init active file**任务初始化dpdk环境，如果在hyper-v环境下的centos8/ubuntu20.04系统下想查看已经绑定的设备，可以运行命令：
 
@@ -219,7 +219,7 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 # 创建vpp开发环境
 在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，则可以配置vpp开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
 
-        python3 opensrc_maker.py vpp [f-stack_project_path]
+        python3 opensrc_maker.py vpp [vpp_project_path]
 
 安装完毕后，然后就可以使用vscode打开vpp开发目录，该目录中的build-root/install-vpp_debug-native/vpp/etc/startup.conf中可以修改vpp配置。后续就可以使用vscode进行集成开发和调试了，非常方便。开机后第一次调试前需要运行**gcc init active file**任务初始化dpdk环境，如果在hyper-v环境下的centos8/ubuntu20.04系统下想查看已经绑定的设备，可以运行命令：
 
