@@ -230,28 +230,10 @@ def makeMakefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
 
 
 #makePropertiesfile 制作索引文件；参数：项目类型、工程路径和开发语言；返回：错误描述
-def makePropertiesfile(szAppType, szProjPath, szLangType):
-    #获取GCC
-    GccVersion = maker_public.execCmdAndGetOutput("gcc -dumpversion").replace('\n', '')
-    CppVersion = maker_public.execCmdAndGetOutput("g++ -dumpversion").replace('\n', '')
-    cpuarch = platform.machine()
-    #获取GCC的include路径
-    GccIncPath = ""
+def makePropertiesfile(szAppType, szProjPath, szComplier):
     other_inc_path = "\n"
-    if "centos" == maker_public.getOSName():
-        GccIncPath = cpuarch+"-redhat-linux/"+GccVersion+"/include"
-        if "c++" == szLangType:
-            other_inc_path = ",\n                \"/usr/include/c++/"+\
-                CppVersion+"/"+cpuarch+"-redhat-linux\"\n"
-    else:
-        GccIncPath = cpuarch+"-linux-gnu/"+GccVersion+"/include"
-        if "c++" == szLangType:
-            other_inc_path = ",\n                \"/usr/include/c++/"+CppVersion+"\"\n"
     if -1!=str(szAppType).find("-dpdk"):
-        other_inc_path = other_inc_path[:len(other_inc_path)-1]
-        #if "test_libhs\n"!=maker_public.execCmdAndGetOutput(
-        #    "pkg-config --exists libhs && echo test_libhs"):
-        other_inc_path += ",\n                \"/usr/local/dpdk/include\"\n"
+        other_inc_path = ",\n                \"/usr/local/dpdk/include\"\n"
         #else:
         #    other_inc_path += ",\n                \"/usr/local/dpdk/include\""\
         #       ",\n                \"/usr/local/hyperscan/include/hs\"\n"
@@ -263,11 +245,11 @@ def makePropertiesfile(szAppType, szProjPath, szLangType):
         "            \"includePath\": [\n"\
         "                \"${workspaceFolder}/**\",\n"\
         "                \"/usr/include\",\n"\
-        "                \"/usr/local/include\",\n"\
-        "                \"/usr/lib/gcc/"+GccIncPath+"\""+other_inc_path+\
+        "                \"/usr/local/include\""\
+        +other_inc_path+\
         "            ],\n"\
         "            \"defines\": [],\n"\
-        "            \"compilerPath\": \"/usr/bin/gcc\",\n"\
+        "            \"compilerPath\": \"/usr/bin/"+szComplier+"\",\n"\
         "            \"cStandard\": \"c11\",\n"\
         "            \"cppStandard\": \"c++11\",\n"\
         "            \"intelliSenseMode\": \"${default}\"\n"\
@@ -398,7 +380,7 @@ def MakeProject(szLangType, szAppType, szProjPath):
     if 0 < len(szErr):
         return szErr
     #建立配置索引配置目录
-    szErr = makePropertiesfile(szAppType, szProjPath, szLangType)
+    szErr = makePropertiesfile(szAppType, szProjPath, szComplier)
     if 0 < len(szErr):
         return szErr
     #建立编译任务
