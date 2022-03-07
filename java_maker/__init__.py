@@ -1,7 +1,6 @@
 #!/usr/python/bin
 # -*- coding: utf-8 -*-
 
-import os
 import maker_public
 
 

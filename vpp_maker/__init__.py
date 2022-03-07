@@ -11,8 +11,9 @@ import platform
 #功能：安装依赖；参数：无；返回：错误码
 def make_dep(vpp_path):
     cpuarch = platform.machine()
+    osname = maker_public.getOSName()
 
-    if maker_public.getOSName()=="ubuntu":
+    if osname=="ubuntu" or osname=="ubuntu-wsl2":
         os.system("apt-get --purge autoremove vpp-ext-deps."+cpuarch)
         if 0!=os.system("cd "+vpp_path+"/vpp && make UNATTENDED=y install-dep"):
             return "make install-dep failed!"
@@ -232,9 +233,9 @@ def makeropensrc():
     vpp_path = os.getcwd()
     if 2<len(sys.argv):
         vpp_path = sys.argv[2]
-    vpp_path = os.path.abspath(vpp_path)
     if False==os.path.isdir(vpp_path):
         return "Invaild vpp path"
+    vpp_path = os.path.abspath(vpp_path)
     #初始化vpp
     need_continue = "y"
     if True == os.path.exists(vpp_path+"/vpp"):

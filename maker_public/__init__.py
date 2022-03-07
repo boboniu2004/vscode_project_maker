@@ -6,7 +6,6 @@ import os
 import re
 import sys
 import multiprocessing
-import platform
 
 
 #函数功能：读取一个文本文件
