@@ -6,7 +6,6 @@ import os
 import sys
 import re
 import maker_public
-import platform
 
 
 #make_nomal_makefile 制作c语言的makefile文件；

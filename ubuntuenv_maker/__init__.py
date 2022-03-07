@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 
-from ast import Return
 import re
 import os
 import sys
@@ -313,17 +312,17 @@ def configWSLmodules():
             ".zip -O "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
             os.system("rm -rf "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip")
             return "failed to download linux-msft-wsl-"+match_ret.group(1)+".zip"
-    if False == os.path.isdir("/lib/modules/"+match_ret.group(1)+"-microsoft-standard-WSL2"):
-        os.system("rm -rf /tmp/WSL2-Linux-Kernel-linux-msft-wsl-"+match_ret.group(1))
-        if 0 != os.system("unzip -d /tmp/ "+
+    if False == os.path.isdir("/usr/src/WSL2-Linux-Kernel-linux-msft-wsl-"+match_ret.group(1)):
+        if 0 != os.system("unzip -d /usr/src/ "+
             vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
-            return "Failed to unzip "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"
+            return "Failed to unzip "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"        
+    if False == os.path.isdir("/lib/modules/"+match_ret.group(1)+"-microsoft-standard-WSL2"):
         #编译内核
-        if 0 != os.system("cd /tmp/WSL2-Linux-Kernel-linux-msft-wsl-"+match_ret.group(1)+" && zcat /proc/config.gz > .config "\
-            "&& make -j $(nproc) scripts && make -j $(nproc) modules && make -j $(nproc) modules_install"):
-            os.system("rm -rf /tmp/WSL2-Linux-Kernel-linux-msft-wsl-"+match_ret.group(1))
+        if 0 != os.system("cd /usr/src/WSL2-Linux-Kernel-linux-msft-wsl-"+match_ret.group(1)+" && zcat /proc/config.gz > .config "\
+            "&& make -j $(nproc) scripts && make -j $(nproc) modules && make -j $(nproc) modules_install && make clean"):
+            os.system("rm -rf /lib/modules/"+match_ret.group(1)+"-microsoft-standard-WSL2")
             return "Failed to make kmod"
-        os.system("rm -rf /tmp/WSL2-Linux-Kernel-linux-msft-wsl-"+match_ret.group(1))
+
     return ""
     
 

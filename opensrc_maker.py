@@ -3,7 +3,6 @@
 
 
 import sys
-import os
 import fstack_maker
 import vpp_maker
 

@@ -4,7 +4,6 @@
 
 import re
 import sys
-import os
 import maker_public
 import centosenv_maker
 import ubuntuenv_maker

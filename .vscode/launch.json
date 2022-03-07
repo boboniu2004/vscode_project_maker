@@ -10,10 +10,8 @@
             "request": "launch",
             "program": "${workspaceFolder}/opensrc_maker.py",
             "args": [
-                "f-stack",
-                "/root/nginx-extend",
-                "/usr/local/dpdk",
-                "/usr/local/hyperscan"
+                "vpp",
+                "/root/nginx-extend"
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"
