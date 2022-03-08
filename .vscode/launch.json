@@ -8,10 +8,8 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/opensrc_maker.py",
+            "program": "${workspaceFolder}/osenv_maker.py",
             "args": [
-                "vpp",
-                "/root/other_workspace/"
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"

@@ -67,32 +67,28 @@ def configRepo():
             return ("Unknow OS:%s" %szCentOSVer)
     #更新基础源为阿里源rue
     if "8" == MatchList.group(1):
+        os.system( ("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))) )
         if True == os.path.exists("/etc/yum.repos.d/CentOS-Base.repo"):
             os.system("rm -Rf /etc/yum.repos.d/CentOS-Base.repo.bark")
             os.system("mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/"\
                 "CentOS-Base.repo.bark")
-        if False==os.path.exists( ("/etc/yum.repos.d/Centos-%s.repo" \
-            %(MatchList.group(1))) ) and \
-            0!=os.system( ("wget -O /etc/yum.repos.d/Centos-%s.repo "\
-                "http://mirrors.aliyun.com/repo/Centos-%s.repo" \
-                %(MatchList.group(1), MatchList.group(1))) ):
-            os.system( ("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))) )
+        if 0!=os.system( "wget -O /etc/yum.repos.d/CentOS-Base.repo "\
+                "http://mirrors.aliyun.com/repo/Centos-vault-8.5.2111.repo"):
+            os.system("rm -Rf /etc/yum.repos.d/CentOS-Base.repo")
             os.system("mv /etc/yum.repos.d/CentOS-Base.repo.bark "\
                 "/etc/yum.repos.d/CentOS-Base.repo")
             return "Download aliyun.repo failed"
-        #替换
-        repocont,reperr = maker_public.readTxtFile(\
-            "/etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1)))
-        if reperr!="":
-            return reperr
-        repocont = repocont.replace("\nfailovermethod=priority", 
-            "\n#failovermethod=priority")
-        repocont = repocont.replace("mirrors.cloud.aliyuncs.com", 
-            "mirrors.aliyuncs.com")
-        reperr = maker_public.writeTxtFile(\
-            "/etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1)),repocont)
-        if reperr!="":
-            return reperr
+        #删除不要的源
+        os.system("mv /etc/yum.repos.d/CentOS-Linux-AppStream.repo "\
+            "/etc/yum.repos.d/CentOS-Linux-AppStream.repo.bark")
+        os.system("mv /etc/yum.repos.d/CentOS-Linux-BaseOS.repo "\
+            "/etc/yum.repos.d/CentOS-Linux-BaseOS.repo.bark")
+        os.system("mv /etc/yum.repos.d/CentOS-Linux-Extras.repo "\
+            "/etc/yum.repos.d/CentOS-Linux-Extras.repo.bark")
+        os.system("mv /etc/yum.repos.d/CentOS-Linux-Plus.repo "\
+            "/etc/yum.repos.d/CentOS-Linux-Plus.repo.bark")
+        os.system("mv /etc/yum.repos.d/CentOS-Linux-PowerTools.repo "\
+            "/etc/yum.repos.d/CentOS-Linux-PowerTools.repo.bark")
         os.system( ("rm -Rf /etc/yum.repos.d/CentOS%s-Base-163.repo" %(MatchList.group(1))) )
         #安装epel源
         os.system("yum erase -y epel-release.noarch")
