@@ -220,12 +220,14 @@ def issame_kernel_ver(dpdk_path):
 
 #build_s_link 将源目录中的全部文件在目的目录中建立软链接；参数：源目录、目标目录；
 #返回：错误描述
-def build_s_link(src_dir, dst_dir):
+def build_s_link(src_dir, dst_dir, ignore_files):
     src_dir = os.path.abspath(src_dir)
     dst_dir = os.path.abspath(dst_dir)
     src_dir_list = os.listdir(src_dir)
     for cur_dir in src_dir_list:
         if "."==cur_dir or ".."==cur_dir:
+            continue
+        if None!=ignore_files and (cur_dir in list(ignore_files)):
             continue
         os.system("rm -rf "+dst_dir+"/"+cur_dir)
         if 0 != os.system("ln -s "+src_dir+"/"+cur_dir+" "+dst_dir+"/"+cur_dir):
@@ -247,7 +249,7 @@ def install_pc(src_path):
     if "\n" == pkg_path[len(pkg_path)-1:]:
         pkg_path = pkg_path[:len(pkg_path)-1]
     os.system("mkdir -p "+pkg_path)
-    sz_err = build_s_link(src_path, pkg_path)
+    sz_err = build_s_link(src_path, pkg_path, None)
     if ""==sz_err:
         os.system("ldconfig")
     return sz_err
@@ -291,7 +293,7 @@ def build_normal_dpdk(vscode_project_maker, fstack_ver):
             return "config DPDK failed"
         #设置
         sz_err = build_s_link("/usr/local/dpdk/include/dpdk", 
-            "/usr/local/dpdk/include")
+            "/usr/local/dpdk/include", None)
         if "" != sz_err:
             return sz_err
         if 0 != os.system("cp -rf /tmp/f-stack-"+fstack_ver+"/dpdk/build/kmod /usr/local/dpdk/"):

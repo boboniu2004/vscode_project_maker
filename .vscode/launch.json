@@ -8,8 +8,10 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/osenv_maker.py",
+            "program": "${workspaceFolder}/opensrc_maker.py",
             "args": [
+                "gperftools",
+                "/usr/local"
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"
