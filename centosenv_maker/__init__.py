@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
+import platform
 import re
 import os
 import sys
@@ -124,15 +125,16 @@ def configRepo():
                 return "Download epel.repo failed"
     os.system("yum clean all; yum makecache")
     #安装WANGdisco
+    cpuarch = platform.machine()
     if "8" != MatchList.group(1):
         szRpmPath = ("http://opensource.wandisco.com/centos/%s"\
-            "/git/x86_64/wandisco-git-release-%s-2.noarch.rpm" 
+            "/git/"+cpuarch+"/wandisco-git-release-%s-2.noarch.rpm" 
             %(MatchList.group(1),MatchList.group(1)))
         szErr = installOrUpdateRpm("wandisco-git-release", "noarch", szRpmPath)
         if 0 >= len(szErr):
             return ""
         szRpmPath = ("http://opensource.wandisco.com/centos/%s"\
-            "/git/x86_64/wandisco-git-release-%s-1.noarch.rpm" 
+            "/git/"+cpuarch+"/wandisco-git-release-%s-1.noarch.rpm" 
             %(MatchList.group(1),MatchList.group(1)))
         szErr = installOrUpdateRpm("wandisco-git-release", "noarch", szRpmPath)
         if 0 < len(szErr):
@@ -187,7 +189,7 @@ def updateSystem():
 #configSshd 配置SSHD；参数：无；返回：错误描述
 def configSshd():
     #安装
-    szErr = installOrUpdateRpm("openssh-server", "x86_64", "")
+    szErr = installOrUpdateRpm("openssh-server", platform.machine(), "")
     if 0 < len(szErr):
         return szErr
     #读取配置文件
@@ -196,18 +198,18 @@ def configSshd():
 
 #configGit 配置GIT；参数：无；返回：错误描述
 def configGit():
-    return installOrUpdateRpm("git", "x86_64", "")
+    return installOrUpdateRpm("git", platform.machine(), "")
 
 
 #configGcc 配置GcCC；参数：无；返回：错误描述
 def configGcc():
-    return installOrUpdateRpm("gcc", "x86_64", "")
+    return installOrUpdateRpm("gcc", platform.machine(), "")
 
 
 #configGolang 配置GOLANG；参数：无；返回：错误描述
 def configGolang():
     #安装 golang
-    szErr = installOrUpdateRpm("golang", "x86_64", "")
+    szErr = installOrUpdateRpm("golang", platform.machine(), "")
     if 0 < len(szErr):
         return szErr
     #安装工具
@@ -220,9 +222,9 @@ def configGolang():
 
 #configPython 配置PYTHON；参数：无；返回：错误描述
 def configPython():
-    szErr = installOrUpdateRpm("python3", "x86_64", "")
+    szErr = installOrUpdateRpm("python3", platform.machine(), "")
     if 0 < len(szErr):
-        szErr = installOrUpdateRpm("python36", "x86_64", "")
+        szErr = installOrUpdateRpm("python36", platform.machine(), "")
         if 0 < len(szErr):
             return szErr
     szErr = installOrUpdateRpm("python3-pip", "noarch", "")
@@ -238,10 +240,10 @@ def configPython():
 #configJava 配置JAVA；参数：无；返回：错误描c述
 def configJava():
     #安装RPM包
-    szErr = installOrUpdateRpm("java-11-openjdk", "x86_64", "")
+    szErr = installOrUpdateRpm("java-11-openjdk", platform.machine(), "")
     if 0 < len(szErr):
         return szErr
-    szErr = installOrUpdateRpm("java-11-openjdk-jmods", "x86_64", "")
+    szErr = installOrUpdateRpm("java-11-openjdk-jmods", platform.machine(), "")
     if 0 < len(szErr):
         return szErr
     os.system("java -version")
@@ -251,16 +253,17 @@ def configJava():
 
 #configPlanUML 配置PlanUML；参数：无；返回：错误描述
 def configPlanUML():
+    cpuarch = platform.machine()
     #下载
-    if False == os.path.exists(os.path.dirname(os.path.realpath(sys.argv[0]))+\
-        "/graphviz-2.30.1-21.el7.x86_64.rpm"):
-        if 0 != os.system("wget -P "+os.path.dirname(os.path.realpath(sys.argv[0]))+\
-            " http://rpmfind.net/linux/centos/7.7.1908/os/x86_64/Packages/"\
-            "graphviz-2.30.1-21.el7.x86_64.rpm "):
+    if False == os.path.exists(os.path.dirname(os.path.abspath(sys.argv[0]))+\
+        "/graphviz-2.30.1-21.el7."+cpuarch+".rpm"):
+        if 0 != os.system("wget -P "+os.path.dirname(os.path.abspath(sys.argv[0]))+\
+            " http://rpmfind.net/linux/centos/7.7.1908/os/"+cpuarch+"/Packages/"\
+            "graphviz-2.30.1-21.el7."+cpuarch+".rpm "):
             return "Failed to download graphviz"
     #安装
-    szErr = installOrUpdateRpm("graphviz", "x86_64", \
-        os.path.dirname(os.path.realpath(sys.argv[0]))+"/graphviz-2.30.1-21.el7.x86_64.rpm")
+    szErr = installOrUpdateRpm("graphviz", platform.machine(), \
+        os.path.dirname(os.path.abspath(sys.argv[0]))+"/graphviz-2.30.1-21.el7."+cpuarch+".rpm")
     if 0 < len(szErr):
         return szErr
     #
@@ -313,19 +316,19 @@ def configInternalNet(szEthChName, szEthEnName, szIpAddr):
 #installDPDK配置DPDK；参数：无；返回：错误描述
 def installDPDK(complie_type):
     #安装libnuma-dev
-    szErr = installOrUpdateRpm("numactl-devel", "x86_64", "")
+    szErr = installOrUpdateRpm("numactl-devel", platform.machine(), "")
     if 0 < len(szErr):
         return szErr
     #安装pcre
-    szErr = installOrUpdateRpm("pcre-devel", "x86_64", "")
+    szErr = installOrUpdateRpm("pcre-devel", platform.machine(), "")
     if 0 < len(szErr):
         return szErr
     #安装openssl
-    szErr = installOrUpdateRpm("openssl-devel", "x86_64", "")
+    szErr = installOrUpdateRpm("openssl-devel", platform.machine(), "")
     if 0 < len(szErr):
         return szErr
     #安装zlib
-    szErr = installOrUpdateRpm("zlib-devel", "x86_64", "")
+    szErr = installOrUpdateRpm("zlib-devel", platform.machine(), "")
     if 0 < len(szErr):
         return szErr
     #安装ninja
@@ -341,7 +344,7 @@ def installDPDK(complie_type):
 #installHYPERSCAN配置hyperscan；参数：无；返回：错误描述
 def installHYPERSCAN():
     #安装cmake
-    szErr = installOrUpdateRpm("cmake", "x86_64", "")
+    szErr = installOrUpdateRpm("cmake", platform.machine(), "")
     if 0 < len(szErr):
         return szErr
     #安装ragel
@@ -361,7 +364,7 @@ def installHYPERSCAN():
         os.system("ln -s /usr/local/ragel/bin/ragel /usr/local/bin/")
         os.system("rm -Rf /tmp/ragel-6.10")
     #安装boost
-    szErr = installOrUpdateRpm("boost-devel", "x86_64", "")
+    szErr = installOrUpdateRpm("boost-devel", platform.machine(), "")
     if 0 < len(szErr):
         return szErr
     #安装 HYPERSCAN

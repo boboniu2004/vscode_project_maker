@@ -33,6 +33,8 @@ def addGitignore(szProjPath):
 def configGit(szProjPath):
     #配置口令自动保存
     #os.system("cd "+szProjPath+" && "+"git config  credential.helper store")
+    #os.system("cd "+szProjPath+" && "+"git config --global user.email xxx@yy.zz")
+    #os.system("cd "+szProjPath+" && "+"git config --global user.name xx")
     return addGitignore(szProjPath)
 
 #函数功能：主函数
@@ -54,7 +56,7 @@ if __name__ == "__main__":
     if 0>=len(szProjPath) or "."==szProjPath[0]:
         print("vs_progject_maker: Invalid workspace(%s)" %(szProjPath))
         exit(-1)
-    if True==os.path.exists(szProjPath) and False==os.path.isdir( os.path.realpath(szProjPath) ):
+    if True==os.path.exists(szProjPath) and False==os.path.isdir( os.path.abspath(szProjPath) ):
         print("vs_progject_maker: Invalid workspace(%s)" %(szProjPath))
         exit(-1)
     if False == os.path.exists(szProjPath):

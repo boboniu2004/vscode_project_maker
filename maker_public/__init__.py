@@ -4,6 +4,7 @@
 
 import os
 import re
+import sys
 import multiprocessing
 
 
@@ -193,6 +194,7 @@ def getOSName():
             return "ubuntu"
     return ""
 
+
 #get_kernel_ver 获取内核版本；参数：无；返回：操作系统内核的版本
 def get_kernel_ver():
     szOSName = execCmdAndGetOutput("uname -r")
@@ -219,8 +221,8 @@ def issame_kernel_ver(dpdk_path):
 #build_s_link 将源目录中的全部文件在目的目录中建立软链接；参数：源目录、目标目录；
 #返回：错误描述
 def build_s_link(src_dir, dst_dir):
-    src_dir = os.path.realpath(src_dir)
-    dst_dir = os.path.realpath(dst_dir)
+    src_dir = os.path.abspath(src_dir)
+    dst_dir = os.path.abspath(dst_dir)
     src_dir_list = os.listdir(src_dir)
     for cur_dir in src_dir_list:
         if "."==cur_dir or ".."==cur_dir:
@@ -245,7 +247,28 @@ def install_pc(src_path):
     if "\n" == pkg_path[len(pkg_path)-1:]:
         pkg_path = pkg_path[:len(pkg_path)-1]
     os.system("mkdir -p "+pkg_path)
-    return build_s_link(src_path, pkg_path)
+    sz_err = build_s_link(src_path, pkg_path)
+    if ""==sz_err:
+        os.system("ldconfig")
+    return sz_err
+
+
+#功能：重启；参数：重启提示信息；返回：无
+def do_reboot(msg):
+    if re.search("^2\\..*", sys.version):
+        raw_input(msg)
+    else:
+        input(msg)
+    os.system("reboot")
+
+
+#功能：获取pyhon命令；参数：无；返回：python命令
+def get_python():
+    man_ver = re.search("^(\d+)\\..*", sys.version)
+    if None==man_ver or "2"==man_ver.group(1):
+        return "python"
+    else:
+        return "python"+man_ver.group(1)
 
 
 #build_normal_dpdk 编译普通版本的DPDK；参数：dpdk源码路径；返回：错误描述
@@ -352,36 +375,43 @@ def buildDPDK(complie_type):
     return ""
 
 
-    #功能：安装hyperscan；参数：无；返回：错误码
+    #功能：安装hyperscan；参数：操作系统名称；返回：错误码
 def buildHYPERSCAN():
+    machine = execCmdAndGetOutput("lscpu | grep aarch64")
     vscode_project_maker = os.environ["HOME"]+"/vscode_project_maker"
+    hyperscan_zip = vscode_project_maker+"/hyperscan-5.4.0.zip"
+    hyperscan_src = "https://ghproxy.com/github.com/intel/hyperscan/archive/refs/tags/v5.4.0.zip"
+    hyperscan_tmp = "/tmp/hyperscan-5.4.0"
+    if "" != machine:
+        hyperscan_zip = vscode_project_maker+"/hyperscan-5.3.0.zip"
+        hyperscan_src = "https://ghproxy.com/github.com/kunpengcompute/hyperscan/archive/refs/tags/v5.3.0.aarch64.zip"
+        hyperscan_tmp = "/tmp/hyperscan-5.3.0.aarch64"
     #安装hyperscan
-    if False == os.path.exists("./hyperscan-5.4.0.zip"):
-        if 0 != os.system("wget https://ghproxy.com/github.com/intel/hyperscan/archive/refs/tags/v"\
-            "5.4.0.zip -O "+vscode_project_maker+"/hyperscan-5.4.0.zip"):
-            os.system("rm -f "+vscode_project_maker+"/hyperscan-5.4.0.zip")
+    if False == os.path.exists(hyperscan_zip):
+        if 0 != os.system("wget "+hyperscan_src+" -O "+hyperscan_zip):
+            os.system("rm -f "+hyperscan_zip)
             return "Failed to download hyperscan"
     if False == os.path.exists("/usr/local/hyperscan"):
         #解压缩
-        os.system("rm -Rf /tmp/hyperscan-5.4.0")
-        os.system("unzip -d /tmp/ "+vscode_project_maker+"/hyperscan-5.4.0.zip")
+        os.system("rm -Rf "+hyperscan_tmp)
+        os.system("unzip -d /tmp/ "+hyperscan_zip)
         try:
-            os.system("rm -Rf /tmp/hyperscan-5.4.0/build")
-            os.makedirs("/tmp/hyperscan-5.4.0/build")
+            os.system("rm -Rf "+hyperscan_tmp+"/build")
+            os.makedirs(hyperscan_tmp+"/build")
         except:
-            os.system("rm -Rf /tmp/hyperscan-5.4.0")
-            return "Make /tmp/hyperscan-5.4.0/build failed"
-        if 0 != os.system("cd /tmp/hyperscan-5.4.0/build && "\
+            os.system("rm -Rf "+hyperscan_tmp)
+            return "Make "+hyperscan_tmp+" failed"
+        if 0 != os.system("cd "+hyperscan_tmp+"/build && "\
             "cmake -DCMAKE_BUILD_TYPE=release "\
             "-DCMAKE_INSTALL_PREFIX=/usr/local/hyperscan ../"):
-            os.system("rm -Rf /tmp/hyperscan-5.4.0")
+            os.system("rm -Rf "+hyperscan_tmp)
             return "Failed to config hyperscan"
-        if 0 != os.system("cd /tmp/hyperscan-5.4.0/build && make -j"+\
+        if 0 != os.system("cd "+hyperscan_tmp+"/build && make -j"+\
             str(multiprocessing.cpu_count())+" && make install"):
-            os.system("rm -Rf /tmp/hyperscan-5.4.0")
+            os.system("rm -Rf "+hyperscan_tmp)
             os.system("rm -Rf /usr/local/hyperscan")
             return "Failed to make hyperscan"
-        os.system("rm -Rf /tmp/hyperscan-5.4.0")
+        os.system("rm -Rf "+hyperscan_tmp)
     #安装pc文件
     return install_pc(execCmdAndGetOutput(
         "cd /usr/local/hyperscan/lib*/pkgconfig && pwd").split("\n")[0])
@@ -390,8 +420,8 @@ def buildHYPERSCAN():
 #remove_s_link 将源目录中的全部文件对应的软链接删除；参数：源目录、目标目录；
 #返回：错误描述
 def remove_s_link(src_dir, dst_dir):
-    src_dir = os.path.realpath(src_dir)
-    dst_dir = os.path.realpath(dst_dir)
+    src_dir = os.path.abspath(src_dir)
+    dst_dir = os.path.abspath(dst_dir)
     src_dir_list = os.listdir(src_dir)
     for cur_dir in src_dir_list:
         if "."==cur_dir or ".."==cur_dir:
@@ -424,3 +454,26 @@ def uninstallDPDK():
     #删除其他文件
     os.system("rm -rf /usr/local/dpdk")
     os.system("rm -rf /usr/local/hyperscan")
+
+
+#获取DPDK管理脚本；参数：管理脚本存储路径，会在该路径下创建dpdk_scrits目录；返回：错误码
+def get_DPDKscrits(store_path):
+    vscode_project_maker = os.environ["HOME"]+"/vscode_project_maker"
+    #创建目录
+    if False == os.path.isdir(store_path):
+        return ("Faile to find dir %s" %store_path)
+    store_path = os.path.abspath(store_path)+"/dpdk_scrits"
+    if False == os.path.isdir(store_path):
+        try:
+            os.makedirs(store_path)
+        except:
+            return ("Faile to make dir %s" %store_path)
+    #拷贝数据
+    if 0 != os.system("mkdir -p "+store_path+"/maker_public && cp -rf "+\
+        vscode_project_maker+"/maker_public/*.py "+store_path+"/maker_public/"):
+        return "Faile to cp maker_public"
+    if 0 != os.system("cp -rf "+vscode_project_maker+"/dpdk_scrits.py "+\
+        store_path+"/__init__.py"):
+        return "Faile to cp dpdk_scrits"
+    return ""
+    

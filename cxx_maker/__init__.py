@@ -14,7 +14,7 @@ import maker_public
 def make_nomal_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
     #读取基础的makefile文件
     szMakeCont,szErr = maker_public.readTxtFile( 
-        os.path.dirname(os.path.realpath(sys.argv[0]))+"/cxx_maker/makefile.conf" )
+        os.path.dirname(os.path.abspath(sys.argv[0]))+"/cxx_maker/makefile.conf" )
     if 0 < len(szErr):
         return szErr
     #替换编译器
@@ -26,23 +26,23 @@ def make_nomal_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
     #替换编译选项
     if -1!=str(szAppType).find("app"):
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS[ \\t]*:=.*", \
-            ("\nCXXFLAGS := -std=%s $(WERROR_FLAGS) -m64 -O2 -fmessage-length=0" %(szStd)), szMakeCont)
+            ("\nCXXFLAGS := -std=%s $(WERROR_FLAGS) -O3 -fmessage-length=0" %(szStd)), szMakeCont)
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS_DBG[ \\t]*:=.*", \
-            ("\nCXXFLAGS_DBG := -std=%s $(WERROR_FLAGS) -m64 -O0 -g3 -fmessage-length=0" 
+            ("\nCXXFLAGS_DBG := -std=%s $(WERROR_FLAGS) -O0 -g3 -fmessage-length=0" 
             %(szStd)), szMakeCont)
     elif -1!=str(szAppType).find("shared"):
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS[ \\t]*:=.*", \
-            ("\nCXXFLAGS := -std=%s $(WERROR_FLAGS) -m64 -O2 -fPIC -fmessage-length=0 "\
+            ("\nCXXFLAGS := -std=%s $(WERROR_FLAGS) -O3 -fPIC -fmessage-length=0 "\
             "-fvisibility=hidden" %(szStd)), szMakeCont)
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS_DBG[ \\t]*:=.*", \
-            ("\nCXXFLAGS_DBG := -std=%s $(WERROR_FLAGS) -m64 -O0 -g3 -fPIC "\
+            ("\nCXXFLAGS_DBG := -std=%s $(WERROR_FLAGS) -O0 -g3 -fPIC "\
             "-fmessage-length=0 -fvisibility=hidden" %(szStd)), szMakeCont)
     else:
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS[ \\t]*:=.*", \
-            ("\nCXXFLAGS := -std=%s $(WERROR_FLAGS) -m64 -O2 -fPIC -fmessage-length=0" 
+            ("\nCXXFLAGS := -std=%s $(WERROR_FLAGS) -O3 -fPIC -fmessage-length=0" 
             %(szStd)), szMakeCont)
         szMakeCont = re.sub("\\n[ \\t]*CXXFLAGS_DBG[ \\t]*:=.*", \
-            ("\nCXXFLAGS_DBG := -std=%s $(WERROR_FLAGS) -m64 -O0 -g3 -fPIC -fmessage-length=0" 
+            ("\nCXXFLAGS_DBG := -std=%s $(WERROR_FLAGS) -O0 -g3 -fPIC -fmessage-length=0" 
             %(szStd)), szMakeCont)
     #替换链接器
     if -1!=str(szAppType).find("app") or -1!=str(szAppType).find("shared"):
@@ -98,7 +98,7 @@ def make_nomal_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
 def make_dpdk_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
     #读取基础的makefile文件
     szMakeCont,szErr = maker_public.readTxtFile( 
-        os.path.dirname(os.path.realpath(sys.argv[0]))+"/cxx_maker/makefile-dpdk.conf" )
+        os.path.dirname(os.path.abspath(sys.argv[0]))+"/cxx_maker/makefile-dpdk.conf" )
     if 0 < len(szErr):
         return szErr
     #替换编译器
@@ -229,27 +229,10 @@ def makeMakefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
 
 
 #makePropertiesfile 制作索引文件；参数：项目类型、工程路径和开发语言；返回：错误描述
-def makePropertiesfile(szAppType, szProjPath, szLangType):
-    #获取GCC
-    GccVersion = maker_public.execCmdAndGetOutput("gcc -dumpversion").replace('\n', '')
-    CppVersion = maker_public.execCmdAndGetOutput("g++ -dumpversion").replace('\n', '')
-    #获取GCC的include路径
-    GccIncPath = ""
+def makePropertiesfile(szAppType, szProjPath, szComplier):
     other_inc_path = "\n"
-    if "centos" == maker_public.getOSName():
-        GccIncPath = "x86_64-redhat-linux/"+GccVersion+"/include"
-        if "c++" == szLangType:
-            other_inc_path = ",\n                \"/usr/include/c++/"+\
-                CppVersion+"/x86_64-redhat-linux\"\n"
-    else:
-        GccIncPath = "x86_64-linux-gnu/"+GccVersion+"/include"
-        if "c++" == szLangType:
-            other_inc_path = ",\n                \"/usr/include/c++/"+CppVersion+"\"\n"
     if -1!=str(szAppType).find("-dpdk"):
-        other_inc_path = other_inc_path[:len(other_inc_path)-1]
-        #if "test_libhs\n"!=maker_public.execCmdAndGetOutput(
-        #    "pkg-config --exists libhs && echo test_libhs"):
-        other_inc_path += ",\n                \"/usr/local/dpdk/include\"\n"
+        other_inc_path = ",\n                \"/usr/local/dpdk/include\"\n"
         #else:
         #    other_inc_path += ",\n                \"/usr/local/dpdk/include\""\
         #       ",\n                \"/usr/local/hyperscan/include/hs\"\n"
@@ -261,14 +244,14 @@ def makePropertiesfile(szAppType, szProjPath, szLangType):
         "            \"includePath\": [\n"\
         "                \"${workspaceFolder}/**\",\n"\
         "                \"/usr/include\",\n"\
-        "                \"/usr/local/include\",\n"\
-        "                \"/usr/lib/gcc/"+GccIncPath+"\""+other_inc_path+\
+        "                \"/usr/local/include\""\
+        +other_inc_path+\
         "            ],\n"\
         "            \"defines\": [],\n"\
-        "            \"compilerPath\": \"/usr/bin/gcc\",\n"\
+        "            \"compilerPath\": \"/usr/bin/"+szComplier+"\",\n"\
         "            \"cStandard\": \"c11\",\n"\
         "            \"cppStandard\": \"c++11\",\n"\
-        "            \"intelliSenseMode\": \"gcc-x64\"\n"\
+        "            \"intelliSenseMode\": \"${default}\"\n"\
         "        }\n"\
         "    ],\n"\
         "    \"version\": 4\n"\
@@ -396,7 +379,7 @@ def MakeProject(szLangType, szAppType, szProjPath):
     if 0 < len(szErr):
         return szErr
     #建立配置索引配置目录
-    szErr = makePropertiesfile(szAppType, szProjPath, szLangType)
+    szErr = makePropertiesfile(szAppType, szProjPath, szComplier)
     if 0 < len(szErr):
         return szErr
     #建立编译任务

@@ -2,20 +2,23 @@
 # -*- coding: utf-8 -*-
 
 import os
-from posixpath import basename
 import re
 import sys
 import maker_public
+import platform
 
 
 #功能：安装依赖；参数：无；返回：错误码
 def make_dep(vpp_path):
-    if maker_public.getOSName()=="ubuntu":
-        os.system("apt-get --purge autoremove vpp-ext-deps.x86_64")
+    cpuarch = platform.machine()
+    osname = maker_public.getOSName()
+
+    if osname=="ubuntu" or osname=="ubuntu-wsl2":
+        os.system("apt-get --purge autoremove vpp-ext-deps."+cpuarch)
         if 0!=os.system("cd "+vpp_path+"/vpp && make UNATTENDED=y install-dep"):
             return "make install-dep failed!"
     else:
-        os.system("yum -y erase vpp-ext-deps.x86_64")
+        os.system("yum -y erase vpp-ext-deps."+cpuarch)
         if 0 != os.system("cd "+vpp_path+"/vpp && make install-dep"):
             return "make install-dep failed!"
     return ""
@@ -23,7 +26,8 @@ def make_dep(vpp_path):
 
 #功能：制作vpp工程；参数：无；返回：错误码
 def create_vpp_project(vpp_path, vscode_project_maker):
-    if 0 != os.system("python3 "+vscode_project_maker+"/__init__.py c app /tmp/vpp"):
+    if 0 != os.system(maker_public.get_python()+" "+vscode_project_maker+\
+        "/__init__.py c app /tmp/vpp"):
         os.system("rm -rf /tmp/vpp")
         return "create vpp project failed"
     os.system("cp -rf /tmp/vpp/.vscode "+ vpp_path+"/vpp/")
@@ -59,8 +63,8 @@ def create_vpp_project(vpp_path, vscode_project_maker):
             "\n            \"label\": \"gcc init active file\","\
             "\n            \"command\": \"/usr/bin/python3\","\
             "\n            \"args\": ["\
-            "\n                \"${workspaceFolder}/dpdk_init.py\","\
-            "\n                \"vpp\","\
+            "\n                \"${workspaceFolder}/dpdk_scrits/__init__.py\","\
+            "\n                \"initenv\","\
             "\n            ],"\
             "\n            \"options\": {"\
             "\n                \"cwd\": \"${workspaceFolder}\""\
@@ -81,12 +85,12 @@ def create_vpp_project(vpp_path, vscode_project_maker):
     return ""
 
 
-#功能：配置dpdk；参数：无；返回：错误码
+#功能：配置dpdk；参数：vpp路径、工程路径；返回：错误码
 def config_dpdk(vpp_path, vscode_project_maker):
     #拷贝dpdk初始化工具
-    if 0 != os.system("cp -rf "+vscode_project_maker+\
-        "/vpp_maker/dpdk_init.py "+vpp_path+"/vpp"+"/"):
-        return "cp dpdk_init.py failed"
+    sz_err = maker_public.get_DPDKscrits(vpp_path+"/vpp")
+    if "" != sz_err:
+        return sz_err
     #写入igb_uio的meson文件
     err = maker_public.writeTxtFile(vpp_path+"/vpp"+\
         "/dpdk-kmods/linux/igb_uio/meson.build", \
@@ -229,9 +233,9 @@ def makeropensrc():
     vpp_path = os.getcwd()
     if 2<len(sys.argv):
         vpp_path = sys.argv[2]
-    vpp_path = os.path.realpath(vpp_path)
     if False==os.path.isdir(vpp_path):
         return "Invaild vpp path"
+    vpp_path = os.path.abspath(vpp_path)
     #初始化vpp
     need_continue = "y"
     if True == os.path.exists(vpp_path+"/vpp"):

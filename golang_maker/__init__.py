@@ -16,7 +16,7 @@ def makeMakefile(szAppType, szProjPath):
     if "app"!=szAppType and "shared"!=szAppType and "static"!=szAppType:
         return ("Invalid output(%s)" %(szAppType))
     #读取基础的makefile文件
-    szMakeCont,szErr = maker_public.readTxtFile( os.path.dirname(os.path.realpath(sys.argv[0]))+"/golang_maker/makefile.conf" )
+    szMakeCont,szErr = maker_public.readTxtFile( os.path.dirname(os.path.abspath(sys.argv[0]))+"/golang_maker/makefile.conf" )
     if 0 < len(szErr):
         return szErr
     #替换编译选项
@@ -37,7 +37,7 @@ def makeMakefile(szAppType, szProjPath):
             "\nGOFLAGS_DBG := -i -v -gcflags \"-N -l\" -buildmode=archive", szMakeCont)
     #替换编译命令
     #获取模块名称
-    szModName = os.path.basename(os.path.realpath(szProjPath))
+    szModName = os.path.basename(os.path.abspath(szProjPath))
     szSuffix = ""
     szSrc = szModName+"/src/main"
     if "shared" == szAppType:
@@ -145,7 +145,7 @@ def makeDebugfile(szProjPath):
 #函数返回：错误描述
 def makeGomod(szProjPath):
     #获取模块名称
-    szModName = os.path.basename(os.path.realpath(szProjPath))
+    szModName = os.path.basename(os.path.abspath(szProjPath))
     if True==os.path.exists(szProjPath+"/go.mod") and False==os.path.isfile(szProjPath+"/go.mod"):
         return "Can not create go.mod"
     if False == os.path.exists(szProjPath+"/go.mod"):
