@@ -97,7 +97,7 @@ def install_gperftools(ver, install_path, vscode_project_maker):
     #编译
     if 0!=os.system("cd /tmp/gperftools-"+ver+" && "\
         "sh ./autogen.sh && "\
-        "./configure --prefix="+install_path+" && "\
+        "./configure --prefix="+install_path+" --enable-shared=yes --enable-static=yes && "\
         "make -j $(nproc) && make install"):
         os.system("rm -rf /tmp/gperftools-"+ver)
         return "Failed to build gperftools"
