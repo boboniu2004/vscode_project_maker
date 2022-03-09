@@ -165,9 +165,10 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
         #下载绑定器
         if ""==maker_public.execCmdAndGetOutput("lspci") and \
             False == os.path.exists(vscode_project_maker+"/vpp-"+vpp_ver+"/driverctl"):
-            if 0 != os.system("git clone https://gitlab.com/driverctl/driverctl.git "+\
-                vscode_project_maker+"/vpp-"+vpp_ver+"/driverctl"):
-                return "download driverctl failed"
+            sz_err = maker_public.download_driverctl(\
+                vscode_project_maker+"/vpp-"+vpp_ver+"/driverctl")
+            if "" != sz_err:
+                return sz_err
         if 0 != os.system("cd "+vscode_project_maker+\
             " && zip -r "+"vpp-"+vpp_ver+".zip vpp-"+vpp_ver):
             os.system("rm -f "+vscode_project_maker+"/vpp-"+vpp_ver+".zip")

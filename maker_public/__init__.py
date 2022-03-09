@@ -273,6 +273,17 @@ def get_python():
         return "python"+man_ver.group(1)
 
 
+#功能：下载driverctl；参数：存储路径：返回：错误码
+def download_driverctl(dst_path):
+    if 0 == os.system("git clone https://gitlab.com/driverctl/driverctl.git "+dst_path):
+        return ""
+    os.system("rm -rf "+dst_path)
+    if 0 == os.system("git clone https://ghproxy.com/github.com/boboniu2004/driverctl.git "\
+        +dst_path):
+        return "download driverctl failed"
+    return ""
+
+
 #build_normal_dpdk 编译普通版本的DPDK；参数：dpdk源码路径；返回：错误描述
 def build_normal_dpdk(vscode_project_maker, fstack_ver):
     if False==issame_kernel_ver("/usr/local/dpdk") or \
@@ -371,9 +382,9 @@ def buildDPDK(complie_type):
     if ""==execCmdAndGetOutput("lspci") and \
         True == os.path.exists("/usr/local/dpdk/sbin") and \
         False == os.path.exists("/usr/local/dpdk/sbin/driverctl"):
-        if 0 != os.system("git clone https://gitlab.com/driverctl/driverctl.git "\
-            "/usr/local/dpdk/sbin/driverctl"):
-            return "download driverctl failed"
+        sz_err = download_driverctl("/usr/local/dpdk/sbin/driverctl")
+        if "" != sz_err:
+            return sz_err
     return ""
 
 
