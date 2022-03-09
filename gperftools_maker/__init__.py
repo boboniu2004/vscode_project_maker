@@ -97,7 +97,7 @@ def install_gperftools(ver, install_path, vscode_project_maker):
     #编译
     if 0!=os.system("cd /tmp/gperftools-"+ver+" && "\
         "sh ./autogen.sh && "\
-        "./configure --prefix="+install_path+" CFLAGS=-DUNW_LOCAL_ONLY && "\
+        "./configure --prefix="+install_path+" && "\
         "make -j $(nproc) && make install"):
         os.system("rm -rf /tmp/gperftools-"+ver)
         return "Failed to build gperftools"
@@ -111,19 +111,13 @@ def install_gperftools(ver, install_path, vscode_project_maker):
 
 #功能：主函数；参数：无；返回：错误描述
 def makeropensrc():
-    osname = maker_public.getOSName()
     gperftools_path = os.getcwd()
     if 2<len(sys.argv):
         gperftools_path = sys.argv[2]
     if False==os.path.isdir(gperftools_path):
         return "Invaild gperftools path"
     gperftools_path = os.path.abspath(gperftools_path)
-    #安装依赖
-    if "ubuntu"==osname or "ubuntu-wsl"==osname:
-        if 0!=os.system("apt-get -y install autoreconf"):
-            return "Failed to install autoreconf"
     #初始化
-    #暂时不启用libunwind，因为GCC自带的分析也可以使用
     if "y"==check_reinstall("libunwind", gperftools_path+"/libunwind"):
         szErr = install_libunwind("1.6.2", gperftools_path+"/libunwind", 
             os.environ["HOME"]+"/vscode_project_maker")

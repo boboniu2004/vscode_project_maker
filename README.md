@@ -250,18 +250,44 @@ gperftools是Google开源的一款非常使用的性能分析工具集。由tcma
 在有大量malloc/free、new/delete操作的程序中使用tcmalloc来代替linux自身的ptmalloc来分配内存，会显著提高程序的整体性能。有两种使用方法：
 
         静态链接法：在编译阶段直接链接gperftools/lib/libtcmalloc_minimal.a或者gperftools/lib/libtcmalloc_minimal_debug.a。
-        二者主要的区别是debug库在牺牲性能的前提下带上了更多的调试信息，主要用于程序的调试模式。因为tcmalloc内部的锁使用了pthread，所以还需要加上链接选项-lpthread。注意：因为tcmalloc使用了c++代码，所以在链接时需要使用g++作为链接器，否则会出现大量的c++符号找不到的错误。
+        二者主要的区别是debug库在牺牲性能的前提下带上了更多的调试信息。注意：因为tcmalloc使用了c++代码，所以在链接时需要使用g++作为链接器，否则会出现大量的c++符号找不到的错误。
 
-        动态加载法：在程序运行前设置环境变量LD_PRELOAD=gperftools/lib/libtcmalloc_minimal.so或者LD_PRELOAD=gperftools/lib/libtcmalloc_minimal_debug.so。
+        动态加载法：在程序运行前设置环境变量LD_PRELOAD，然后运行程序：LD_PRELOAD=gperftools/lib/[libtcmalloc_minimal|libtcmalloc_minimal_debug].so [app path]
 
 tcmalloc利用hook技术在底层替换malloc/free、new/delete。所以无论是静态链接，还是动态加载都不需要改写程序原先的代码。
 
 ## 使用heap-profiler
+heap-profiler会监控堆(heap)的使用情况，找出哪些函数申请了较多的内存，哪些地方可能发生了内存泄漏。使用方法为静态链接法和动态加载法：
+
+        静态链接法：在编译阶段直接链接/usr/local/gperftools/lib/libtcmalloc_and_profiler.a和/usr/local/libunwind/lib/libunwind.a,同时增加链接选项-lpthread。该使用方法适合对特定代码段进行检测：
+        #include <gperftools/heap-profiler.h>
+        ...
+        HeapProfilerStart(...);
+        do_somthine{}
+        HeapProfilerStop();
+        编译完毕后，添加HEAPCHECK和HEAPPROFILE变量后运行程序：HEAPCHECK=[minimal|normal|strict] HEAPPROFILE=[profile path] [app path]
+
+        动态加载法：在程序运行前设置环境变量LD_PRELOAD、HEAPCHECK、HEAPPROFILE三个环境变量，然后运行程序：LD_PRELOAD=perftools/lib/libtcmalloc_and_profiler.so HEAPCHECK=[minimal|normal|strict] HEAPPROFILE=[profile path] [app path]
+
+        运行完毕后会在HEAPPROFILE指明的地方生成一系列的heap文件，可以使用pprof工具查看。
 
 ## 使用heap-checker
+heap-checker是一个堆(heap)内存泄漏检测工具。可以理解为heap-profiler的子功能，运行heap-profiler时也会检查内存泄漏，所以不做详细介绍。
 
 ## 使用cpu-profiler
+cpu-profiler会监控程序的CPU消耗，找出哪些函数调用消耗CPU资源。使用方法为静态链接法和动态加载法：
 
+        静态链接法：在编译阶段直接链接/usr/local/gperftools/lib/libtcmalloc_and_profiler.a和/usr/local/libunwind/lib/libunwind.a,同时增加链接选项-lpthread。该使用方法适合对特定代码段进行检测：
+        #include <gperftools/profiler.h>
+        ...
+        ProfilerStart(out_path);
+        do_somthine{}
+        ProfilerStop();
+        编译完毕后，运行程序即可。
+
+        动态加载法：在程序运行前设置环境变量LD_PRELOAD、CPUPROFILE环境变量，然后运行程序：LD_PRELOAD=perftools/lib/libtcmalloc_and_profiler.so CPUPROFILE=[out_path] [app path]
+
+        运行完毕后会将分析结果输出到输出到out_path中去，可以使用pprof工具查看。
 
 # DPDK管理脚本
 DPDK应用运行在linux系统中时，为了保证CPU尽可能的运行应用代码，需要对宿主linux做一系列的优化。同时还要设置巨页，绑定网卡，监控进程等一系列操作。为了降低DPDK使用的复杂度，开发了一众脚本来自动化完成上述工作，目前已经在ubuntu和centos下通过了测试。这是它的参数说明。![dpdk_opt](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/dpdk_opt.jpg)
