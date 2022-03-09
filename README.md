@@ -1,7 +1,7 @@
 # vscode_project_maker
 ## 概述
 工作n年了，工作环境一直是台式机，所以整了个双硬盘分别装了windows和linux，平时的开发就在linux下，普通工作就在windows下，虽然经常切换系统感觉比较麻烦，但是凑合下也就算了。不过，在2019年12月，爱折腾的我终于给自己换了一个工作。新公司给我配了一台装好了win10专业版的笔记本，这家伙，就像刘姥姥进大观园，头一遭啊！怎么安装linux？怎么安装开发环境？没办法，经过两个月的折腾，终于使用win10+hyper-v+vscode整合出了一个开发环境，该方法在win10中开启HYPER-V，然后安装CentOS和Ubuntu虚拟机，最后安装vscode，这一切完成后，使用该工程提供的脚本初始化虚拟机，创建C/C++，GO,PYTHON,JAVA工程供主机上的vscode开发。
-接下来从**安装**，**备份**，**配置网络**，**配置DPDK和hyperscan**，**新建工程**，**编译调试工程**，**创建f-stack开发环境**，**创建vpp开发环境**，**DPDK管理脚本**这九个角度来进行说明。
+接下来从**安装**，**备份**，**配置网络**，**配置DPDK和hyperscan**，**新建工程**，**编译调试工程**，**创建f-stack开发环境**，**创建vpp开发环境**，**安装gperftools**,**DPDK管理脚本**这九个角度来进行说明。
 
 # 安装
 ## 硬件要求
@@ -208,7 +208,7 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 # 创建f-stack开发环境
 在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，且已经正确安装了DPDK到/usr/local/dpdk下，则可以配置f-stack开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
 
-        python3 opensrc_maker.py f-stack [f-stack_project_path] [dpdk_install_path] [hyperscan_install_path]
+        python3 opensrc_maker.py f-stack [f-stack path] [dpdk path] [hyperscan path]
 
 安装完毕后，需要重启虚拟机，然后就可以使用vscode打开f-stack开发目录，首先运行**gcc clean active file**任务重新配置，然后运行**gcc install active file**任务生成debug调试目录，该目录中可以修改f-stack和nginx的配置。后续就可以使用vscode进行集成开发和调试了，非常方便。开机后第一次调试前需要运行**gcc init active file**任务初始化dpdk环境，如果在hyper-v环境下的centos8/ubuntu20.04系统下想查看已经绑定的设备，可以运行命令：
 
@@ -219,7 +219,7 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 # 创建vpp开发环境
 在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，则可以配置vpp开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
 
-        python3 opensrc_maker.py vpp [vpp_project_path]
+        python3 opensrc_maker.py vpp [vpp path]
 
 安装完毕后，然后就可以使用vscode打开vpp开发目录，该目录中的build-root/install-vpp_debug-native/vpp/etc/startup.conf中可以修改vpp配置。后续就可以使用vscode进行集成开发和调试了，非常方便。开机后第一次调试前需要运行**gcc init active file**任务初始化dpdk环境，如果在hyper-v环境下的centos8/ubuntu20.04系统下想查看已经绑定的设备，可以运行命令：
 
@@ -238,6 +238,30 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 
 3 在编译vpp依赖的组件IPSec_MB时，虚拟机需要的内存会超过4GB，所以需要将虚拟机内存调整为至少6GB才能顺利编译完成，否则会出现编译任务被杀死的错误。其中hyper-v虚拟机是在**设置E**-**内存**-**动态内存**-**最大RAM(A)**中进行调整，记得在创建虚拟机时需要勾选同一界面上的**启用动态内存(E)**选项；virtualbox虚拟机是在**设置**-**系统**-**主板(M)**-**内存大小(M)**中进行调整。对hyper-v虚拟机的内存调整可以直接生效，而virtualbox需要先关闭虚拟机才能进行调整生效。
 ![set_vpp_memory](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/set_vpp_memory.jpg) ![virtualbox_set_vpp_memory](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/virtualbox_set_vpp_memory.jpg)
+
+# 安装gperftools
+gperftools是Google开源的一款非常使用的性能分析工具集。由tcmalloc(高性能内存池)、heap-profiler(内存使用监控器)、heap-checker(内存泄漏检查工具)、cpu-profiler(程序cpu时间统计和分析)四大块构成。利用gperftools可以优化程序的内存分配性能，检查内存泄漏情况，分析程序性能瓶颈。如果需要使用gperftools，可以在vscode_project_maker目录下运行如下命令安装：
+
+        python3 opensrc_maker.py gperftools [gperftools path]
+
+安装时会检测上次安装情况，输入'y'会覆盖原先的安装。在gperftools的安装目录下会有libunwind和gperftools两个子目录，其中libunwind是一个堆栈跟踪回溯工具，gperftools的cpu-profiler会用到它。libunwind/lib和gperftools/lib和目录中存放了需要用到的动态库和静态库。
+
+## 使用tcmalloc
+在有大量malloc/free、new/delete操作的程序中使用tcmalloc来代替linux自身的ptmalloc来分配内存，会显著提高程序的整体性能。有两种使用方法：
+
+        静态链接法：在编译阶段直接链接gperftools/lib/libtcmalloc_minimal.a或者gperftools/lib/libtcmalloc_minimal_debug.a。
+        二者主要的区别是debug库在牺牲性能的前提下带上了更多的调试信息，主要用于程序的调试模式。因为tcmalloc内部的锁使用了pthread，所以还需要加上链接选项-lpthread。注意：因为tcmalloc使用了c++代码，所以在链接时需要使用g++作为链接器，否则会出现大量的c++符号找不到的错误。
+
+        动态加载法：在程序运行前设置环境变量LD_PRELOAD=gperftools/lib/libtcmalloc_minimal.so或者LD_PRELOAD=gperftools/lib/libtcmalloc_minimal_debug.so。
+
+tcmalloc利用hook技术在底层替换malloc/free、new/delete。所以无论是静态链接，还是动态加载都不需要改写程序原先的代码。
+
+## 使用heap-profiler
+
+## 使用heap-checker
+
+## 使用cpu-profiler
+
 
 # DPDK管理脚本
 DPDK应用运行在linux系统中时，为了保证CPU尽可能的运行应用代码，需要对宿主linux做一系列的优化。同时还要设置巨页，绑定网卡，监控进程等一系列操作。为了降低DPDK使用的复杂度，开发了一众脚本来自动化完成上述工作，目前已经在ubuntu和centos下通过了测试。这是它的参数说明。![dpdk_opt](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/dpdk_opt.jpg)

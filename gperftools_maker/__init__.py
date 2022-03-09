@@ -124,12 +124,12 @@ def makeropensrc():
             return "Failed to install autoreconf"
     #初始化
     #暂时不启用libunwind，因为GCC自带的分析也可以使用
-    #if "y"==check_reinstall("libunwind", gperftools_path+"/libunwind"):
-    #    szErr = install_libunwind("1.6.2", gperftools_path+"/libunwind", 
-    #        os.environ["HOME"]+"/vscode_project_maker")
-    #    if "" != szErr:
-    #        return szErr
-    #print("install libunwind sucess!")      
+    if "y"==check_reinstall("libunwind", gperftools_path+"/libunwind"):
+        szErr = install_libunwind("1.6.2", gperftools_path+"/libunwind", 
+            os.environ["HOME"]+"/vscode_project_maker")
+        if "" != szErr:
+            return szErr
+    print("install libunwind sucess!")      
     if "y"==check_reinstall("gperftools", gperftools_path+"/gperftools"):
         szErr = install_gperftools("2.9.1", gperftools_path+"/gperftools", 
             os.environ["HOME"]+"/vscode_project_maker")
