@@ -129,6 +129,5 @@ def makeropensrc():
             os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
             return szErr
-    print("install gperftools sucess!")
-    #
+    print("install gperftools sucess!")    
     return ""

@@ -262,15 +262,18 @@ heap-profiler会监控堆(heap)的使用情况，找出哪些函数申请了较�
         静态链接法：在编译阶段直接链接/usr/local/gperftools/lib/libtcmalloc_and_profiler.a和/usr/local/libunwind/lib/libunwind.a,同时增加链接选项-lpthread(arm64体系下还要添加-lz)。该使用方法适合对特定代码段进行检测：
         #include <gperftools/heap-profiler.h>
         ...
-        HeapProfilerStart(...);
+        HeapProfilerStart(out_path);
         do_somthine{}
+        HeapProfilerDump(out_reason);
         HeapProfilerStop();
-        编译完毕后，添加HEAPCHECK和HEAPPROFILE变量后运行程序：HEAPCHECK=[minimal|normal|strict] HEAPPROFILE=[profile path] [app path]
+        编译完毕后，运行程序，就会输出一个名为out_path.001.heap的文件。
 
         动态加载法：在程序运行前设置环境变量LD_PRELOAD、HEAPCHECK、HEAPPROFILE三个环境变量，然后运行程序：LD_PRELOAD=perftools/lib/libtcmalloc_and_profiler.so HEAPCHECK=[minimal|normal|strict] HEAPPROFILE=[profile path] [app path]
+        此外，还可以通过设置环境变量HEAP_PROFILE_ALLOCATION_INTERVAL=[bytes]或者HEAP_PROFILE_TIME_INTERVAL=[seconds]来控制heap的输出间隔，这两个变量分别表示内存每增加多少字节输出一次，或者间隔多少时间输出一次。
 
-        运行完毕后会在HEAPPROFILE指明的地方生成一系列的heap文件，可以使用pprof工具查看。
-**注意：在arm64体系下使用heap-profiler会触发bus error，目前还没有发现解决方案**
+        运行完毕后会在HEAPPROFILE指明的地方或者out_path处会生成一系列的heap文件，可以使用pprof工具查看。
+        
+**注意：在arm64体系下使用动态加载法时，当程序退出后会触发bus error，但是不影响使用**
 
 ## 使用heap-checker
 heap-checker是一个堆(heap)内存泄漏检测工具。可以理解为heap-profiler的子功能，运行heap-profiler时也会检查内存泄漏，所以不做详细介绍。
