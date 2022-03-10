@@ -291,7 +291,7 @@ cpu-profiler会监控程序的CPU消耗，找出哪些函数调用消耗CPU资�
 
         动态加载法：在程序运行前设置环境变量LD_PRELOAD、CPUPROFILE环境变量，然后运行程序：LD_PRELOAD=perftools/lib/libtcmalloc_and_profiler.so CPUPROFILE=[out_path] [app path]
 
-        运行完毕后会将分析结果输出到输出到out_path中去，可以使用pprof工具查看。
+        运行完毕后会将分析结果输出到out_path中去，可以使用pprof工具查看。
 
 # DPDK管理脚本
 DPDK应用运行在linux系统中时，为了保证CPU尽可能的运行应用代码，需要对宿主linux做一系列的优化。同时还要设置巨页，绑定网卡，监控进程等一系列操作。为了降低DPDK使用的复杂度，开发了一众脚本来自动化完成上述工作，目前已经在ubuntu和centos下通过了测试。这是它的参数说明。![dpdk_opt](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/dpdk_opt.jpg)
