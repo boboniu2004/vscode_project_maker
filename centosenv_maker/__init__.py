@@ -7,7 +7,6 @@ import re
 import os
 import sys
 import maker_public
-import multiprocessing
 
 
 #installOrUpdateRpm 检查rpm包的版本，并且尝试安装该包；参数：rpm包名称，机器版本；返回：错误描述
@@ -356,7 +355,7 @@ def installHYPERSCAN():
     if False == os.path.exists("/usr/local/ragel"):
         os.system("tar -xvf ./ragel-6.10.tar.gz  -C /tmp/")
         if 0 != os.system("cd /tmp/ragel-6.10 && ./configure --prefix=/usr/local/ragel "\
-            "&& make -j"+str(multiprocessing.cpu_count())+" && make install"):
+            "&& make -j $(nproc) && make install"):
             os.system("make uninstall")
             os.system("rm -Rf /tmp/hyperscan-5.4.0")
             os.system("rm -Rf /tmp/ragel-6.10")

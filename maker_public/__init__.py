@@ -6,6 +6,7 @@ import os
 import re
 import sys
 import multiprocessing
+import platform
 
 
 #函数功能：读取一个文本文件
@@ -56,6 +57,26 @@ def execCmdAndGetOutput(szCmd):
     szOutput = Ret.read()  
     Ret.close()  
     return str(szOutput)  
+
+
+#功能：下载；参数：名称、版本、工程路径、解压缩路径；返回：错误描述
+def download_src(name, versufx, ver, url, vscode_project_maker, uncomp_path):
+    store_path = vscode_project_maker+"/"+name+"-"+ver
+    if False == os.path.exists(store_path+".zip"):
+        #下载
+        os.system("rm -rf "+store_path)
+        if 0 != os.system("git clone --branch "+versufx+ver+" "+url+" "+store_path):
+            os.system("rm -rf "+store_path)
+            return "Failed to download "+name+"-"+ver
+        if 0 != os.system("cd "+vscode_project_maker+\
+            " && zip -r "+name+"-"+ver+".zip "+name+"-"+ver):
+            os.system("rm -f "+store_path+".zip")
+        os.system("rm -rf "+store_path)
+    #解压缩
+    if None != uncomp_path:
+        os.system("rm -rf "+uncomp_path+"/"+name+"-"+ver)
+        os.system("unzip -d "+uncomp_path+"/ "+store_path+".zip")
+    return ""
 
 
 #函数功能：安装golang工i具
@@ -298,8 +319,7 @@ def build_normal_dpdk(vscode_project_maker, fstack_ver):
             return "config DPDK failed"
         #编译安装
         if 0 != os.system("cd /tmp/f-stack-"+fstack_ver+"/dpdk && "\
-            "make -j"+str(multiprocessing.cpu_count())+
-            " && make install prefix=/usr/local/dpdk"):
+            "make -j $(nproc) && make install prefix=/usr/local/dpdk"):
             os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
             return "config DPDK failed"
         #设置
@@ -354,20 +374,12 @@ def build_meson_dpdk(vscode_project_maker, fstack_ver):
 def buildDPDK(complie_type):
     vscode_project_maker = os.environ["HOME"]+"/vscode_project_maker"
     fstack_ver = "1.21"
-    if False == os.path.exists(vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
-        os.system("rm -rf "+vscode_project_maker+"/f-stack-"+fstack_ver)
-        if 0 != os.system(\
-            "git clone --branch v"+fstack_ver+" https://ghproxy.com/github.com/F-Stack/f-stack.git "+\
-            vscode_project_maker+"/f-stack-"+fstack_ver):
-            os.system("rm -rf "+vscode_project_maker+"/f-stack-"+fstack_ver)
-            return "Failed to download f-stack-"+fstack_ver
-        if 0 != os.system("cd "+vscode_project_maker+\
-            " && zip -r "+"f-stack-"+fstack_ver+".zip f-stack-"+fstack_ver):
-            os.system("rm -f "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
-        os.system("rm -rf "+vscode_project_maker+"/f-stack-"+fstack_ver) 
+    sz_err = download_src("f-stack", "v", fstack_ver, \
+        "https://ghproxy.com/github.com/F-Stack/f-stack.git", vscode_project_maker, None)
+    if "" != sz_err:
+        return sz_err
     #测试DPDK的版本是否需要更新
     #编译安装DPDK
-    sz_err = ""
     if -1 == str(complie_type).find("-meson"):
         sz_err = build_normal_dpdk(vscode_project_maker, fstack_ver)
     else:
@@ -390,24 +402,22 @@ def buildDPDK(complie_type):
 
     #功能：安装hyperscan；参数：操作系统名称；返回：错误码
 def buildHYPERSCAN():
-    machine = execCmdAndGetOutput("lscpu | grep aarch64")
     vscode_project_maker = os.environ["HOME"]+"/vscode_project_maker"
-    hyperscan_zip = vscode_project_maker+"/hyperscan-5.4.0.zip"
-    hyperscan_src = "https://ghproxy.com/github.com/intel/hyperscan/archive/refs/tags/v5.4.0.zip"
-    hyperscan_tmp = "/tmp/hyperscan-5.4.0"
-    if "" != machine:
-        hyperscan_zip = vscode_project_maker+"/hyperscan-5.3.0.zip"
-        hyperscan_src = "https://ghproxy.com/github.com/kunpengcompute/hyperscan/archive/refs/tags/v5.3.0.aarch64.zip"
-        hyperscan_tmp = "/tmp/hyperscan-5.3.0.aarch64"
+    hs_ver = "5.4.0"
+    hyperscan_url = "https://ghproxy.com/github.com/intel/hyperscan.git"
+    if "aarch64" == platform.machine():
+        hs_ver = "5.3.0.aarch64"
+        hyperscan_url = "https://ghproxy.com/github.com/kunpengcompute/hyperscan.git"
     #安装hyperscan
-    if False == os.path.exists(hyperscan_zip):
-        if 0 != os.system("wget "+hyperscan_src+" -O "+hyperscan_zip):
-            os.system("rm -f "+hyperscan_zip)
-            return "Failed to download hyperscan"
+    sz_err = download_src("hyperscan", "v", hs_ver, hyperscan_url, vscode_project_maker, None)
+    if "" != sz_err:
+        return sz_err
+    hyperscan_tmp = "/tmp/hyperscan-"+hs_ver
+    hyperscan_src = vscode_project_maker+"/hyperscan-"+hs_ver+".zip"
     if False == os.path.exists("/usr/local/hyperscan"):
         #解压缩
         os.system("rm -Rf "+hyperscan_tmp)
-        os.system("unzip -d /tmp/ "+hyperscan_zip)
+        os.system("unzip -d /tmp/ "+hyperscan_src)
         try:
             os.system("rm -Rf "+hyperscan_tmp+"/build")
             os.makedirs(hyperscan_tmp+"/build")
@@ -415,12 +425,11 @@ def buildHYPERSCAN():
             os.system("rm -Rf "+hyperscan_tmp)
             return "Make "+hyperscan_tmp+" failed"
         if 0 != os.system("cd "+hyperscan_tmp+"/build && "\
-            "cmake -DCMAKE_BUILD_TYPE=release "\
+            "cmake -DCMAKE_BUILD_TYPE=release -DBUILD_STATIC_AND_SHARED=ON "\
             "-DCMAKE_INSTALL_PREFIX=/usr/local/hyperscan ../"):
             os.system("rm -Rf "+hyperscan_tmp)
             return "Failed to config hyperscan"
-        if 0 != os.system("cd "+hyperscan_tmp+"/build && make -j"+\
-            str(multiprocessing.cpu_count())+" && make install"):
+        if 0 != os.system("cd "+hyperscan_tmp+"/build && make -j $(nproc) && make install"):
             os.system("rm -Rf "+hyperscan_tmp)
             os.system("rm -Rf /usr/local/hyperscan")
             return "Failed to make hyperscan"

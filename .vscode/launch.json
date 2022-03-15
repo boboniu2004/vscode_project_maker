@@ -8,10 +8,10 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/opensrc_maker.py",
+            "program": "${workspaceFolder}/osenv_maker.py",
             "args": [
-                "gperftools",
-                "/usr/local"
+                "config_DPDK",
+                "install"
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"

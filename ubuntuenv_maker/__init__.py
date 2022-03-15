@@ -306,12 +306,11 @@ def configWSLmodules():
     if 0 != os.system("apt-get -y install build-essential flex bison libssl-dev libelf-dev"):
         return "Install build-essential flex bison libssl-dev libelf-dev failed"
     #下载内核
-    if False == os.path.isfile(vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
-        if 0 != os.system("wget https://ghproxy.com/github.com/microsoft/"\
-            "WSL2-Linux-Kernel/archive/refs/tags/linux-msft-wsl-"+match_ret.group(1)+\
-            ".zip -O "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
-            os.system("rm -rf "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip")
-            return "failed to download linux-msft-wsl-"+match_ret.group(1)+".zip"
+    sz_err = maker_public.download_src("linux-msft-wsl", "linux-msft-wsl-", match_ret.group(1),
+        "https://ghproxy.com/github.com/microsoft/WSL2-Linux-Kernel.git", 
+        vscode_project_maker,None)
+    if "" != sz_err:
+        return sz_err
     if False == os.path.isdir("/usr/src/WSL2-Linux-Kernel-linux-msft-wsl-"+match_ret.group(1)):
         if 0 != os.system("unzip -d /usr/src/ "+
             vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):

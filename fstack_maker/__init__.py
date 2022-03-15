@@ -51,17 +51,10 @@ def config_dpdk(fstack_path, vscode_project_maker):
 
 #功能：下载配置f-stack；参数：无；返回：错误码
 def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
-    if False == os.path.exists(vscode_project_maker+"/f-stack-"+fstack_ver+".zip"):
-        os.system("rm -rf "+vscode_project_maker+"/f-stack-"+fstack_ver)
-        if 0 != os.system(\
-            "git clone --branch v"+fstack_ver+" https://ghproxy.com/github.com/F-Stack/f-stack.git "+\
-            vscode_project_maker+"/f-stack-"+fstack_ver):
-            os.system("rm -rf "+vscode_project_maker+"/f-stack-"+fstack_ver)
-            return "Failed to download f-stack-"+fstack_ver
-        if 0 != os.system("cd "+vscode_project_maker+\
-            " && zip -r "+"f-stack-"+fstack_ver+".zip f-stack-"+fstack_ver):
-            os.system("rm -f "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
-        os.system("rm -rf "+vscode_project_maker+"/f-stack-"+fstack_ver) 
+    sz_err = maker_public.download_src("f-stack", "v", fstack_ver, \
+        "https://ghproxy.com/github.com/F-Stack/f-stack.git", vscode_project_maker, None)
+    if "" != sz_err:
+        return sz_err
     if False == os.path.exists(fstack_path+"/f-stack"):
         os.system("unzip -d "+fstack_path+"/ "+
             vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
@@ -198,6 +191,8 @@ def create_fstack_project(fstack_path, vscode_project_maker):
     if "" != sz_err:
         return "create f-stack project failed"
     tasks = re.sub("\"debug\"", "\"update\"", tasks)
+    tasks = re.sub("\"O=debug\"", "\"update\"", tasks)
+    tasks = re.sub("\"O=clean\"", "\"clean\"", tasks)
     #增加安装任务
     tasks = re.sub("\"tasks\":[ \\t]+\\[", 
             "\"tasks\": ["\

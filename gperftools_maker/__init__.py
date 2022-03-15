@@ -7,25 +7,6 @@ import re
 import maker_public
 
 
-#功能：下载；参数：名称、版本、工程路径；返回：错误描述
-def download_src(name, versufx, ver, url, vscode_project_maker):
-    store_path = vscode_project_maker+"/"+name+"-"+ver
-    if False == os.path.exists(store_path+".zip"):
-        #下载
-        os.system("rm -rf "+store_path)
-        if 0 != os.system("git clone --branch "+versufx+ver+" "+url+" "+store_path):
-            os.system("rm -rf "+store_path)
-            return "Failed to download "+name+"-"+ver
-        if 0 != os.system("cd "+vscode_project_maker+\
-            " && zip -r "+name+"-"+ver+".zip "+name+"-"+ver):
-            os.system("rm -f "+store_path+".zip")
-        os.system("rm -rf "+store_path)
-    #解压缩
-    os.system("rm -rf /tmp/"+name+"-"+ver)
-    os.system("unzip -d /tmp/ "+store_path+".zip")
-    return ""
-
-
 #功能：卸载pc文件；参数：原路径；返回：错误码
 def uninstall_pc(pkgconfig_path):
     #尝试删除pc文件
@@ -65,8 +46,8 @@ def check_reinstall(proj_name, proj_path):
 #功能：安装libunwind；参数：版本、安装路径、工程路径；返回：错误描述
 def install_libunwind(ver, install_path, vscode_project_maker):
     #下载
-    sz_err = download_src("libunwind", "v", ver, \
-        "https://ghproxy.com/github.com/libunwind/libunwind.git", vscode_project_maker)
+    sz_err = maker_public.download_src("libunwind", "v", ver, \
+        "https://ghproxy.com/github.com/libunwind/libunwind.git", vscode_project_maker,"/tmp")
     if "" != sz_err:
         return sz_err
     #编译
@@ -90,8 +71,8 @@ def install_libunwind(ver, install_path, vscode_project_maker):
 #功能：安装gperftools；参数：版本、安装路径、工程路径；返回：错误描述
 def install_gperftools(ver, install_path, vscode_project_maker):
     #下载
-    sz_err = download_src("gperftools", "gperftools-", ver, \
-        "https://ghproxy.com/github.com/gperftools/gperftools.git", vscode_project_maker)
+    sz_err = maker_public.download_src("gperftools", "gperftools-", ver, \
+        "https://ghproxy.com/github.com/gperftools/gperftools.git", vscode_project_maker,"/tmp")
     if "" != sz_err:
         return sz_err
     #编译
