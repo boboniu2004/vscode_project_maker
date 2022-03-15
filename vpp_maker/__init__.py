@@ -247,7 +247,8 @@ def makeropensrc():
             need_continue = \
                 input("vpp is already installed, do you want to continue[y/n]:")
     if "y"==need_continue or "Y"==need_continue:
-        szErr = config_vpp("21.10", vpp_path, os.environ["HOME"]+"/vscode_project_maker")
+        szErr = config_vpp(maker_public.getVer("vpp"), vpp_path, \
+            os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
             return szErr
         szErr = make_dep(vpp_path)

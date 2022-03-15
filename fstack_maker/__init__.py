@@ -352,7 +352,8 @@ def makeropensrc():
             need_continue = \
                 input("f-stack is already installed, do you want to continue[y/n]:")
     if "y"==need_continue or "Y"==need_continue:
-        szErr = config_fstack("1.21", fstack_path, os.environ["HOME"]+"/vscode_project_maker")
+        szErr = config_fstack(maker_public.getVer("f-stack"), fstack_path, \
+            os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
             return szErr
         print("config f-stack sucess!")

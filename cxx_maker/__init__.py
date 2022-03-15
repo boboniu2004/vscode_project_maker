@@ -254,7 +254,7 @@ def makePropertiesfile(szAppType, szProjPath, szComplier):
         "            \"intelliSenseMode\": \"${default}\"\n"\
         "        }\n"\
         "    ],\n"\
-        "    \"version\": 4\n"\
+        "    \"version\": "+maker_public.getVer("prop")+"\n"\
         "}"
     return maker_public.writeTxtFile(szProjPath+"/.vscode/c_cpp_properties.json", szConfig)
 
@@ -270,7 +270,7 @@ def makeBuildfile(szAppType, szProjPath, szComplier):
         "{\n"\
         "    // See https://go.microsoft.com/fwlink/?LinkId=733558\n"\
         "    // for the documentation about the tasks.json format\n"\
-        "    \"version\": \"2.0.0\",\n"\
+        "    \"version\": \""+maker_public.getVer("task")+"\",\n"\
         "    \"tasks\": [\n"\
         "        {\n"\
         "            \"type\": \"shell\",\n"\
@@ -324,7 +324,7 @@ def makeDebugfile(szProjPath, szComplier):
         "    // Use IntelliSense to learn about possible attributes.\n"\
         "    // Hover to view descriptions of existing attributes.\n"\
         "    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387\n"\
-        "    \"version\": \"0.2.0\",\n"\
+        "    \"version\": \""+maker_public.getVer("launch")+"\",\n"\
         "    \"configurations\": [\n"\
         "        {\n"\
         "            \"name\": \""+szComplier+" build and debug active file\",\n"\

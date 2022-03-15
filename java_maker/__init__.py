@@ -22,7 +22,7 @@ def MakeProject(szLangType, szAppType, szProjPath):
         "    // Use IntelliSense to learn about possible attributes.\n"\
         "    // Hover to view descriptions of existing attributes.\n"\
         "    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387\n"\
-        "    \"version\": \"0.2.0\",\n"\
+        "    \"version\": \""+maker_public.getVer("launch")+"\",\n"\
         "    \"configurations\": [\n"\
         "        {\n"\
         "            \"type\": \"java\",\n"\

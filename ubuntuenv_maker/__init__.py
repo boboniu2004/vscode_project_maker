@@ -151,7 +151,7 @@ def configGcc():
 
 #configGolang配置GOLANG；参数：无；返回：错误描述
 def configGolang():
-    gover = "1.16.12"
+    gover = maker_public.getVer("go")
     gomac = "amd64"
     if "" != maker_public.execCmdAndGetOutput("lscpu | grep -E \"aarch64\""):
         gomac = "arm64"
@@ -201,18 +201,11 @@ def configPython():
 #configJava 配置JAVA；参数：无；返回：错误描述
 def configJava():
     #安装JDK
-    if 0 != os.system("apt-get -y install openjdk-11-jdk-headless"):
+    if 0 != os.system("apt-get -y install openjdk-"+maker_public.getVer("java")+\
+        "-jdk-headless"):
         return "Install openjdk-11 failed"
     #返回
     return ""
-
-
-#configPlanUML 配置PlanUML；参数：无；返回：错误描述
-#def configPlanUML():
-#    #安装
-#    if 0 != os.system("apt-get -y install graphviz"):
-#        return "Install graphviz failed"
-#    return ""
 
 
 #configCompletion 配置自动补齐；参数：无；返回：错误描述
@@ -414,10 +407,6 @@ def InitEnv():
     szErr = configJava()
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
-    #配置PLANUML
-    #szErr = configPlanUML()
-    #if 0 < len(szErr):
-    #    return("Config Ubuntu failed:%s" %(szErr))
     #配置自动补齐
     szErr = configCompletion()
     if 0 < len(szErr):

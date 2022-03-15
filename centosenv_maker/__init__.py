@@ -223,7 +223,8 @@ def configGolang():
 def configPython():
     szErr = installOrUpdateRpm("python3", platform.machine(), "")
     if 0 < len(szErr):
-        szErr = installOrUpdateRpm("python36", platform.machine(), "")
+        szErr = installOrUpdateRpm("python"+maker_public.getVer("python"), \
+            platform.machine(), "")
         if 0 < len(szErr):
             return szErr
     szErr = installOrUpdateRpm("python3-pip", "noarch", "")
@@ -239,33 +240,16 @@ def configPython():
 #configJava 配置JAVA；参数：无；返回：错误描c述
 def configJava():
     #安装RPM包
-    szErr = installOrUpdateRpm("java-11-openjdk", platform.machine(), "")
+    szErr = installOrUpdateRpm("java-"+maker_public.getVer("java")+"-openjdk", 
+        platform.machine(), "")
     if 0 < len(szErr):
         return szErr
-    szErr = installOrUpdateRpm("java-11-openjdk-jmods", platform.machine(), "")
+    szErr = installOrUpdateRpm("java-"+maker_public.getVer("java")+"-openjdk-jmods", 
+        platform.machine(), "")
     if 0 < len(szErr):
         return szErr
     os.system("java -version")
     #返回
-    return ""
-
-
-#configPlanUML 配置PlanUML；参数：无；返回：错误描述
-def configPlanUML():
-    cpuarch = platform.machine()
-    #下载
-    if False == os.path.exists(os.path.dirname(os.path.abspath(sys.argv[0]))+\
-        "/graphviz-2.30.1-21.el7."+cpuarch+".rpm"):
-        if 0 != os.system("wget -P "+os.path.dirname(os.path.abspath(sys.argv[0]))+\
-            " http://rpmfind.net/linux/centos/7.7.1908/os/"+cpuarch+"/Packages/"\
-            "graphviz-2.30.1-21.el7."+cpuarch+".rpm "):
-            return "Failed to download graphviz"
-    #安装
-    szErr = installOrUpdateRpm("graphviz", platform.machine(), \
-        os.path.dirname(os.path.abspath(sys.argv[0]))+"/graphviz-2.30.1-21.el7."+cpuarch+".rpm")
-    if 0 < len(szErr):
-        return szErr
-    #
     return ""
 
 
@@ -347,21 +331,21 @@ def installHYPERSCAN():
     if 0 < len(szErr):
         return szErr
     #安装ragel
-    if False == os.path.exists("./ragel-6.10.tar.gz"):
-        if 0 != os.system("wget http://www.colm.net/files/ragel/ragel-6.10.tar.gz "\
-            "-O ./ragel-6.10.tar.gz"):
-            os.system("rm -f ./ragel-6.10.tar.gz")
+    ragel_ver = maker_public.getVer("ragel")
+    if False == os.path.exists("./ragel-"+ragel_ver+".tar.gz"):
+        if 0 != os.system("wget http://www.colm.net/files/ragel/ragel-"+ragel_ver+".tar.gz "\
+            "-O ./ragel-"+ragel_ver+".tar.gz"):
+            os.system("rm -f ./ragel-"+ragel_ver+".tar.gz")
             return "Failed to download ragel"
     if False == os.path.exists("/usr/local/ragel"):
-        os.system("tar -xvf ./ragel-6.10.tar.gz  -C /tmp/")
-        if 0 != os.system("cd /tmp/ragel-6.10 && ./configure --prefix=/usr/local/ragel "\
+        os.system("tar -xvf ./ragel-"+ragel_ver+".tar.gz  -C /tmp/")
+        if 0 != os.system("cd /tmp/ragel-"+ragel_ver+" && ./configure --prefix=/usr/local/ragel "\
             "&& make -j $(nproc) && make install"):
             os.system("make uninstall")
-            os.system("rm -Rf /tmp/hyperscan-5.4.0")
-            os.system("rm -Rf /tmp/ragel-6.10")
+            os.system("rm -Rf /tmp/ragel-"+ragel_ver)
             return "Failed to make hyperscan"
         os.system("ln -s /usr/local/ragel/bin/ragel /usr/local/bin/")
-        os.system("rm -Rf /tmp/ragel-6.10")
+        os.system("rm -Rf /tmp/ragel-"+ragel_ver)
     #安装boost
     szErr = installOrUpdateRpm("boost-devel", platform.machine(), "")
     if 0 < len(szErr):
@@ -406,10 +390,6 @@ def InitEnv():
     szErr = configJava()
     if 0 < len(szErr):
         return("Config CentOS failed:%s" %(szErr))
-    #配置PLANUML
-    #szErr = configPlanUML()
-    #if 0 < len(szErr):
-    #    return("Config CentOS failed:%s" %(szErr))
     #关闭图形界面
     if 0 != os.system("systemctl set-default multi-user.target"):
         return("Config CentOS failed: can not disable GNOME")

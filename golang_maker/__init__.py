@@ -67,7 +67,7 @@ def makeBuildfile(szProjPath):
         "{\n"\
         "    // See https://go.microsoft.com/fwlink/?LinkId=733558\n"\
         "    // for the documentation about the tasks.json format\n"\
-        "    \"version\": \"2.0.0\",\n"\
+        "    \"version\": \""+maker_public.getVer("task")+"\",\n"\
         "    \"tasks\": [\n"\
         "        {\n"\
         "            \"type\": \"shell\",\n"\
@@ -123,7 +123,7 @@ def makeDebugfile(szProjPath):
     "        // Use IntelliSense to learn about possible attributes.\n"\
     "        // Hover to view descriptions of existing attributes.\n"\
     "        // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387\n"\
-    "        \"version\": \"0.2.0\",\n"\
+    "        \"version\": \""+maker_public.getVer("launch")+"\",\n"\
     "        \"configurations\": [\n"\
     "            {\n"\
     "                \"name\": \"Launch\",\n"\

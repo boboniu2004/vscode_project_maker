@@ -9,6 +9,29 @@ import multiprocessing
 import platform
 
 
+#存储了所有需要配置的版本信息，方便后续对脚本中用到的模块的版本进行管理
+g_verconfig = {
+    "python"     :  "36",
+    "java"       :  "11",
+    "ragel"      :  "6.10",
+    "f-stack"    :  "1.21",
+    "launch"     :  "0.2.0",
+    "task"       :  "2.0.0",
+    "prop"       :  "4",
+    "libunwind"  :  "1.6.2",
+    "gperftools" :  "2.9.1",
+    "go"         :  "1.16.12",
+    "vpp"        :  "21.10",
+    "x86_64-hs"  :  "5.4.0",
+    "aarch64-hs" :  "5.3.0.aarch64"
+}
+
+
+#获取模块对应的版本；参数：模块名；返回：模块对应的版本
+def getVer(module):
+    return g_verconfig.get(module)
+
+##############################################################################################
 #函数功能：读取一个文本文件
 #函数参数：待读取的文件
 #函数返回：读取到的内容，错误描述
@@ -373,7 +396,7 @@ def build_meson_dpdk(vscode_project_maker, fstack_ver):
 #buildDPDK 编译DPDK；参数：编译方式；返回：错误码
 def buildDPDK(complie_type):
     vscode_project_maker = os.environ["HOME"]+"/vscode_project_maker"
-    fstack_ver = "1.21"
+    fstack_ver = getVer("f-stack")
     sz_err = download_src("f-stack", "v", fstack_ver, \
         "https://ghproxy.com/github.com/F-Stack/f-stack.git", vscode_project_maker, None)
     if "" != sz_err:
@@ -403,10 +426,9 @@ def buildDPDK(complie_type):
     #功能：安装hyperscan；参数：操作系统名称；返回：错误码
 def buildHYPERSCAN():
     vscode_project_maker = os.environ["HOME"]+"/vscode_project_maker"
-    hs_ver = "5.4.0"
+    hs_ver = getVer(platform.machine()+"-hs")
     hyperscan_url = "https://ghproxy.com/github.com/intel/hyperscan.git"
     if "aarch64" == platform.machine():
-        hs_ver = "5.3.0.aarch64"
         hyperscan_url = "https://ghproxy.com/github.com/kunpengcompute/hyperscan.git"
     #安装hyperscan
     sz_err = download_src("hyperscan", "v", hs_ver, hyperscan_url, vscode_project_maker, None)
