@@ -298,12 +298,13 @@ def configWSLmodules():
     #安装依赖包
     if 0 != os.system("apt-get -y install build-essential flex bison libssl-dev libelf-dev"):
         return "Install build-essential flex bison libssl-dev libelf-dev failed"
-    #下载内核
-    sz_err = maker_public.download_src("linux-msft-wsl", "linux-msft-wsl-", match_ret.group(1),
-        "https://ghproxy.com/github.com/microsoft/WSL2-Linux-Kernel.git", 
-        vscode_project_maker,None)
-    if "" != sz_err:
-        return sz_err
+    #下载内核，这里不用download_src函数替代的原因是因为库太大，用git下载太慢。
+    if False == os.path.isfile(vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
+        if 0 != os.system("wget https://ghproxy.com/github.com/microsoft/"\
+            "WSL2-Linux-Kernel/archive/refs/tags/linux-msft-wsl-"+match_ret.group(1)+\
+            ".zip -O "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
+            os.system("rm -rf "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip")
+            return "failed to download linux-msft-wsl-"+match_ret.group(1)+".zip"
     if False == os.path.isdir("/usr/src/WSL2-Linux-Kernel-linux-msft-wsl-"+match_ret.group(1)):
         if 0 != os.system("unzip -d /usr/src/ "+
             vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
@@ -314,7 +315,6 @@ def configWSLmodules():
             "&& make -j $(nproc) scripts && make -j $(nproc) modules && make -j $(nproc) modules_install && make clean"):
             os.system("rm -rf /lib/modules/"+match_ret.group(1)+"-microsoft-standard-WSL2")
             return "Failed to make kmod"
-
     return ""
     
 
