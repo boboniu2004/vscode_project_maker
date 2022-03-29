@@ -98,6 +98,9 @@ def makeropensrc():
     if False==os.path.isdir(gperftools_path):
         return "Invaild gperftools path"
     gperftools_path = os.path.abspath(gperftools_path)
+    #安装apt install autoconf
+    if 0 != os.system("apt-get -y install autoconf libtool"):
+        return "Install autoconf failed"    
     #初始化
     if "y"==check_reinstall("libunwind", gperftools_path+"/libunwind"):
         szErr = install_libunwind(maker_public.getVer("libunwind"), \
