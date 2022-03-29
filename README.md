@@ -210,7 +210,7 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 
         python3 opensrc_maker.py f-stack [f-stack path] [dpdk path] [hyperscan path]
 
-安装完毕后，需要重启虚拟机，然后就可以使用vscode打开f-stack开发目录，首先运行**gcc clean active file**任务重新配置，然后运行**gcc install active file**任务生成debug调试目录，该目录中可以修改f-stack和nginx的配置。后续就可以使用vscode进行集成开发和调试了，非常方便。开机后第一次调试前需要运行**gcc init active file**任务初始化dpdk环境，如果在hyper-v环境下的centos8/ubuntu20.04系统下想查看已经绑定的设备，可以运行命令：
+安装完毕后，需要重启虚拟机，然后就可以使用vscode打开f-stack开发目录，首先运行**gcc clean active file**任务重新配置，后续只需要运行**gcc build active file**任务就可以进行编译了，该任务会自动生成debug调试目录，该目录中可以修改f-stack和nginx的配置，非常方便。开机后第一次调试前需要运行**gcc init active file**任务初始化dpdk环境，如果在hyper-v环境下的centos8/ubuntu20.04系统下想查看已经绑定的设备，可以运行命令：
 
         /usr/local/dpdk/sbin/driverctl/driverctl -b vmbus list-overrides
 

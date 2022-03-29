@@ -4,7 +4,6 @@
 import sys
 import re
 import os
-import multiprocessing
 import maker_public
 import platform
 
@@ -89,13 +88,10 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
     lib_make,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack"+"/lib/Makefile")
     if "" != sz_err:
         return "config f-stack failed"
-    if 0 >= len(re.findall("\\n#DEBUG[ \\t]*=|\\nDEBUG[ \\t]*=", lib_make)):
-        return "can not find DEBUG"
     if 0 >= len(re.findall("\\n#FF_IPFW[ \\t]*=[ \\t]*1|\\nFF_IPFW[ \\t]*=[ \\t]*1", lib_make)):
         return "can not find FF_IPFW"
     if 0 >= len(re.findall("\\nifndef[ \\t]+DEBUG\\nHOST_CFLAGS[ \\t]*=", lib_make)):
         return "can not find HOST_CFLAGS"
-    lib_make = re.sub("\\n#DEBUG[ \\t]*=", "\nDEBUG=", lib_make)
     lib_make = re.sub("\\n#FF_IPFW[ \\t]*=[ \\t]*1", "\nFF_IPFW=1", lib_make)
     if None == re.search(\
         "\\nifndef[ \\t]+DEBUG\\nHOST_CFLAGS[ \\t]*=[ \\t]*-DNDEBUG[ \\t] ", lib_make):
@@ -117,17 +113,44 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
     if "" == nginx_path:
         return "config f-stack failed"
     #为f-stack生成总的make文件
-    cpunum = str(multiprocessing.cpu_count())
     fstack_make = \
-        "HS_PATH:=$(subst /,\/,$(FF_HS))\n\n"\
-        "update:"\
+        "HS_PATH:=$(subst /,\/,$(FF_HS))\n"\
+        "DEBUG_FLAG:=\"-O0 -gdwarf-2 -g3 -Wno-format-truncation\"\n"\
+        "EXIST_DBG := $(shell if [ -d "+fstack_path+"/f-stack"+"/debug ]; then echo \"exist\"; else echo \"noexist\"; fi)\n\n"\
+        "debug:"\
             "\n\trm -rf ./example/helloworld*"\
+            "\nifeq (\"$(EXIST_DBG)\", \"noexist\")"\
             "\n\trm -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx"\
-	        "\n\tcd ./lib && make"+" -j "+cpunum+\
-	        "\n\tcd ./tools && make"+" -j "+cpunum+\
-            "\n\tcd ./example && make"+" -j "+cpunum+\
-	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make"+" -j "+cpunum+\
+            "\nendif"\
+	        "\n\tcd ./lib && make"+" DEBUG=$(DEBUG_FLAG) -j $(nproc)"\
+	        "\n\tcd ./tools && make"+" DEBUG=$(DEBUG_FLAG) -j $(nproc)"\
+            "\n\tcd ./example && make"+" DEBUG=$(DEBUG_FLAG) -j $(nproc)"\
+	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make"+" -j $(nproc)"\
+            "\nifeq (\"$(EXIST_DBG)\", \"noexist\")"\
+	        "\n\tmkdir -p "+fstack_path+"/f-stack"+"/debug/net-tools"\
+	        "\n\tcp -rf ./tools/sbin/* "+fstack_path+"/f-stack"+"/debug/net-tools/"\
+	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make install"\
+            "\n\tcp -rf ./config.ini "+fstack_path+"/f-stack"+"/debug/conf/f-stack.conf"\
+            "\nendif"\
             "\n\tcp -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx "+fstack_path+"/f-stack"+"/debug/sbin/"\
+            "\n\n"\
+        "release:"\
+	        "\n\tcd ./lib && make clean"\
+	        "\n\tcd ./tools && make clean"\
+	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make clean"\
+            "\n\tcd ./app/"+os.path.basename(nginx_path)+" && ./configure "\
+            "--prefix="+fstack_path+"/f-stack"+"/release "\
+            "--with-stream --with-stream_ssl_module "\
+            "--with-ff_module --with-stream_ssl_preread_module "\
+            "--with-http_v2_module"\
+            "\n\tsed -i \"s/-lfstack,--no-whole-archive/-lfstack,--no-whole-archive -L${HS_PATH}\/lib -lhs -Wl,-rpath,.\/:${HS_PATH}\/lib/\" ./app/nginx-1.16.1/objs/Makefile"\
+	        "\n\tcd ./lib && make"+" -j $(nproc)"\
+	        "\n\tcd ./tools && make"+" -j $(nproc)"\
+	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make"+" -j $(nproc)"\
+	        "\n\tmkdir -p "+fstack_path+"/f-stack"+"/release/net-tools"\
+	        "\n\tcp -rf ./tools/sbin/* "+fstack_path+"/f-stack"+"/release/net-tools/"\
+	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make install"\
+            "\n\tcp -rf ./config.ini "+fstack_path+"/f-stack"+"/release/conf/f-stack.conf"\
             "\n\n"\
         "clean:"\
 	        "\n\tcd ./lib && make clean"\
@@ -143,18 +166,7 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
             "\n\tsed -i \"s/ -g / -g3 /\" ./app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
             "\n\tsed -i \"s/-lfstack,--no-whole-archive/-lfstack,--no-whole-archive -L${HS_PATH}\/lib -lhs -Wl,-rpath,.\/:${HS_PATH}\/lib/\" ./app/nginx-1.16.1/objs/Makefile"\
             "\n\n"\
-        "install:"\
-            "\n\trm -rf ./example/helloworld*"\
-            "\n\trm -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx"\
-	        "\n\tcd ./lib && make"+" -j "+cpunum+\
-	        "\n\tcd ./tools && make"+" -j "+cpunum+\
-            "\n\tcd ./example && make"+" -j "+cpunum+\
-	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make"+" -j "+cpunum+\
-	        "\n\tmkdir -p "+fstack_path+"/f-stack"+"/debug/net-tools"\
-	        "\n\tcp -rf ./tools/sbin/* "+fstack_path+"/f-stack"+"/debug/net-tools/"\
-	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make install"\
-            "\n\tcp -rf ./config.ini "+fstack_path+"/f-stack"+"/debug/conf/f-stack.conf"\
-            "\n"
+            "\n.PHONY: debug release clean\n"
     sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/makefile", fstack_make)
     if "" != sz_err:
         return "config f-stack failed"
@@ -207,32 +219,11 @@ def create_fstack_project(fstack_path, vscode_project_maker):
         "tasks.json")
     if "" != sz_err:
         return "create f-stack project failed"
-    tasks = re.sub("\"debug\"", "\"update\"", tasks)
-    tasks = re.sub("\"O=debug\"", "\"update\"", tasks)
+    tasks = re.sub("\"O=debug\"", "\"debug\"", tasks)
     tasks = re.sub("\"O=clean\"", "\"clean\"", tasks)
     #增加安装任务
     tasks = re.sub("\"tasks\":[ \\t]+\\[", 
             "\"tasks\": ["\
-            "\n        {"\
-            "\n            \"type\": \"shell\","\
-            "\n            \"label\": \"gcc install active file\","\
-            "\n            \"command\": \"/usr/bin/make\","\
-            "\n            \"args\": ["\
-            "\n                \"-f\","\
-            "\n                \"${workspaceFolder}/makefile\","\
-            "\n                \"install\""\
-            "\n            ],"\
-            "\n            \"options\": {"\
-            "\n                \"cwd\": \"${workspaceFolder}\""\
-            "\n            },"\
-            "\n            \"problemMatcher\": ["\
-            "\n                \"$gcc\""\
-            "\n            ],"\
-            "\n            \"group\": {"\
-            "\n                \"kind\": \"build\","\
-            "\n                \"isDefault\": true"\
-            "\n            }"\
-            "\n        },"
             "\n        {"\
             "\n            \"type\": \"shell\","\
             "\n            \"label\": \"gcc init active file\","\
@@ -260,7 +251,43 @@ def create_fstack_project(fstack_path, vscode_project_maker):
     return create_fstack_properties(fstack_path)
 
 
-#功能：制作f-stack工程；参数：无；返回：错误码
+#功能：修改ff_host_interface.c文件；参数：fstack安装路径；返回：错误码
+def correct_ff_host_interface(fstack_path):
+    src_cont,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack/lib/ff_host_interface.c")
+    if ""!=sz_err:
+        return sz_err
+    if None != re.search("#ifndef[ \\t]+NDEBUG", src_cont):
+        return ""
+    src_cont  = re.sub(
+        "\\n[ \\t]*int[ \\t]+rv[ \\t]*;",
+        "\n    int rv = 0;",
+        src_cont, 1)
+    src_cont = re.sub(
+        "\\n[ \\t]*rv[ \\t]*=[ \\t]*clock_gettime[ \\t]*\\([^\\)]+\\)[ \\t]*;[ \\t]*"\
+        "\\n[ \\t]*assert[ \\t]*\\([^\\)]+\\)[ \\t]*;[ \\t]*", 
+        "\n#ifndef NDEBUG"\
+        "\n    rv = clock_gettime(host_id, &ts);"\
+        "\n    assert(0 == rv);"\
+        "\n#else"\
+        "\n    clock_gettime(host_id, &ts);"\
+        "\n#endif", 
+        src_cont, 1) 
+    src_cont = re.sub(
+        "\\n[ \\t]*int[ \\t]+rv[ \\t]*=[ \\t]*clock_gettime[ \\t]*\\([^\\)]+\\)[ \\t]*;[ \\t]*"\
+        "\\n[ \\t]*assert[ \\t]*\\([^\\)]+\\)[ \\t]*;[ \\t]*",
+        "\n#ifndef NDEBUG"\
+        "\n    int rv = clock_gettime(CLOCK_REALTIME, &current_ts);"\
+        "\n    assert(rv == 0);"\
+        "\n#else"\
+        "\n    clock_gettime(CLOCK_REALTIME, &current_ts);"\
+        "\n#endif",
+        src_cont, 1)   
+    sz_err = maker_public.writeTxtFile(
+        fstack_path+"/f-stack/lib/ff_host_interface.c",src_cont)
+    return sz_err
+
+
+#功能：制作f-stack工程；参数：fstack安装路径；返回：错误码
 def correct_fstack_code(fstack_path):
     cpuarch = platform.machine()
     match_type = ""
@@ -303,7 +330,9 @@ def correct_fstack_code(fstack_path):
             ff_mod_cont, 1)        
     sz_err = maker_public.writeTxtFile(nginx_path+\
         "/src/event/modules/ngx_ff_module.c", ff_mod_cont)
-    return sz_err
+    if "" != sz_err:
+        return sz_err
+    return correct_ff_host_interface(fstack_path)
 
 
 #功能：导入路径参数；参数：无；返回：错误码
@@ -333,9 +362,7 @@ def export_path(fstack_path, dpdk_path, hs_path):
             profile = re.sub("\\nexport[ \\t]+FF_HS[ \\t]*=.+", "", profile)        
     #写入
     sz_err = maker_public.writeTxtFile(os.environ["HOME"]+"/.bashrc", profile)
-    if "" != sz_err:
-        return sz_err
-    return ""
+    return sz_err
 
 
 #功能：主函数；参数：无；返回：错误描述
