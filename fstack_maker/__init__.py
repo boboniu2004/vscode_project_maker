@@ -94,21 +94,19 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
         "EXIST_DBG := $(shell if [ -d "+fstack_path+"/f-stack"+"/debug ]; then echo \"exist\"; else echo \"noexist\"; fi)\n\n"\
         "debug:"\
             "\n\trm -rf ./example/helloworld*"\
-            "\nifeq (\"$(EXIST_DBG)\", \"noexist\")"\
             "\n\trm -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx"\
-            "\nendif"\
 	        "\n\tcd ./lib && make"+" DEBUG=$(DEBUG_FLAG) -j $(nproc)"\
 	        "\n\tcd ./tools && make"+" DEBUG=$(DEBUG_FLAG) -j $(nproc)"\
             "\n\tcd ./example && make"+" DEBUG=$(DEBUG_FLAG) -j $(nproc)"\
 	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make"+" -j $(nproc)"\
             "\nifeq (\"$(EXIST_DBG)\", \"noexist\")"\
 	        "\n\tmkdir -p "+fstack_path+"/f-stack"+"/debug/net-tools"\
-	        "\n\tcp -rf ./tools/sbin/* "+fstack_path+"/f-stack"+"/debug/net-tools/"\
 	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make install"\
             "\n\tcp -rf ./config.ini "+fstack_path+"/f-stack"+"/debug/conf/f-stack.conf"\
             "\n\tmkdir -p "+fstack_path+"/f-stack"+"/debug/lib"\
-            "\n\tcp $(FF_HS)/lib/libhs.so "+fstack_path+"/f-stack"+"/debug/lib/libhs.so"\
             "\nendif"\
+            "\n\tcp $(FF_HS)/lib/libhs.so "+fstack_path+"/f-stack"+"/debug/lib/libhs.so"\
+            "\n\tcp -rf ./tools/sbin/* "+fstack_path+"/f-stack"+"/debug/net-tools/"\
             "\n\tcp -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx "+fstack_path+"/f-stack"+"/debug/sbin/"\
             "\n\n"\
         "release:"\
