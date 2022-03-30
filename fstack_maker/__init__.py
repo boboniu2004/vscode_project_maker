@@ -8,22 +8,6 @@ import maker_public
 import platform
 
 
-#功能：配置f-stack下的example中的makefile；参数：无；返回：错误码
-def config_example(fstack_path):
-    makedat,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack"+"/example/Makefile")
-    if "" != sz_err:
-        return "config f-stack example failed"
-    makedat = re.sub("\\nLIBS[ \\t]*\\+=[ \\t]*-L\\$\\{FF_DPDK\\}/lib[^\\n]+"\
-        "\\nLIBS[ \\t]*\\+=[ \\t]*-Wl", \
-        "\nLIBS+= -L${FF_DPDK}/lib -Wl,--whole-archive,-ldpdk,--no-whole-archive"\
-        "\nLIBS+= -L${FF_HS}/lib -lhs -Wl,-rpath,./:${FF_HS}/lib"\
-        "\nLIBS+= -Wl", makedat)
-    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/example/Makefile", makedat)
-    if "" != sz_err:
-        return "config f-stack example failed"
-    return ""
-
-
 #功能：配置f-stack下的tools中的makefile；参数：无；返回：错误码
 def config_tools(fstack_path):
     #修改tools下的makefile
@@ -43,11 +27,6 @@ def config_tools(fstack_path):
     makedat = re.sub("\\n\\n\\$\\{PROG\\}:.*", "\n\n${PROGDIR}/${PROG}: ${HEADERS} ${OBJS} "\
         "${TOPDIR}/tools/compat/libffcompat.a", makedat)
     makedat = re.sub("\\nall:[ ]+\\$\\{PROG\\}.*", "\nall: ${PROGDIR}/${PROG}", makedat)
-    makedat = re.sub("\\nFF_PROG_LIBS[ \\t]*\\+=[ \\t]*-L\\$\\{FF_DPDK\\}/lib[^\\n]+"\
-        "\\nFF_PROG_LIBS[ \\t]*\\+=[ \\t]*-Wl", \
-        "\nFF_PROG_LIBS+= -L${FF_DPDK}/lib -Wl,--whole-archive,-ldpdk,--no-whole-archive"\
-        "\nFF_PROG_LIBS+= -L${FF_HS}/lib -lhs -Wl,-rpath,./:${FF_HS}/lib"\
-        "\nFF_PROG_LIBS+= -Wl", makedat)
     sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/tools/prog.mk", makedat)
     if "" != sz_err:
         return "config f-stack tools failed"
@@ -104,9 +83,6 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
     sz_err = config_tools(fstack_path)
     if "" != sz_err:
         return "config f-stack failed"
-    sz_err = config_example(fstack_path)
-    if "" != sz_err:
-        return "config f-stack failed"
     #配置nginx
     nginx_path = maker_public.execCmdAndGetOutput(\
         "cd "+fstack_path+"/f-stack"+"/app/nginx-* && pwd").replace("\n", "")
@@ -114,7 +90,6 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
         return "config f-stack failed"
     #为f-stack生成总的make文件
     fstack_make = \
-        "HS_PATH:=$(subst /,\/,$(FF_HS))\n"\
         "DEBUG_FLAG:=\"-O0 -gdwarf-2 -g3 -Wno-format-truncation\"\n"\
         "EXIST_DBG := $(shell if [ -d "+fstack_path+"/f-stack"+"/debug ]; then echo \"exist\"; else echo \"noexist\"; fi)\n\n"\
         "debug:"\
@@ -131,6 +106,8 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
 	        "\n\tcp -rf ./tools/sbin/* "+fstack_path+"/f-stack"+"/debug/net-tools/"\
 	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make install"\
             "\n\tcp -rf ./config.ini "+fstack_path+"/f-stack"+"/debug/conf/f-stack.conf"\
+            "\n\tmkdir -p "+fstack_path+"/f-stack"+"/debug/lib"\
+            "\n\tcp $(FF_HS)/lib/libhs.so "+fstack_path+"/f-stack"+"/debug/lib/libhs.so"\
             "\nendif"\
             "\n\tcp -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx "+fstack_path+"/f-stack"+"/debug/sbin/"\
             "\n\n"\
@@ -143,7 +120,6 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
             "--with-stream --with-stream_ssl_module "\
             "--with-ff_module --with-stream_ssl_preread_module "\
             "--with-http_v2_module"\
-            "\n\tsed -i \"s/-lfstack,--no-whole-archive/-lfstack,--no-whole-archive -L${HS_PATH}\/lib -lhs -Wl,-rpath,.\/:${HS_PATH}\/lib/\" ./app/nginx-1.16.1/objs/Makefile"\
 	        "\n\tcd ./lib && make"+" -j $(nproc)"\
 	        "\n\tcd ./tools && make"+" -j $(nproc)"\
 	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make"+" -j $(nproc)"\
@@ -151,6 +127,9 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
 	        "\n\tcp -rf ./tools/sbin/* "+fstack_path+"/f-stack"+"/release/net-tools/"\
 	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make install"\
             "\n\tcp -rf ./config.ini "+fstack_path+"/f-stack"+"/release/conf/f-stack.conf"\
+            "\n\tmkdir -p "+fstack_path+"/f-stack"+"/release/lib"\
+            "\n\tcp $(FF_HS)/lib/libhs.so "+fstack_path+"/f-stack"+"/release/lib/libhs.so"\
+            "\n\tcp -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx "+fstack_path+"/f-stack"+"/release/sbin/"\
             "\n\n"\
         "clean:"\
 	        "\n\tcd ./lib && make clean"\
@@ -164,7 +143,6 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
             "--with-http_v2_module"\
             "\n\tsed -i \"s/ -Os / -O0 /\" ./app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
             "\n\tsed -i \"s/ -g / -g3 /\" ./app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
-            "\n\tsed -i \"s/-lfstack,--no-whole-archive/-lfstack,--no-whole-archive -L${HS_PATH}\/lib -lhs -Wl,-rpath,.\/:${HS_PATH}\/lib/\" ./app/nginx-1.16.1/objs/Makefile"\
             "\n\n"\
             "\n.PHONY: debug release clean\n"
     sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/makefile", fstack_make)
