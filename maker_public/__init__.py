@@ -120,7 +120,7 @@ def installGolangTools(szGo):
             date = time.strptime("1970 1 1 00:00:00", tmformat)
     else:
         date = time.strptime("1970 1 1 00:00:00", tmformat)
-    #三个月内内不用更新
+    #半年不用更新
     if time.localtime(time.time()-24*3600*31*3)<date:
         return
     #设置GO模块代理
