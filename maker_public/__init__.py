@@ -7,6 +7,7 @@ import re
 import sys
 import multiprocessing
 import platform
+import time
 
 
 #存储了所有需要配置的版本信息，方便后续对脚本中用到的模块的版本进行管理
@@ -106,6 +107,22 @@ def download_src(name, versufx, ver, url, vscode_project_maker, uncomp_path):
 #函数参数：GO可执行程序位置
 #函数返回：错误描述
 def installGolangTools(szGo):
+    tmformat = "%Y %m %d %H:%M:%S"
+    curtime_str = time.strftime(tmformat, time.localtime(time.time()))
+    if True == os.path.isfile("/root/go/update_date"):
+        date_str,sz_err = readTxtFile("/root/go/update_date")
+        date_str = date_str.replace("\n", "")
+        if "" != sz_err:
+            return sz_err
+        try:
+            date = time.strptime(date_str, tmformat)
+        except:
+            date = time.strptime("1970 1 1 00:00:00", tmformat)
+    else:
+        date = time.strptime("1970 1 1 00:00:00", tmformat)
+    #三个月内内不用更新
+    if time.localtime(time.time()-24*3600*31*3)<date:
+        return
     #设置GO模块代理
     if 0 != os.system("su -c \""+szGo+" env -w GO111MODULE=on\""):
         return "Set GO111MODULE=on failed"
@@ -153,6 +170,7 @@ def installGolangTools(szGo):
     #安装godoctor
     os.system("su -c \""+szGo+" install github.com/godoctor/godoctor@latest\"")
     #
+    os.system("rm -rf /root/go/update_date && echo \""+curtime_str+"\" > /root/go/update_date")
     return ""
     
 
