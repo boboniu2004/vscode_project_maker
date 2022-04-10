@@ -222,8 +222,9 @@ def configGolang():
 #configPython 配置PYTHON；参数：无；返回：错误描述
 def configPython():
     pyver = maker_public.getVer("python")
-    installOrUpdateRpm("python3", "")
-    cur_ver = re.search("python3[ \\t]+(\d+\\.\d+)\\.\d+.*", maker_public.execCmdAndGetOutput("python3 --version"))
+    installOrUpdateRpm("python3", "", "")
+    cur_ver = re.search("[pP]ython[ \\t]+(3\\.\d+)\\.\d+.*", 
+        maker_public.execCmdAndGetOutput("python3 --version"))
     if None == cur_ver:
         return "No python3"
     szErr = installOrUpdateRpm("python"+pyver, platform.machine(), "")
@@ -231,6 +232,9 @@ def configPython():
         return szErr
     if False == os.path.islink("/etc/alternatives/python3"):
         return "No /etc/alternatives/python3"
+    pyver = re.sub("^3", "3.", pyver)
+    if False == os.path.isfile("/usr/bin/python"+pyver):
+        return "No /usr/bin/python"+pyver
     if 0!=os.system("ln -snf /usr/bin/python"+pyver+" /etc/alternatives/python3"):
         return "Can not link /etc/alternatives/python3"
     #

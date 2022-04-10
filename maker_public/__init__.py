@@ -122,7 +122,7 @@ def installGolangTools(szGo):
         date = time.strptime("1970 1 1 00:00:00", tmformat)
     #半年不用更新
     if time.localtime(time.time()-24*3600*31*3)<date:
-        return
+        return ""
     #设置GO模块代理
     if 0 != os.system("su -c \""+szGo+" env -w GO111MODULE=on\""):
         return "Set GO111MODULE=on failed"
