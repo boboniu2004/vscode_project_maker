@@ -386,10 +386,10 @@ def build_normal_dpdk(vscode_project_maker, fstack_ver):
                     "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_PCAP[ \\t]*=.*",
                     "\nCONFIG_RTE_LIBRTE_PMD_PCAP=y",
                 ],
-                [
-                    "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_AF_XDP[ \\t]*=.*",
-                    "\nCONFIG_RTE_LIBRTE_PMD_AF_XDP=y",
-                ],
+#                [
+#                    "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_AF_XDP[ \\t]*=.*",
+#                    "\nCONFIG_RTE_LIBRTE_PMD_AF_XDP=y",
+#                ],
             ])
         if "" != sz_err:
             return ("config DPDK failed[%s]" %(sz_err))
@@ -434,10 +434,10 @@ def build_meson_dpdk(vscode_project_maker, fstack_ver):
                     "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_PCAP[ \\t]*=.*",
                     "\nCONFIG_RTE_LIBRTE_PMD_PCAP=y",
                 ],
-                [
-                    "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_AF_XDP[ \\t]*=.*",
-                    "\nCONFIG_RTE_LIBRTE_PMD_AF_XDP=y",
-                ],
+#                [
+#                    "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_AF_XDP[ \\t]*=.*",
+#                    "\nCONFIG_RTE_LIBRTE_PMD_AF_XDP=y",
+#                ],
             ])
         if "" != sz_err:
             return ("config DPDK failed[%s]" %(sz_err))
