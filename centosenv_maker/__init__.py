@@ -314,6 +314,10 @@ def installDPDK(complie_type):
     szErr = installOrUpdateRpm("zlib-devel", platform.machine(), "")
     if 0 < len(szErr):
         return szErr
+    #安装pcap
+    szErr = installOrUpdateRpm("libpcap", platform.machine(), "")
+    if 0 < len(szErr):
+        return szErr
     #安装ninja
     if 0 != os.system("pip3 install ninja"):
         return "Install ninja failed"
