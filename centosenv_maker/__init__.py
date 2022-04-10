@@ -326,9 +326,11 @@ def installDPDK(complie_type):
     if 0 < len(szErr):
         return szErr
     #安装pcap
-    szErr = installOrUpdateRpm("libpcap", platform.machine(), "")
-    if 0 < len(szErr):
-        return szErr
+    if 0 != os.system("dnf --enablerepo=PowerTools install -y libpcap-devel"):
+        return "Can not install libpcap-devel"
+    #安装libbpf
+    if 0 != os.system("dnf --enablerepo=PowerTools install -y libbpf-devel"):
+        return "Can not install libpcap-devel"
     #安装ninja
     if 0 != os.system("pip3 install ninja"):
         return "Install ninja failed"
