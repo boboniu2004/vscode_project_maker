@@ -296,7 +296,7 @@ def configWSLmodules():
     if None == match_ret:
         return "Can not get WSL kernel version"
     #安装依赖包
-    if 0 != os.system("apt-get -y install build-essential flex bison libssl-dev libelf-dev"):
+    if 0 != os.system("apt-get -y install build-essential flex bison libssl-dev libelf-dev dwarves"):
         return "Install build-essential flex bison libssl-dev libelf-dev failed"
     #下载内核，这里不用download_src函数替代的原因是因为库太大，用git下载太慢。
     if False == os.path.isfile(vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
@@ -306,10 +306,14 @@ def configWSLmodules():
             os.system("rm -rf "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip")
             return "failed to download linux-msft-wsl-"+match_ret.group(1)+".zip"
     if False == os.path.isdir("/usr/src/WSL2-Linux-Kernel-linux-msft-wsl-"+match_ret.group(1)):
+        #删除旧版本的数据
+        os.system("rm -rf /usr/src/WSL2-Linux-Kernel-linux-msft-wsl*")
         if 0 != os.system("unzip -d /usr/src/ "+
             vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
             return "Failed to unzip "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"        
     if False == os.path.isdir("/lib/modules/"+match_ret.group(1)+"-microsoft-standard-WSL2"):
+        #删除旧版本的数据
+        os.system("rm -rf /lib/modules/*-microsoft-standard-WSL2")
         #编译内核
         if 0 != os.system("cd /usr/src/WSL2-Linux-Kernel-linux-msft-wsl-"+match_ret.group(1)+" && zcat /proc/config.gz > .config "\
             "&& make -j $(nproc) scripts && make -j $(nproc) modules && make -j $(nproc) modules_install && make clean"):
@@ -335,6 +339,8 @@ def installDPDK(complie_type):
     #安装zlib
     if 0 != os.system("apt-get -y install zlib1g-dev"):
         return "Install libpcre3-dev failed"
+    if 0 != os.system("apt-get -y install python-is-python3"):
+        return "Install python-is-python3 failed"
     #安装ninja
     if 0 != os.system("pip3 install ninja"):
         return "Install ninja failed"

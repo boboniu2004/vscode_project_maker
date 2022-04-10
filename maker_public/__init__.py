@@ -328,6 +328,27 @@ def download_driverctl(dst_path):
     return ""
 
 
+#功能：替换文件中的内容；参数：文件路径，待替换的文本正则，替换的内容；返回：错误码
+def replace_content(file_path, replace_lst):
+    #修改lib下的makefile
+    file_dat,err = readTxtFile(file_path)
+    if "" != err:
+        return err
+    for replace in replace_lst:
+        pattern = replace[0]
+        dst_dat = replace[1]
+        ignore_err = False
+        if 2 < len(replace):
+            ignore_err = replace[2]
+        if False==ignore_err and  0>=len(re.findall(pattern, file_dat)):
+            return ("can not find pattern( %s )" %pattern)
+    for replace in replace_lst:
+        pattern = replace[0]
+        dst_dat = replace[1]
+        file_dat = re.sub(pattern, dst_dat, file_dat)
+    return writeTxtFile(file_path, file_dat)
+
+
 #build_normal_dpdk 编译普通版本的DPDK；参数：dpdk源码路径；返回：错误描述
 def build_normal_dpdk(vscode_project_maker, fstack_ver):
     if False==issame_kernel_ver("/usr/local/dpdk") or \
@@ -336,6 +357,20 @@ def build_normal_dpdk(vscode_project_maker, fstack_ver):
         os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
         #解压缩
         os.system("unzip -d /tmp/ "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
+        #打开PMD驱动
+        sz_err = replace_content("/tmp/f-stack-"+fstack_ver+"/dpdk/config/common_base", 
+            [
+                [
+                    "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_AF_PACKET[ \\t]*=.*",
+                    "\nCONFIG_RTE_LIBRTE_PMD_AF_PACKET=y",
+                ],
+                [
+                    "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_PCAP[ \\t]*=.*",
+                    "\nCONFIG_RTE_LIBRTE_PMD_PCAP=y",
+                ],
+            ])
+        if "" != sz_err:
+            return ("config DPDK failed[%s]" %(sz_err))
         #配置
         if 0 != os.system("cd /tmp/f-stack-"+fstack_ver+"/dpdk && make defconfig"):
             os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
@@ -366,6 +401,20 @@ def build_meson_dpdk(vscode_project_maker, fstack_ver):
         os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
         #解压缩
         os.system("unzip -d /tmp/ "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
+        #打开PMD驱动
+        sz_err = replace_content("/tmp/f-stack-"+fstack_ver+"/dpdk/config/common_base", 
+            [
+                [
+                    "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_AF_PACKET[ \\t]*=.*",
+                    "\nCONFIG_RTE_LIBRTE_PMD_AF_PACKET=y",
+                ],
+                [
+                    "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_PCAP[ \\t]*=.*",
+                    "\nCONFIG_RTE_LIBRTE_PMD_PCAP=y",
+                ],
+            ])
+        if "" != sz_err:
+            return ("config DPDK failed[%s]" %(sz_err))
         #编译安装meson版本
         if 0 != os.system("cd /tmp/f-stack-"+fstack_ver+"/dpdk && "\
             "meson ./dpdk_build && cd ./dpdk_build && "\
