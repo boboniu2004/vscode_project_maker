@@ -11,7 +11,7 @@ import platform
 
 #存储了所有需要配置的版本信息，方便后续对脚本中用到的模块的版本进行管理
 g_verconfig = {
-    "python"     :  "36",
+    "python"     :  "38",
     "java"       :  "11",
     "ragel"      :  "6.10",
     "f-stack"    :  "1.21",
