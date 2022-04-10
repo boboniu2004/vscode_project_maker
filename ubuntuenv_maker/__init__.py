@@ -339,6 +339,7 @@ def installDPDK(complie_type):
     #安装zlib
     if 0 != os.system("apt-get -y install zlib1g-dev"):
         return "Install libpcre3-dev failed"
+    #if 0 != os.system("apt-get -y install python-is-python3 libpcap-dev libbpfcc-dev"):
     if 0 != os.system("apt-get -y install python-is-python3 libpcap-dev"):
         return "Install python-is-python3,libpcap failed"
     #安装ninja
