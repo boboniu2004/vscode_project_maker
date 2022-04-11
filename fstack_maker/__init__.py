@@ -51,8 +51,6 @@ def config_dpdk(fstack_path, vscode_project_maker):
         return sz_err
     #
     rep_list = [["\\n[ \\t]+ASLR_flg[ \\t]+=.*", "\n    ASLR_flg = \"0\""]]
-    if "ubuntu-wsl2" == maker_public.getOSName():
-        rep_list.append(["\\n[ \\t]+dev_lst[ \\t]*=.*", "\n    dev_lst = None"])
     return maker_public.replace_content(fstack_path+"/f-stack/dpdk_scrits/__init__.py",
         rep_list)
 
@@ -217,11 +215,30 @@ def create_fstack_project(fstack_path, vscode_project_maker):
             "\"tasks\": ["\
             "\n        {"\
             "\n            \"type\": \"shell\","\
-            "\n            \"label\": \"gcc init active file\","\
+            "\n            \"label\": \"gcc initenv active file\","\
             "\n            \"command\": \"/usr/bin/python3\","\
             "\n            \"args\": ["\
             "\n                \"${workspaceFolder}/dpdk_scrits/__init__.py\","\
             "\n                \"initenv\","\
+            "\n            ],"\
+            "\n            \"options\": {"\
+            "\n                \"cwd\": \"${workspaceFolder}\""\
+            "\n            },"\
+            "\n            \"problemMatcher\": ["\
+            "\n                \"$gcc\""\
+            "\n            ],"\
+            "\n            \"group\": {"\
+            "\n                \"kind\": \"build\","\
+            "\n                \"isDefault\": true"\
+            "\n            }"\
+            "\n        },"
+            "\n        {"\
+            "\n            \"type\": \"shell\","\
+            "\n            \"label\": \"gcc loadCOM active file\","\
+            "\n            \"command\": \"/usr/bin/python3\","\
+            "\n            \"args\": ["\
+            "\n                \"${workspaceFolder}/dpdk_scrits/__init__.py\","\
+            "\n                \"loadCOM\","\
             "\n            ],"\
             "\n            \"options\": {"\
             "\n                \"cwd\": \"${workspaceFolder}\""\

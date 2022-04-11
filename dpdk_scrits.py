@@ -307,7 +307,7 @@ def ch_workdir():
     
 
 #功能：绑定网卡；参数：绑定参数、内核模块名称清单、网卡名称-pci地址；返回：错误码
-def bind_device(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
+def do_binddev(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
     all_err = ""
     if None==dev_lst or 0>=len(dev_lst):
         print("Can not bind any device!\n")
@@ -378,21 +378,27 @@ def bind_device(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
     return all_err
 
 
-#功能：启动后初始化DPDK的环境参数；参数：巨页大小、巨页数量、是否开启地址随机化；返回：错误码
-def Init_dpdkenv(ASLR_flg, page_size, page_cnt_lst, devbind_path, drvctl_path, \
-    kmod_path, kmod_list, dev_lst):
+#功能：加载除了设备之外的其他组件；参数：巨页大小、巨页数量、是否开启地址随机化；返回：错误码
+def Load_COM(ASLR_flg, page_size, page_cnt_lst):
     #设置地址随机化
     sz_err = set_ASLR(ASLR_flg)
     if "" != sz_err:
         return sz_err
     #设置巨页
-    sz_err = set_hugepage(page_size, page_cnt_lst)
+    return set_hugepage(page_size, page_cnt_lst)
+
+
+#功能：绑定DPDK的网卡；参数：巨页大小、巨页数量、是否开启地址随机化；返回：错误码
+def Init_dpdkenv(ASLR_flg, page_size, page_cnt_lst, devbind_path, drvctl_path, \
+    kmod_path, kmod_list, dev_lst):
+    #加载组件
+    sz_err = Load_COM(ASLR_flg, page_size, page_cnt_lst)
     if "" != sz_err:
         return sz_err
-    old_workdir = ch_workdir()
-    sz_err = bind_device(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst)
-    os.chdir(old_workdir)
     #绑定设备
+    old_workdir = ch_workdir()
+    sz_err = do_binddev(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst)
+    os.chdir(old_workdir)
     return sz_err
 
 
@@ -588,7 +594,7 @@ def init_log(file_size, error):
 #函数返回：执行成功返回0，否则返回负值的错误码
 if __name__ == "__main__":
     #错误描述
-    error = "dpdk_opt: [optimsys|recovsys|initenv|install|uninstall|monitor|make] [log file]"
+    error = "dpdk_opt: [optimsys|recovsys|initenv|loadcom|install|uninstall|monitor|make] [log file]"
     if 2<len(sys.argv) and "make"==sys.argv[1]:
         error = maker_public.get_DPDKscrits(sys.argv[2])
         if ""!=error:
@@ -630,7 +636,7 @@ if __name__ == "__main__":
     kmod_list = ["uio_hv_generic"]
     #需要绑定的设备，两层list，内层list每个节点有两个参数：网卡名、网卡的PCI地址。在PCI环境中，
     # 网卡的PCI地址是必须的；在VMBUS环境中，网卡名是必须的。
-    # 如果不想绑定任何设备，而是用PMD_PCAP或者PMD_AF，则把dev_lst置为None
+    # 如果不想绑定任何设备，可以设置为None
     dev_lst = [["eth2", ""]] #[["eth2", "04:00.3"]]
     #需要监控的进程的信息，两层list，内层list每个节点有三个参数：程序路径、工作路径、启动参数。
     # 如果程序路径、工作路径配置为相对目录，则最后的绝对目录为：脚本所在目录的上一级/配置的路径。
@@ -646,8 +652,10 @@ if __name__ == "__main__":
     elif "recovsys"==sys.argv[1]:
         error  = Recov_system()
     elif "initenv"==sys.argv[1]:
-        error = Init_dpdkenv(ASLR_flg, page_size, page_cnt_lst, devbind_path, \
-            drvctl_path, kmod_path, kmod_list, dev_lst)
+        error = Init_dpdkenv(ASLR_flg, page_size, page_cnt_lst,\
+            devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst)
+    elif "loadCOM"==sys.argv[1]:
+        error = Load_COM(ASLR_flg, page_size, page_cnt_lst)
     elif "install"==sys.argv[1]:
         error = Install_app(dllpath_list)
     elif "uninstall"==sys.argv[1]:
