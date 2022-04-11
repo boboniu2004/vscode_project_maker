@@ -8,7 +8,7 @@ import maker_public
 import platform
 
 
-#功能：配置f-stack下的tools中的makefile；参数：无；返回：错误码
+#功能：配置f-stack下的tools中的makefile；参数：stack路径；返回：错误码
 def config_tools(fstack_path):
     #修改tools下的makefile
     #修改compat
@@ -27,10 +27,22 @@ def config_tools(fstack_path):
     makedat = re.sub("\\n\\n\\$\\{PROG\\}:.*", "\n\n${PROGDIR}/${PROG}: ${HEADERS} ${OBJS} "\
         "${TOPDIR}/tools/compat/libffcompat.a", makedat)
     makedat = re.sub("\\nall:[ ]+\\$\\{PROG\\}.*", "\nall: ${PROGDIR}/${PROG}", makedat)
+    makedat = re.sub("-lpthread[ \\t]+-lnuma[ \\t]*\\n", "-lpthread -lnuma -lpcap\n", makedat)
     sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/tools/prog.mk", makedat)
     if "" != sz_err:
         return "config f-stack tools failed"
     return ""
+
+#功能：配置f-stack下的example；参数：fstack路径；返回：错误码
+def config_example(fstack_path):
+    sz_err = maker_public.replace_content(fstack_path+"/f-stack/example/Makefile",
+        [
+            ["-pthread[ \\t]+-lnuma[ \\t]*\\n", "-pthread -lnuma -lpcap\n"],
+        ])
+    if "" != sz_err:
+        return "config f-stack example failed"
+    return ""
+
 
 #功能：配置dpdk；参数：fstack路径、工程路径；返回：错误码
 def config_dpdk(fstack_path, vscode_project_maker):
@@ -82,7 +94,11 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
     #修改tools下的makefile
     sz_err = config_tools(fstack_path)
     if "" != sz_err:
-        return "config f-stack failed"
+        return sz_err
+    #修改example
+    sz_err = config_example(fstack_path)
+    if "" != sz_err:
+        return sz_err
     #配置nginx
     nginx_path = maker_public.execCmdAndGetOutput(\
         "cd "+fstack_path+"/f-stack"+"/app/nginx-* && pwd").replace("\n", "")
@@ -118,6 +134,7 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
             "--with-stream --with-stream_ssl_module "\
             "--with-ff_module --with-stream_ssl_preread_module "\
             "--with-http_v2_module"\
+            "\n\tsed -i \"s/-lnuma/-lnuma -lpcap/\" ./app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
 	        "\n\tcd ./lib && make"+" -j $(nproc)"\
 	        "\n\tcd ./tools && make"+" -j $(nproc)"\
 	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make"+" -j $(nproc)"\
@@ -139,6 +156,7 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
             "--with-debug --with-stream --with-stream_ssl_module "\
             "--with-ff_module --with-stream_ssl_preread_module "\
             "--with-http_v2_module"\
+            "\n\tsed -i \"s/-lnuma/-lnuma -lpcap/\" ./app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
             "\n\tsed -i \"s/ -Os / -O0 /\" ./app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
             "\n\tsed -i \"s/ -g / -g3 /\" ./app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
             "\n\n"\
