@@ -50,14 +50,11 @@ def config_dpdk(fstack_path, vscode_project_maker):
     if "" != sz_err:
         return sz_err
     #
-    scrits,sz_err = maker_public.readTxtFile(\
-        fstack_path+"/f-stack/dpdk_scrits/__init__.py")
-    if "" != sz_err:
-        return sz_err
-    scrits = re.sub("\\n[ \\t]+ASLR_flg[ \\t]+=.*", \
-        "\n    ASLR_flg = \"0\"", scrits)    
-    return maker_public.writeTxtFile(fstack_path+"/f-stack/dpdk_scrits/__init__.py", 
-        scrits)
+    rep_list = [["\\n[ \\t]+ASLR_flg[ \\t]+=.*", "\n    ASLR_flg = \"0\""]]
+    if "ubuntu-wsl2" == maker_public.getOSName():
+        rep_list.append(["\\n[ \\t]+dev_lst[ \\t]*=.*", "\n    dev_lst = None"])
+    return maker_public.replace_content(fstack_path+"/f-stack/dpdk_scrits/__init__.py",
+        rep_list)
 
 
 #功能：下载配置f-stack；参数：无；返回：错误码

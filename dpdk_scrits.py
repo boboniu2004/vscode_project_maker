@@ -309,6 +309,9 @@ def ch_workdir():
 #功能：绑定网卡；参数：绑定参数、内核模块名称清单、网卡名称-pci地址；返回：错误码
 def bind_device(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
     all_err = ""
+    if None==dev_lst or 0>=len(dev_lst):
+        print("Can not bind any device!\n")
+        return ""
     #加载内核模块
     for kmod in kmod_list:
         if "" != maker_public.execCmdAndGetOutput("lsmod | grep "+kmod):
@@ -627,6 +630,7 @@ if __name__ == "__main__":
     kmod_list = ["uio_hv_generic"]
     #需要绑定的设备，两层list，内层list每个节点有两个参数：网卡名、网卡的PCI地址。在PCI环境中，
     # 网卡的PCI地址是必须的；在VMBUS环境中，网卡名是必须的。
+    # 如果不想绑定任何设备，而是用PMD_PCAP或者PMD_AF，则把dev_lst置为None
     dev_lst = [["eth2", ""]] #[["eth2", "04:00.3"]]
     #需要监控的进程的信息，两层list，内层list每个节点有三个参数：程序路径、工作路径、启动参数。
     # 如果程序路径、工作路径配置为相对目录，则最后的绝对目录为：脚本所在目录的上一级/配置的路径。
