@@ -126,7 +126,7 @@ def installGolangTools(szGo):
     #设置GO模块代理
     if 0 != os.system("su -c \""+szGo+" env -w GO111MODULE=on\""):
         return "Set GO111MODULE=on failed"
-    if 0 != os.system("su -c \""+szGo+" env -w GOPROXY=\\\"https://goproxy.io,direct\\\"\""):
+    if 0 != os.system("su -c \""+szGo+" env -w GOPROXY=\\\"https://proxy.golang.com.cn,direct\\\"\""):
         return "Set GOPROXY failed"
     os.system("su -c \""+szGo+" env\"")
     #安装go-outline
