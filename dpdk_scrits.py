@@ -615,7 +615,7 @@ if __name__ == "__main__":
     #需要开启的巨页的尺寸，有2048kb和1048576kb两种。
     page_size = 2048
     #需要开启的巨页的数量，按照NUMA节点进行分配，在非NUMA结构下，只能配置node0。
-    page_cnt_lst = [["node0", 128]]
+    page_cnt_lst = [["node0", 256]]
     #PCI设备的DPDK绑定脚本所在的路径，一般在DPDK安装路径的usertools下。如果配置为相对目录，
     # 则最后的绝对目录为：脚本所在目录的上一级/配置的路径。不需要时可以配置为None。
     devbind_path = None #"/usr/local/dpdk/sbin"
