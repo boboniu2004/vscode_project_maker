@@ -102,7 +102,7 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
     #为f-stack生成总的make文件
     fstack_make = \
         "DEBUG_FLAG:=\"-O0 -gdwarf-2 -g3 -Wno-format-truncation\"\n"\
-        "EXIST_DBG := $(shell if [ -d "+fstack_path+"/f-stack"+"/debug ]; then echo \"exist\"; else echo \"noexist\"; fi)\n\n"\
+        "EXIST_DBG := $(shell if [ -d ./debug ]; then echo \"exist\"; else echo \"noexist\"; fi)\n\n"\
         "debug:"\
             "\n\trm -rf ./example/helloworld*"\
             "\n\trm -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx"\
@@ -111,21 +111,21 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
             "\n\tcd ./example && make"+" DEBUG=$(DEBUG_FLAG) -j $(nproc)"\
 	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make"+" -j $(nproc)"\
             "\nifeq (\"$(EXIST_DBG)\", \"noexist\")"\
-	        "\n\tmkdir -p "+fstack_path+"/f-stack"+"/debug/net-tools"\
+	        "\n\tmkdir -p ./debug/net-tools"\
 	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make install"\
-            "\n\tcp -rf ./config.ini "+fstack_path+"/f-stack"+"/debug/conf/f-stack.conf"\
-            "\n\tmkdir -p "+fstack_path+"/f-stack"+"/debug/lib"\
+            "\n\tcp -rf ./config.ini ./debug/conf/f-stack.conf"\
+            "\n\tmkdir -p ./debug/lib"\
             "\nendif"\
-            "\n\tcp $(FF_HS)/lib/libhs.so "+fstack_path+"/f-stack"+"/debug/lib/libhs.so"\
-            "\n\tcp -rf ./tools/sbin/* "+fstack_path+"/f-stack"+"/debug/net-tools/"\
-            "\n\tcp -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx "+fstack_path+"/f-stack"+"/debug/sbin/"\
+            "\n\tcp $(FF_HS)/lib/libhs.so ./debug/lib/libhs.so"\
+            "\n\tcp -rf ./tools/sbin/* ./debug/net-tools/"\
+            "\n\tcp -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx ./debug/sbin/"\
             "\n\n"\
         "release:"\
 	        "\n\tcd ./lib && make clean"\
 	        "\n\tcd ./tools && make clean"\
 	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make clean"\
             "\n\tcd ./app/"+os.path.basename(nginx_path)+" && ./configure "\
-            "--prefix="+fstack_path+"/f-stack"+"/release "\
+            "--prefix=./release "\
             "--with-stream --with-stream_ssl_module "\
             "--with-ff_module --with-stream_ssl_preread_module "\
             "--with-http_v2_module"\
@@ -133,13 +133,13 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
 	        "\n\tcd ./lib && make"+" -j $(nproc)"\
 	        "\n\tcd ./tools && make"+" -j $(nproc)"\
 	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make"+" -j $(nproc)"\
-	        "\n\tmkdir -p "+fstack_path+"/f-stack"+"/release/net-tools"\
-	        "\n\tcp -rf ./tools/sbin/* "+fstack_path+"/f-stack"+"/release/net-tools/"\
+	        "\n\tmkdir -p ./release/net-tools"\
+	        "\n\tcp -rf ./tools/sbin/* ./release/net-tools/"\
 	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make install"\
-            "\n\tcp -rf ./config.ini "+fstack_path+"/f-stack"+"/release/conf/f-stack.conf"\
-            "\n\tmkdir -p "+fstack_path+"/f-stack"+"/release/lib"\
-            "\n\tcp $(FF_HS)/lib/libhs.so "+fstack_path+"/f-stack"+"/release/lib/libhs.so"\
-            "\n\tcp -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx "+fstack_path+"/f-stack"+"/release/sbin/"\
+            "\n\tcp -rf ./config.ini ./release/conf/f-stack.conf"\
+            "\n\tmkdir -p ./release/lib"\
+            "\n\tcp $(FF_HS)/lib/libhs.so ./release/lib/libhs.so"\
+            "\n\tcp -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx ./release/sbin/"\
             "\n\n"\
         "clean:"\
 	        "\n\tcd ./lib && make clean"\
@@ -147,7 +147,7 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
             "\n\tcd ./example && make clean"\
 	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make clean"\
             "\n\tcd ./app/"+os.path.basename(nginx_path)+" && ./configure "\
-            "--prefix="+fstack_path+"/f-stack"+"/debug "\
+            "--prefix=./debug "\
             "--with-debug --with-stream --with-stream_ssl_module "\
             "--with-ff_module --with-stream_ssl_preread_module "\
             "--with-http_v2_module"\
