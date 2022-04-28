@@ -125,7 +125,7 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
 	        "\n\tcd ./tools && make clean"\
 	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make clean"\
             "\n\tcd ./app/"+os.path.basename(nginx_path)+" && ./configure "\
-            "--prefix=./release "\
+            "--prefix=../../release "\
             "--with-stream --with-stream_ssl_module "\
             "--with-ff_module --with-stream_ssl_preread_module "\
             "--with-http_v2_module"\
@@ -147,7 +147,7 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
             "\n\tcd ./example && make clean"\
 	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make clean"\
             "\n\tcd ./app/"+os.path.basename(nginx_path)+" && ./configure "\
-            "--prefix=./debug "\
+            "--prefix=../../debug "\
             "--with-debug --with-stream --with-stream_ssl_module "\
             "--with-ff_module --with-stream_ssl_preread_module "\
             "--with-http_v2_module"\
