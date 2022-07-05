@@ -147,6 +147,7 @@ def installGolangTools(szGo):
     os.system("su -c \""+szGo+" install github.com/newhook/go-symbols@latest\"")
     #安装gopls
     os.system("su -c \""+szGo+" install golang.org/x/tools/gopls@latest\"")
+    os.system("su -c \""+szGo+" mod download golang.org/x/tools/gopls\"")
     #安装dlv
     os.system("su -c \""+szGo+" install github.com/go-delve/delve/cmd/dlv@latest\"")
     #安装staticcheck
