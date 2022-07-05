@@ -2,10 +2,20 @@
 # -*- coding: utf-8 -*-
 
 
+from pickle import NONE
 import re
 import os
 import sys
 import maker_public
+
+
+#getUbuntuVer 获取ubuntu版本；参数：无；返回：ubuntu版本、错误描述
+def getUbuntuVer():
+    osinfo = maker_public.execCmdAndGetOutput("lsb_release -a")
+    ubuntu_ver = re.search("\\nRelease[ \\t]*:[ \\t]*(\d+\\.\d+)", osinfo)
+    if None == ubuntu_ver:
+        return "","have no version"
+    return ubuntu_ver.group(1), ""
 
 
 #openRoot 打开root用户；参数：无；返回：错误描述
@@ -340,8 +350,15 @@ def installDPDK(complie_type):
     if 0 != os.system("apt-get -y install zlib1g-dev"):
         return "Install libpcre3-dev failed"
     #if 0 != os.system("apt-get -y install python-is-python3 libpcap-dev libbpfcc-dev"):
-    if 0 != os.system("apt-get -y install python-is-python3 libpcap-dev"):
-        return "Install python-is-python3,libpcap failed"
+    ubuntu_ver,sz_err = getUbuntuVer()
+    if "" != sz_err:
+        return sz_err
+    if ("20.04" <= ubuntu_ver):
+        if 0 != os.system("apt-get -y install python-is-python3 libpcap-dev"):
+            return "Install python-is-python3,libpcap failed"
+    else:
+        if 0 != os.system("apt-get -y install libpcap-dev"):
+            return "Install libpcap failed"
     #安装ninja
     if 0 != os.system("pip3 install ninja"):
         return "Install ninja failed"

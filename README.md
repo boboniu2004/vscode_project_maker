@@ -54,14 +54,14 @@
 第二步，安装完毕后，打开windows终端(windows徽标+x)，输入命令wsl --list，就可以看到已经安装的WSL虚拟机，然后将虚拟机导出到非系统盘，否则虚拟机越用越大，可能会把系统盘撑爆了，在windows终端输入以下命令：
 
         mkdir -P D:\bark
-        mkdir -P D:\WSL\ubuntu2004
-        wsl -t Ubuntu20.04
-        wsl --export Ubuntu20.04 D:\bark\ubuntu2004.tar
-        wsl --unregister Ubuntu20.04
-        wsl --import Ubuntu20.04 D:\WSL\ubuntu2004 D:\bark\ubuntu2004.tar
-        ubuntu2004.exe config --default-user root
+        mkdir -P D:\WSL\ubuntu[1804|2004]
+        wsl -t Ubuntu[18.04|20.04]
+        wsl --export Ubuntu[18.04|20.04] D:\bark\ubuntu[1804|2004].tar
+        wsl --unregister Ubuntu[18.04|20.04]
+        wsl --import Ubuntu[18.04|20.04] D:\WSL\ubuntu[1804|2004] D:\bark\ubuntu[1804|2004].tar
+        ubuntu[1804|2004].exe config --default-user root
 
-上述命令第一第二行在D盘下创建了bark目录和WSL/ubuntu2004目录，分别用于存储备份出来的虚拟机和重新安装的位置；第三行是关闭已经安装的ubuntu虚拟机，虚拟机名称来源自wsl --list；第四行是将虚拟机导出到D:\bark中，文件名为ubuntu2004.tar；第五行是注销已备份的虚拟机；第六行是从D:\bark\ubuntu2004.tar中重新安装虚拟机到D:\WSL\ubuntu2004，并且命名为Ubuntu20.04；第七行是将虚拟机的默认登录账号设置为root，其中ubuntu2004.exe是虚拟机的配置程序，输入命令时可以按tab键选择。
+上述命令第一第二行在D盘下创建了bark目录和WSL/ubuntu[1804|2004]目录，分别用于存储备份出来的虚拟机和重新安装的位置；第三行是关闭已经安装的ubuntu虚拟机，虚拟机名称来源自wsl --list；第四行是将虚拟机导出到D:\bark中，文件名为ubuntu[1804|2004].tar；第五行是注销已备份的虚拟机；第六行是从D:\bark\ubuntu[1804|2004].tar中重新安装虚拟机到D:\WSL\ubuntu[1804|2004]，并且命名为Ubuntu[18.04|20.04]；第七行是将虚拟机的默认登录账号设置为root，其中ubuntu[1804|2004].exe是虚拟机的配置程序，输入命令时可以按tab键选择。
 
 第三步，在重新安装了wsl虚拟机后，在windows终端输入命令wsl，即可进入虚拟机。首次登录时会要求设置密码。目前wsl虚拟机下可以编译DPDk，HYPERSCAN，F-STACK，VPP。但是只有一张网卡，所以如果要运行DPDK程序，并且绑定了该网卡，会导致虚拟机无法上网。
 
@@ -167,17 +167,17 @@ hyper-v可以在管理界面设置开机自启动；virtualbox需要修改**vsco
 一，在WSL下，可以运行如下命令导出虚拟机：
 
         mkdir -P D:\bark
-        wsl -t Ubuntu20.04
-        wsl --export Ubuntu20.04 D:\bark\ubuntu2004.tar
+        wsl -t Ubuntu[18.04|20.04]
+        wsl --export Ubuntu[18.04|20.04] D:\bark\ubuntu[1804|2004].tar
 
-wsl虚拟机Ubuntu20.04就会被备份到D:\bark\ubuntu2004.tar中。
+wsl虚拟机Ubuntu[18.04|20.04]就会被备份到D:\bark\ubuntu[1804|2004].tar中。
 
 二，如果要恢复虚拟机，则运行如下命令：
 
-        mkdir -P D:\WSL\ubuntu2004
-        wsl --import Ubuntu20.04 D:\WSL\ubuntu2004 D:\bark\ubuntu2004.tar
+        mkdir -P D:\WSL\ubuntu[1804|2004]
+        wsl --import Ubuntu[18.04|20.04] D:\WSL\ubuntu[1804|2004] D:\bark\ubuntu[1804|2004].tar
 
-会将虚拟机Ubuntu20.04还原到D:\WSL\ubuntu2004中。
+会将虚拟机Ubuntu[18.04|20.04]还原到D:\WSL\ubuntu[1804|2004]中。
 
 # 配置网络
 在hyper-v环境下，可能需要对第二块内部网卡独立配置IP，此时可以在vscode_project_maker目录下运行如下命令：
@@ -187,7 +187,7 @@ wsl虚拟机Ubuntu20.04就会被备份到D:\bark\ubuntu2004.tar中。
 其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。
 
 # 配置DPDK和hyperscan
-在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，则可以安装DPDK开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
+在virtualbox环境下、或者hyper-v环境下的centos8/Ubuntu[18.04|20.04]系统，如果网卡支持DPDK，则可以安装DPDK开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
 
         python3 osenv_maker.py config_DPDK install/uninstall
 
@@ -206,22 +206,22 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 # 编译调试工程
 
 # 创建f-stack开发环境
-在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，且已经正确安装了DPDK到/usr/local/dpdk下，则可以配置f-stack开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
+在virtualbox环境下、或者hyper-v环境下的centos8/Ubuntu[18.04|20.04]系统，如果网卡支持DPDK，且已经正确安装了DPDK到/usr/local/dpdk下，则可以配置f-stack开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
 
         python3 opensrc_maker.py f-stack [f-stack path] [dpdk path] [hyperscan path]
 
-安装完毕后，需要重启虚拟机，然后就可以使用vscode打开f-stack开发目录，首先运行**gcc clean active file**任务重新配置，后续只需要运行**gcc build active file**任务就可以进行编译了，该任务会自动生成debug调试目录，该目录中可以修改f-stack和nginx的配置，非常方便。开机后第一次调试前需要运行**gcc init active file**任务初始化dpdk环境，如果在hyper-v环境下的centos8/ubuntu20.04系统下想查看已经绑定的设备，可以运行命令：
+安装完毕后，需要重启虚拟机，然后就可以使用vscode打开f-stack开发目录，首先运行**gcc clean active file**任务重新配置，后续只需要运行**gcc build active file**任务就可以进行编译了，该任务会自动生成debug调试目录，该目录中可以修改f-stack和nginx的配置，非常方便。开机后第一次调试前需要运行**gcc init active file**任务初始化dpdk环境，如果在hyper-v环境下的centos8/Ubuntu[18.04|20.04]系统下想查看已经绑定的设备，可以运行命令：
 
         /usr/local/dpdk/sbin/driverctl/driverctl -b vmbus list-overrides
 
 如果没有绑定任何设备，那么可能是LINUX内核进行了升级导致DPDK的内核模块失效了，此时需要重新安装DPDK，可以参见章节**配置DPDK**。
 
 # 创建vpp开发环境
-在virtualbox环境下、或者hyper-v环境下的centos8/ubuntu20.04系统，如果网卡支持DPDK，则可以配置vpp开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
+在virtualbox环境下、或者hyper-v环境下的centos8/Ubuntu[18.04|20.04]系统，如果网卡支持DPDK，则可以配置vpp开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
 
         python3 opensrc_maker.py vpp [vpp path]
 
-安装完毕后，然后就可以使用vscode打开vpp开发目录，该目录中的build-root/install-vpp_debug-native/vpp/etc/startup.conf中可以修改vpp配置。后续就可以使用vscode进行集成开发和调试了，非常方便。开机后第一次调试前需要运行**gcc init active file**任务初始化dpdk环境，如果在hyper-v环境下的centos8/ubuntu20.04系统下想查看已经绑定的设备，可以运行命令：
+安装完毕后，然后就可以使用vscode打开vpp开发目录，该目录中的build-root/install-vpp_debug-native/vpp/etc/startup.conf中可以修改vpp配置。后续就可以使用vscode进行集成开发和调试了，非常方便。开机后第一次调试前需要运行**gcc init active file**任务初始化dpdk环境，如果在hyper-v环境下的centos8/Ubuntu[18.04|20.04]系统下想查看已经绑定的设备，可以运行命令：
 
         driverctl/driverctl -b vmbus list-overrides
 

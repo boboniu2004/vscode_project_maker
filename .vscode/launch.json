@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/osenv_maker.py",
             "args": [
-                "config_DPDK-meson",
+                "config_DPDK",
                 "install"
             ],
             "cwd": "${workspaceFolder}",

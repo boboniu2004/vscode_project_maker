@@ -25,18 +25,19 @@ if __name__ == "__main__":
         else:
             szErr = "Invaild operation" 
     elif 2<len(sys.argv) and -1!=str(sys.argv[1]).find("config_DPDK"):
-        #判断是否具备运行DPDK的环境
-        first_ver,second_ver,_ = maker_public.get_kernel_ver()
-        if ""==maker_public.execCmdAndGetOutput("lspci") and (None==first_ver or \
-            first_ver<4 or (first_ver==4 and second_ver<18)):
-            szErr = "Invaild virture machine"
+        #这部分代码被舍弃掉的原因是，可以使用af护着pcap驱动启动DPDK，
+        # 所以不需要判断是否具备运行DPDK的环境
+        #first_ver,second_ver,_ = maker_public.get_kernel_ver()
+        #if ""==maker_public.execCmdAndGetOutput("lspci") and (None==first_ver or \
+        #    first_ver<4 or (first_ver==4 and second_ver<18)):
+        #    szErr = "Invaild virture machine"
+        #else:
+        if "centos" == szOSName:
+            szErr = centosenv_maker.ConfigDPDK(sys.argv[1], sys.argv[2])
+        elif "ubuntu" == szOSName or "ubuntu-wsl2"==szOSName:
+            szErr = ubuntuenv_maker.ConfigDPDK(sys.argv[1], sys.argv[2])
         else:
-            if "centos" == szOSName:
-                szErr = centosenv_maker.ConfigDPDK(sys.argv[1], sys.argv[2])
-            elif "ubuntu" == szOSName or "ubuntu-wsl2"==szOSName:
-                szErr = ubuntuenv_maker.ConfigDPDK(sys.argv[1], sys.argv[2])
-            else:
-                szErr = "Invaild OS"
+            szErr = "Invaild OS"
     elif 1<len(sys.argv) and None==re.match("^\\d+\\.\\d+\\.\\d+\\.\\d+$",
         sys.argv[1]):
         szErr = "osenv_maker: null|config_IP [xx.xx.xx.xx]|"\
