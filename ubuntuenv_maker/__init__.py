@@ -205,6 +205,18 @@ def configPython():
     szErr = maker_public.configPip("python3", "pip3")
     if 0 < len(szErr):
         return szErr
+    #获取python版本
+    pyver = maker_public.getVer("python")
+    pyver = re.sub("^3", "3.", pyver)
+    match_lst = re.search("\\d+\\.\\d+\\.\\d+", \
+        maker_public.execCmdAndGetOutput("python3 --version"))
+    if None == match_lst:
+        cur_pyver = ""
+    else:
+        cur_pyver = match_lst.group(0)
+    if cur_pyver < pyver:
+        if 0 != os.system("apt-get -y install "+pyver):
+            return ("Install %s failed" %pyver)        
     return ""
 
 
