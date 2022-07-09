@@ -121,8 +121,11 @@ def configDebSource(szOSName):
         szErr = maker_public.writeTxtFile("/etc/apt/sources.list", szAptSource)
         if 0 < len(szErr):
             return szErr
-    if 0 != os.system("apt-get update"):
-        return "Update sources.list failed"
+    if "ubuntu" == szOSName:
+        if 0 != os.system("apt-get update"):
+            return "Update sources.list failed"
+    else:
+        os.system("apt-get update")
     return ""
 
 
@@ -195,8 +198,8 @@ def configGolang():
     return ""
 
 
-#configPython 配置PYTHON；参数：无；返回：错误描述
-def configPython():
+#configPython 配置PYTHON；参数：OS版本；返回：错误描述
+def configPython(szOSName):
     if 0 != os.system("apt-get -y install python3"):
         return "Install python3 failed"
     if 0 != os.system("apt-get -y install python3-pip"):
@@ -218,7 +221,8 @@ def configPython():
         pyver = ("python%s" %pyver)
         if 0 != os.system("apt-get install -y %s" %pyver):
             return ("Install %s failed" %pyver)
-        if 0 != os.system("su -c \""+pyver+" -m pip install -U \\\"pylint\\\" --user\""):
+        if "ubuntu"==szOSName and \
+            0!=os.system("su -c \""+pyver+" -m pip install -U \\\"pylint\\\" --user\""):
             return "Update Pylint failed"
     return ""
 
@@ -439,7 +443,7 @@ def InitEnv():
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #安装PYTHON和PIP
-    szErr = configPython()
+    szErr = configPython(szOSName)
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #安装JAVA
