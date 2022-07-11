@@ -204,7 +204,7 @@ def configPython():
     #配置PIP
     szErr = maker_public.configPip("python3", "pip3")
     if 0 < len(szErr):
-        return szErr
+        return szErr   
     #获取python版本
     pyver = maker_public.getVer("python")
     pyver = re.sub("^3", "3.", pyver)
@@ -214,9 +214,12 @@ def configPython():
         cur_pyver = ""
     else:
         cur_pyver = match_lst.group(0)
-    if cur_pyver < pyver:
-        if 0 != os.system("apt-get -y install "+pyver):
-            return ("Install %s failed" %pyver)        
+    if ""==cur_pyver or cur_pyver<pyver:
+        pyver = ("python%s" %pyver)
+        if 0 != os.system("apt-get install -y %s" %pyver):
+            return ("Install %s failed" %pyver)
+        if 0 != os.system("su -c \""+pyver+" -m pip install -U \\\"pylint\\\" --user\""):
+            return "Update Pylint failed"
     return ""
 
 
@@ -452,8 +455,8 @@ def InitEnv():
         if 0 != os.system("systemctl set-default multi-user.target"):
             return("Config Ubuntu failed: can not disable GNOME")
     #升级PIP
-    if 0 != os.system("pip3 install --upgrade pip"):
-        return ("Update PIP3 failed")
+    #if 0 != os.system("pip3 install --upgrade pip"):
+    #    return ("Update PIP3 failed")
     #配置内部网络
     if "ubuntu" == szOSName:
         if 1 < len(sys.argv):
