@@ -101,59 +101,60 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
         return "config f-stack failed"
     #为f-stack生成总的make文件
     fstack_make = \
+        "TOP_DIR := $(strip $(patsubst %/, %, $(dir $(abspath $(lastword ${MAKEFILE_LIST})))))\n"\
         "DEBUG_FLAG:=\"-O0 -gdwarf-2 -g3 -Wno-format-truncation\"\n"\
-        "EXIST_DBG := $(shell if [ -d ./debug ]; then echo \"exist\"; else echo \"noexist\"; fi)\n\n"\
+        "EXIST_DBG := $(shell if [ -d ${TOP_DIR}/debug ]; then echo \"exist\"; else echo \"noexist\"; fi)\n\n"\
         "debug:"\
-            "\n\trm -rf ./example/helloworld*"\
-            "\n\trm -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx"\
-	        "\n\tcd ./lib && make"+" DEBUG=$(DEBUG_FLAG) -j $(nproc)"\
-	        "\n\tcd ./tools && make"+" DEBUG=$(DEBUG_FLAG) -j $(nproc)"\
-            "\n\tcd ./example && make"+" DEBUG=$(DEBUG_FLAG) -j $(nproc)"\
-	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make"+" -j $(nproc)"\
-            "\nifeq (\"$(EXIST_DBG)\", \"noexist\")"\
-	        "\n\tmkdir -p ./debug/net-tools"\
-	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make install"\
-            "\n\tcp -rf ./config.ini ./debug/conf/f-stack.conf"\
-            "\n\tmkdir -p ./debug/lib"\
+            "\n\trm -rf ${TOP_DIR}/example/helloworld*"\
+            "\n\trm -rf ${TOP_DIR}/app/"+os.path.basename(nginx_path)+"/objs/nginx"\
+	        "\n\tcd ${TOP_DIR}/lib && make"+" DEBUG=${DEBUG_FLAG} -j ${nproc}"\
+	        "\n\tcd ${TOP_DIR}/tools && make"+" DEBUG=${DEBUG_FLAG} -j ${nproc}"\
+            "\n\tcd ${TOP_DIR}/example && make"+" DEBUG=${DEBUG_FLAG} -j ${nproc}"\
+	        "\n\tcd ${TOP_DIR}/app/"+os.path.basename(nginx_path)+" && make"+" -j ${nproc}"\
+            "\nifeq (\"${EXIST_DBG}\", \"noexist\")"\
+	        "\n\tmkdir -p ${TOP_DIR}/debug/net-tools"\
+	        "\n\tcd ${TOP_DIR}/app/"+os.path.basename(nginx_path)+" && make install"\
+            "\n\tcp -rf ${TOP_DIR}/config.ini ${TOP_DIR}/debug/conf/f-stack.conf"\
+            "\n\tmkdir -p ${TOP_DIR}/debug/lib"\
             "\nendif"\
-            "\n\tcp $(FF_HS)/lib/libhs.so ./debug/lib/libhs.so"\
-            "\n\tcp -rf ./tools/sbin/* ./debug/net-tools/"\
-            "\n\tcp -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx ./debug/sbin/"\
+            "\n\tcp ${FF_HS}/lib/libhs.so ${TOP_DIR}/debug/lib/libhs.so"\
+            "\n\tcp -rf ${TOP_DIR}/tools/sbin/* ${TOP_DIR}/debug/net-tools/"\
+            "\n\tcp -rf ${TOP_DIR}/app/"+os.path.basename(nginx_path)+"/objs/nginx ${TOP_DIR}/debug/sbin/"\
             "\n\n"\
         "release:"\
-	        "\n\tcd ./lib && make clean"\
-	        "\n\tcd ./tools && make clean"\
-	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make clean"\
-            "\n\tcd ./app/"+os.path.basename(nginx_path)+" && ./configure "\
-            "--prefix=../../release "\
+	        "\n\tcd ${TOP_DIR}/lib && make clean"\
+	        "\n\tcd ${TOP_DIR}/tools && make clean"\
+	        "\n\tcd ${TOP_DIR}/app/"+os.path.basename(nginx_path)+" && make clean"\
+            "\n\tcd ${TOP_DIR}/app/"+os.path.basename(nginx_path)+" && ./configure "\
+            "--prefix=${TOP_DIR}/release "\
             "--with-stream --with-stream_ssl_module "\
             "--with-ff_module --with-stream_ssl_preread_module "\
             "--with-http_v2_module"\
-            "\n\tsed -i \"s/-lnuma/-lnuma -lpcap/\" ./app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
-	        "\n\tcd ./lib && make"+" -j $(nproc)"\
-	        "\n\tcd ./tools && make"+" -j $(nproc)"\
-	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make"+" -j $(nproc)"\
-	        "\n\tmkdir -p ./release/net-tools"\
-	        "\n\tcp -rf ./tools/sbin/* ./release/net-tools/"\
-	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make install"\
-            "\n\tcp -rf ./config.ini ./release/conf/f-stack.conf"\
-            "\n\tmkdir -p ./release/lib"\
-            "\n\tcp $(FF_HS)/lib/libhs.so ./release/lib/libhs.so"\
-            "\n\tcp -rf ./app/"+os.path.basename(nginx_path)+"/objs/nginx ./release/sbin/"\
+            "\n\tsed -i \"s/-lnuma/-lnuma -lpcap/\" ${TOP_DIR}/app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
+	        "\n\tcd ${TOP_DIR}/lib && make"+" -j ${nproc}"\
+	        "\n\tcd ${TOP_DIR}/tools && make"+" -j ${nproc}"\
+	        "\n\tcd ${TOP_DIR}/app/"+os.path.basename(nginx_path)+" && make"+" -j ${nproc}"\
+	        "\n\tmkdir -p ${TOP_DIR}/release/net-tools"\
+	        "\n\tcp -rf ${TOP_DIR}/tools/sbin/* ${TOP_DIR}/release/net-tools/"\
+	        "\n\tcd ${TOP_DIR}/app/"+os.path.basename(nginx_path)+" && make install"\
+            "\n\tcp -rf ${TOP_DIR}/config.ini ${TOP_DIR}/release/conf/f-stack.conf"\
+            "\n\tmkdir -p ${TOP_DIR}/release/lib"\
+            "\n\tcp ${FF_HS}/lib/libhs.so ${TOP_DIR}/release/lib/libhs.so"\
+            "\n\tcp -rf ${TOP_DIR}/app/"+os.path.basename(nginx_path)+"/objs/nginx ${TOP_DIR}/release/sbin/"\
             "\n\n"\
         "clean:"\
-	        "\n\tcd ./lib && make clean"\
-	        "\n\tcd ./tools && make clean"\
-            "\n\tcd ./example && make clean"\
-	        "\n\tcd ./app/"+os.path.basename(nginx_path)+" && make clean"\
-            "\n\tcd ./app/"+os.path.basename(nginx_path)+" && ./configure "\
-            "--prefix=../../debug "\
+	        "\n\tcd ${TOP_DIR}/lib && make clean"\
+	        "\n\tcd ${TOP_DIR}/tools && make clean"\
+            "\n\tcd ${TOP_DIR}/example && make clean"\
+	        "\n\tcd ${TOP_DIR}/app/"+os.path.basename(nginx_path)+" && make clean"\
+            "\n\tcd ${TOP_DIR}/app/"+os.path.basename(nginx_path)+" && ./configure "\
+            "--prefix=${TOP_DIR}/debug "\
             "--with-debug --with-stream --with-stream_ssl_module "\
             "--with-ff_module --with-stream_ssl_preread_module "\
             "--with-http_v2_module"\
-            "\n\tsed -i \"s/-lnuma/-lnuma -lpcap/\" ./app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
-            "\n\tsed -i \"s/ -Os / -O0 /\" ./app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
-            "\n\tsed -i \"s/ -g / -g3 /\" ./app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
+            "\n\tsed -i \"s/-lnuma/-lnuma -lpcap/\" ${TOP_DIR}/app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
+            "\n\tsed -i \"s/ -Os / -O0 /\" ${TOP_DIR}/app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
+            "\n\tsed -i \"s/ -g / -g3 /\" ${TOP_DIR}/app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
             "\n\n"\
             "\n.PHONY: debug release clean\n"
     sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/makefile", fstack_make)
