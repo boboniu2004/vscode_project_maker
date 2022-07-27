@@ -211,19 +211,29 @@ def configPython(szOSName):
     #获取python版本
     pyver = maker_public.getVer("python")
     pyver = re.sub("^3", "3.", pyver)
-    match_lst = re.search("\\d+\\.\\d+\\.\\d+", \
+    match_lst = re.search("(\\d+\\.\\d+)\\.\\d+", \
         maker_public.execCmdAndGetOutput("python3 --version"))
     if None == match_lst:
         cur_pyver = ""
     else:
-        cur_pyver = match_lst.group(0)
+        cur_pyver = match_lst.group(1)
     if ""==cur_pyver or cur_pyver<pyver:
-        pyver = ("python%s" %pyver)
-        if 0 != os.system("apt-get install -y %s" %pyver):
-            return ("Install %s failed" %pyver)
+        if 0 != os.system("apt-get install -y python%s" %pyver):
+            return ("Install python%s failed" %pyver)
         if "ubuntu"==szOSName and \
-            0!=os.system("su -c \""+pyver+" -m pip install -U \\\"pylint\\\" --user\""):
+            0!=os.system("su -c \"python"+pyver+" -m pip install -U \\\"pylint\\\" --user\""):
             return "Update Pylint failed"
+        #将两个版本都安装到update-alternatives中，并且切换到新的版本
+        if None != re.search("3\\.\\d+", cur_pyver):
+            os.system(\
+                "update-alternatives --install /usr/bin/python3 python3 "\
+                "/usr/bin/python"+cur_pyver+" 443 && "\
+                "update-alternatives --install /usr/bin/python3 python3 "\
+                "/usr/bin/python"+pyver+" 444 && "\
+                "update-alternatives --install /usr/bin/python3 python3 "\
+                "/usr/bin/python"+cur_pyver+" 1 && "\
+                "update-alternatives --install /usr/bin/python3 python3 "\
+                "/usr/bin/python"+pyver+" 2")
     return ""
 
 
@@ -410,6 +420,8 @@ def installHYPERSCAN():
 #InitEnv 初始化环境；参数：无；返回：错误描述
 def InitEnv():
     szOSName = maker_public.getOSName()
+    configPython(szOSName)
+    return ""
     #释放apt资源
     releaseApt()
     #打开ROOT
