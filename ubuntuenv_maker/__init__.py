@@ -420,8 +420,6 @@ def installHYPERSCAN():
 #InitEnv 初始化环境；参数：无；返回：错误描述
 def InitEnv():
     szOSName = maker_public.getOSName()
-    configPython(szOSName)
-    return ""
     #释放apt资源
     releaseApt()
     #打开ROOT
