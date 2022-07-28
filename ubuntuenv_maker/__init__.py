@@ -227,13 +227,13 @@ def configPython(szOSName):
         if None != re.search("3\\.\\d+", cur_pyver):
             os.system(\
                 "update-alternatives --install /usr/bin/python3 python3 "\
-                "/usr/bin/python"+cur_pyver+" 443 && "\
+                "/usr/bin/python"+cur_pyver+" 444 && "\
                 "update-alternatives --install /usr/bin/python3 python3 "\
-                "/usr/bin/python"+pyver+" 444 && "\
+                "/usr/bin/python"+pyver+" 443 && "\
                 "update-alternatives --install /usr/bin/python3 python3 "\
-                "/usr/bin/python"+cur_pyver+" 1 && "\
+                "/usr/bin/python"+cur_pyver+" 2 && "\
                 "update-alternatives --install /usr/bin/python3 python3 "\
-                "/usr/bin/python"+pyver+" 2")
+                "/usr/bin/python"+pyver+" 1")
     return ""
 
 
