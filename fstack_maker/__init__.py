@@ -144,7 +144,6 @@ def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
             "\n\tcp -rf ${TOP_DIR}/app/"+os.path.basename(nginx_path)+"/objs/nginx ${TOP_DIR}/release/sbin/"\
             "\n\n"\
         "clean:"\
-            "\n\trm -rf ${TOP_DIR}/debug"\
 	        "\n\tcd ${TOP_DIR}/lib && make clean"\
 	        "\n\tcd ${TOP_DIR}/tools && make clean"\
             "\n\tcd ${TOP_DIR}/example && make clean"\
