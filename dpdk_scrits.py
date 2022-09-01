@@ -90,6 +90,8 @@ def check_cpuflg(cpu_lst):
         while beg <= end:
             all_cpu.append(beg)
             beg = beg+1
+    #排序
+    all_cpu.sort()
     last_cpu = -1
     for cpu in all_cpu:
         if cpu >= multiprocessing.cpu_count():
@@ -100,10 +102,10 @@ def check_cpuflg(cpu_lst):
     return ""
 
 
-#功能：隔离CPU；参数：需要隔离的CPU清单、巨页参数；返回：错误描述
+#功能：隔离CPU；参数：需要隔离的CPU清单、巨页参数；返回：错误描"述
 def isolate_cpu(cpu_lst, page_size):
     #检测cpu_lst的格式
-    cpu_lst = str(cpu_lst).strip()
+    cpu_lst = str(cpu_lst).replace(" ","").replace("\t","")
     sz_err = check_cpuflg(cpu_lst)
     if "" != sz_err:
         return False,sz_err
