@@ -1,6 +1,7 @@
 #!/usr/python/bin
 # -*- coding: utf-8 -*-
 
+from ast import And
 import hashlib
 import os
 import re
@@ -105,14 +106,14 @@ def isolate_cpu(cpu_lst, page_size):
     cpu_lst = str(cpu_lst).strip()
     sz_err = check_cpuflg(cpu_lst)
     if "" != sz_err:
-        return sz_err
+        return False,sz_err
     #检查巨页参数
     if 2048!=page_size and 1048576!=page_size:
-        return "page_size must be 2048 or 1048576"
+        return False,"page_size must be 2048 or 1048576"
     #获取grub-mkconfig命令
     grubver,mkconfig,sz_err = get_mkconfcmd()
     if "" != sz_err:
-        return sz_err
+        return False,sz_err
     #设置iommu，ARM下默认开启smmu
     iommu_flg = "nmi_watchdog=0 selinux=0 nosoftlockup "
     if "" != maker_public.execCmdAndGetOutput("lscpu | grep -P \" vmx \""):
@@ -133,7 +134,8 @@ def isolate_cpu(cpu_lst, page_size):
     #读取grub配置文件
     grub,err = maker_public.readTxtFile("/etc/default/grub")
     if "" != err:
-        return err
+        return False,err
+    old_md5 = hashlib.md5(grub)
     #替换配置文件
     if None != re.search("\nGRUB_CMDLINE_LINUX_DEFAULT.*\nGRUB_CMDLINE_LINUX[ \\t]*=.*",grub):
         grub = re.sub("\nGRUB_CMDLINE_LINUX[ \\t]*=.*", \
@@ -142,34 +144,38 @@ def isolate_cpu(cpu_lst, page_size):
         grub = re.sub("[ \\t]+rhgb[ \\t]+quiet.*", \
             (" rhgb quiet %s%s\"" %(iommu_flg, cpu_flg) ),grub )
     else:
-        return "Failed to make grub.cfg"
+        return False,"Failed to make grub.cfg"
     #写入grub配置文件
     err = maker_public.writeTxtFile("/etc/default/grub", grub)
     if "" != err:
-        return err
+        return False,err
+    new_md5 = hashlib.md5(grub)
+    if old_md5 == new_md5:
+        return False,""
     #重新生成启动文件
     if 0 != os.system(mkconfig+" -o /boot/"+grubver+"/grub.cfg"):
-        return "Failed to make grub.cfg"
-    return ""
+        return False,"Failed to make grub.cfg"
+    return True,""
 
 
 #功能：优化系统；参数：监控脚本、cpu清单(格式化为1,2,5,7,8)、巨页信息；返回：错误描述
 def Optim_system(cpu_lst, page_size):
+    reboot = False
     #关闭服务
     sz_err = disable_services()
     if "" != sz_err:
-        return sz_err
+        return reboot,sz_err
     #关闭UI
     if "ubuntu-wsl2" != maker_public.getOSName():
         if 0 != os.system("systemctl set-default multi-user.target"):
-            return "Failed to close UI"
+            return reboot,"Failed to close UI"
     #核隔离和开启iommu
     if "ubuntu-wsl2" != maker_public.getOSName():
-        sz_err = isolate_cpu(cpu_lst, page_size)
+        reboot,sz_err = isolate_cpu(cpu_lst, page_size)
         if "" != sz_err:
             enable_onesrv("irqbalance.service")
-            return sz_err 
-    return ""
+            return reboot,sz_err 
+    return reboot,""
 
 
 ####################################恢复针对DPDK的优化##########################################
@@ -187,40 +193,45 @@ def free_cpu():
     #获取grub-mkconfig命令
     grubver,mkconfig,sz_err = get_mkconfcmd()
     if "" != sz_err:
-        return sz_err
+        return False,sz_err
     #读取grub配置文件
     grub,err = maker_public.readTxtFile("/etc/default/grub")
     if "" != err:
-        return err
+        return False,err
+    old_md5 = hashlib.md5(grub)
     #替换配置文件
     if None != re.search("\nGRUB_CMDLINE_LINUX_DEFAULT.*\nGRUB_CMDLINE_LINUX[ \\t]*=.*",grub):
         grub = re.sub("\nGRUB_CMDLINE_LINUX[ \\t]*=.*", "\nGRUB_CMDLINE_LINUX=\"\"",grub )
     elif None != re.search("\nGRUB_CMDLINE_LINUX[ \\t]*=.+rhgb[ \\t]+quiet.*",grub):
         grub = re.sub("[ \\t]+rhgb[ \\t]+quiet.*", " rhgb quiet\"",grub)
     else:
-        return "Failed to make grub.cfg"
+        return False,"Failed to make grub.cfg"
     #写入grub配置文件
     err = maker_public.writeTxtFile("/etc/default/grub", grub)
     if "" != err:
-        return err
+        return False,err
+    new_md5 = hashlib.md5(grub)
+    if old_md5 == new_md5:
+        return False,""
     #重新生成启动文件
     if 0 != os.system(mkconfig+" -o /boot/"+grubver+"/grub.cfg"):
-        return "Failed to make grub.cfg"
-    return ""    
+        return False,"Failed to make grub.cfg"
+    return True,""    
 
     
 #功能：复原针对DPDK的优化；参数：监控脚本和监控的进程；返回：错误描述
 def Recov_system():
+    reboot = False
     #开启服务
     sz_err = enable_onesrv("irqbalance.service")
     if "" != sz_err:
-        return sz_err
+        return reboot,sz_err
     #核隔离和关闭iommu
     if "ubuntu-wsl2" != maker_public.getOSName():
-        sz_err = free_cpu()
+        reboot,sz_err = free_cpu()
         if "" != sz_err:
-            return sz_err
-    return ""
+            return reboot,sz_err
+    return reboot,""
 
 
 ####################################初始化#################################################
@@ -228,46 +239,40 @@ def Recov_system():
 def set_ASLR(opt):
     if "0"!=opt and "1"!=opt:
         return "ASLR_FLG must be 0 or 1"
-    if os.system("echo "+opt+" > /proc/sys/kernel/randomize_va_space"):
+    if False == os.path.isfile("/proc/sys/kernel/randomize_va_space"):
+        cur_flg = ""
+    else:
+        cur_flg = maker_public.execCmdAndGetOutput("cat /proc/sys/kernel/randomize_va_space")
+        cur_flg = cur_flg.replace("\n","")
+    if opt!=cur_flg and os.system("echo "+opt+" > /proc/sys/kernel/randomize_va_space"):
         return "set ASLR failed!"
     return ""
 
 
 #功能：加载巨页；参数：巨页大小、巨页数量；返回：错误码
 def set_one_hugepage(node_path, page_name, page_cnt):
-    #检测page_cnt是否是2的幂次方，并且修正到2的幂次方
-    highest_1 = 0
-    cnt_1 = 0
-    cur_pos = 0
-    tmp_page_cnt = page_cnt
-    while 0 < tmp_page_cnt:
-        if tmp_page_cnt%2:
-            cnt_1 = cnt_1+1
-            highest_1 = cur_pos
-        cur_pos = cur_pos+1
-        tmp_page_cnt = int(tmp_page_cnt/2)
-    if 1 != cnt_1:
-        page_cnt = pow(2, highest_1+1)
     #设置
     if False == os.path.isfile(node_path+"/"+page_name+"/nr_hugepages"):
-        return "Failed to set "+node_path+"/"+page_name+"/nr_hugepages"
+        return "Failed to find "+node_path+"/"+page_name+"/nr_hugepages"
     old_hugepages = maker_public.execCmdAndGetOutput(\
-        "grep -P \"\\d+\" "+node_path+"/"+page_name+"/nr_hugepages").replace("\n", "")
-    if "" == old_hugepages:
-        return "Failed to set "+node_path+"/"+page_name+"/nr_hugepages"
-    if 0 != os.system("echo "+str(page_cnt)+" > "+node_path+"/"+page_name+"/nr_hugepages"):
+        "cat "+node_path+"/"+page_name+"/nr_hugepages").replace("\n", "")
+    if str(page_cnt)!=old_hugepages and 0!=os.system(\
+        "echo "+str(page_cnt)+" > "+node_path+"/"+page_name+"/nr_hugepages"):
         os.system("echo "+old_hugepages+" > "+node_path+"/"+page_name+"/nr_hugepages")
         return "Failed to set "+node_path+"/"+page_name+"/nr_hugepages"
     cur_hugepages = maker_public.execCmdAndGetOutput(\
-        "grep -P \"\\d+\" "+node_path+"/"+page_name+"/nr_hugepages").replace("\n", "")
+        "cat "+node_path+"/"+page_name+"/nr_hugepages").replace("\n", "")
     if cur_hugepages != str(page_cnt):
         os.system("echo "+old_hugepages+" > "+node_path+"/"+page_name+"/nr_hugepages")
-        return "Failed to set "+node_path+"/"+page_name+"/nr_hugepages"
+        return "Set "+node_path+"/"+page_name+"/nr_hugepages failed"
     return ""  
 
 
 #功能：加载巨页；参数：巨页大小、巨页数量；返回：错误码
 def set_hugepage(page_size, page_cnt_lst):
+    if None == page_size:
+        print("can not set hugepages")
+        return ""
     #检测类型大小
     if 2048!=page_size and 1048576!=page_size:
         return "page_size must be 2048 or 1048576"
@@ -285,15 +290,13 @@ def set_hugepage(page_size, page_cnt_lst):
             if "" != sz_err:
                 return sz_err
     #加载巨页文件
-    if True == os.path.isdir("/mnt/huge"):
-        os.system("umount -f /mnt/huge")
-    if True == os.path.exists("/mnt/huge"):
-        os.system("rm -Rf /mnt/huge")
-    szErr = maker_public.makeDirs("/mnt/huge")
-    if "" != szErr:
-        return szErr
-    if 0 != os.system("mount -t hugetlbfs nodev /mnt/huge"):
-        return "mount /mnt/huge failed!"
+    if False == os.path.exists("/mnt/huge"):
+        szErr = maker_public.makeDirs("/mnt/huge")
+        if "" != szErr:
+            return szErr
+    if False == os.path.ismount("/mnt/huge"):
+        if 0 != os.system("mount -t hugetlbfs nodev /mnt/huge"):
+            return "mount /mnt/huge failed!"
     return ""
 
 
@@ -316,7 +319,7 @@ def do_binddev(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
     for kmod in kmod_list:
         if "" != maker_public.execCmdAndGetOutput("lsmod | grep "+kmod):
             continue
-        if "uio_pci_generic"==kmod or "vfio_pci"==kmod or "uio_hv_generic"==kmod:
+        if "uio_pci_generic"==kmod or "vfio-pci"==kmod or "uio_hv_generic"==kmod:
             os.system("modprobe "+kmod)
         else:
             if None==kmod_path or False==os.path.isdir(kmod_path):
@@ -328,40 +331,48 @@ def do_binddev(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
             if "" == maker_public.execCmdAndGetOutput("lsmod | grep uio"):
                 os.system("modprobe uio")
             os.system(imsmod_cmd)
-        if "" == maker_public.execCmdAndGetOutput("lsmod | grep "+kmod):
-            all_err += "Failed to load "+kmod+"\n"
+        if ""!=maker_public.getOSName() and \
+            ""==maker_public.execCmdAndGetOutput("lsmod | grep "+kmod):
+            all_err += ("Failed to load %s\n" %kmod)
     if "" != all_err:
         return all_err
     if 0 >= len(kmod_list):
-        return "Can not load anly kmod!"
+        return "Can not load any kmod!"
     kmod = kmod_list[0]
     #绑定网卡设备
+    have_bind = False
     python = maker_public.get_python()
     if None==drvctl_path or False==os.path.exists(drvctl_path):
         if None==devbind_path or False==os.path.isdir(devbind_path):
             return "Failed to find devbind_path"
-        devbind_path = os.path.abspath(devbind_path)
-        dpdk_devbind = devbind_path+"/dpdk-devbind"
+        dpdk_devbind = os.path.abspath(devbind_path)+"/dpdk-devbind"
         if False == os.path.isfile(dpdk_devbind):
-            dpdk_devbind = devbind_path+"/dpdk-devbind.py"
+            dpdk_devbind = os.path.abspath(devbind_path)+"/dpdk-devbind.py"
+        dev_info = maker_public.execCmdAndGetOutput(\
+            python+" "+dpdk_devbind+" --status-dev net")
         for dev in dev_lst:
-            dev_name = dev[0]
             dev_addr = dev[1]
             if "" == dev_addr:
                 all_err += "No PCI address\n"
                 continue
-            if ""!=dev_name and "" != maker_public.execCmdAndGetOutput(python+" "+dpdk_devbind+\
-                " --status-dev net | grep \"if="+dev_name+"\""):
-                os.system("ifconfig "+dev_name+" down")
-            if "" != maker_public.execCmdAndGetOutput(\
-                python+" "+dpdk_devbind+" --status-dev net | "\
-                "grep -P \""+dev_addr+"[ \\t]+'.+'[ \\t]+drv=.+[ \\t]unused=.+\""):
+            #关闭网卡
+            ser_ret = re.search(\
+                ("%s[ \\t]+.+if=([^ \\t]+)[ \\t]+" %dev_addr.replace(".","\\.")),dev_info)
+            if None != ser_ret:
+                os.system("ifconfig %s down" %ser_ret.group(1))
+            #解除原先的绑定
+            if None!=re.search(\
+                ("%s[ \\t]+.+drv=%s[ \\t]+" %(dev_addr.replace(".","\\."),kmod)),dev_info):
+                continue
+            elif None!=re.search(("%s[ \\t]+.+drv=.+" %dev_addr.replace(".","\\.")),dev_info):
                 os.system(python+" "+dpdk_devbind+" -u "+dev_addr)
-            if 0 != os.system(python+" "+dpdk_devbind+" --b "+kmod+" "+dev_addr):
+            #绑定
+            if 0 != os.system(python+" "+dpdk_devbind+" -b "+kmod+" "+dev_addr):
                 all_err += "Failed to bind "+dev_addr+"\n"
-        os.system(python+" "+dpdk_devbind+" --status-dev net")
+            have_bind = True
+        if True == have_bind:
+            os.system(python+" "+dpdk_devbind+" --status-dev net")
     else:
-        drvctl_path = os.path.abspath(drvctl_path)
         for dev in dev_lst:
             dev_name = dev[0]
             if "" == dev_name:
@@ -370,11 +381,14 @@ def do_binddev(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
             if False == os.path.exists("/sys/class/net/"+dev_name+"/device"):
                 logging.warning("Failed to find "+dev_name)
             else:
-                if 0 != os.system("cd "+drvctl_path+" && "\
+                if 0 != os.system("cd "+os.path.abspath(drvctl_path)+" && "\
                     "DEV_UUID=$(basename $(readlink /sys/class/net/"+dev_name+"/device)) && "\
                     "./driverctl -b vmbus set-override $DEV_UUID "+kmod):
                     all_err += "Failed to bind "+dev_name+"\n"
-        os.system("cd "+drvctl_path+" && ./driverctl -b vmbus list-overrides")
+                have_bind = True
+        if True == have_bind:
+            os.system("cd "+os.path.abspath(drvctl_path)+\
+                " && ./driverctl -b vmbus list-overrides")
     return all_err
 
 
@@ -612,7 +626,7 @@ if __name__ == "__main__":
     cpu_list = "" #"2-3"
     #地址随机化开启标志：1表示开启、0表示关闭。只能配置为0或者1。
     ASLR_flg = "1"
-    #需要开启的巨页的尺寸，有2048kb和1048576kb两种。
+    #需要开启的巨页的尺寸，有2048kb和1048576kb两种。配置为None表示不开启巨页
     page_size = 2048
     #需要开启的巨页的数量，按照NUMA节点进行分配，在非NUMA结构下，只能配置node0。
     page_cnt_lst = [["node0", 256]]
@@ -629,7 +643,7 @@ if __name__ == "__main__":
     # 编译脚本，具体可以参见本工程中对VPP的DPDK的编译方法。如果配置为相对目录，
     # 则最后的绝对目录为：脚本所在目录的上一级/配置的路径。不需要时可以配置为None。
     kmod_path = "/usr/local/dpdk/kmod"
-    #需要加载的内核模块，可以是igb_uio、rte_kni、uio_pci_generic、vfio_pci、uio_hv_generic。
+    #需要加载的内核模块，可以是igb_uio、rte_kni、uio_pci_generic、vfio-pci、uio_hv_generic。
     # 其中uio_pci_generic是linux提供的uio驱动，大部分场景可以替代igb_uio，只有一些比较老的设备
     # 才会需要igb_uio驱动；vfio_pci是3.6之后的内核提供的一种uio驱动，可以支持IO虚拟化技术，如
     # INTEL的VT-d、AMD的AMD-V、ARM的SMMU；uio_hv_generic是微软hyper-v虚拟机中的uio驱动。
@@ -647,10 +661,11 @@ if __name__ == "__main__":
 
 
     #解析参数
+    reboot = False
     if "optimsys"==sys.argv[1]:
-        error = Optim_system(cpu_list, page_size)
+        reboot,error = Optim_system(cpu_list, page_size)
     elif "recovsys"==sys.argv[1]:
-        error  = Recov_system()
+        reboot,error  = Recov_system()
     elif "initenv"==sys.argv[1]:
         error = Init_dpdkenv(ASLR_flg, page_size, page_cnt_lst,\
             devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst)
@@ -665,6 +680,6 @@ if __name__ == "__main__":
     if ""!=error:
         logging.error(error)
         exit(-1)
-    if "optimsys"==sys.argv[1] or "recovsys"==sys.argv[1]:
+    if True == reboot:
         maker_public.do_reboot("press any key to reboot...")
     exit(0)
