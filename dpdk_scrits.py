@@ -1,7 +1,6 @@
 #!/usr/python/bin
 # -*- coding: utf-8 -*-
 
-from ast import And
 import hashlib
 import os
 import re
@@ -252,19 +251,28 @@ def set_ASLR(opt):
 
 
 #功能：加载巨页；参数：巨页大小、巨页数量；返回：错误码
+def get_hugepage_size(node_path, page_name):
+    hugepages_size_ret = re.search( "^[ \\t\\n]*(\\d+)[ \\t\\n]*$", \
+        maker_public.execCmdAndGetOutput(\
+        "cat "+node_path+"/"+page_name+"/nr_hugepages").replace("\n", "") )
+    if None == hugepages_size_ret:
+        hugepages_size = 0
+    else:
+        hugepages_size = int(hugepages_size_ret.group(1))
+    return hugepages_size
+
+
+#功能：加载巨页；参数：巨页大小、巨页数量；返回：错误码
 def set_one_hugepage(node_path, page_name, page_cnt):
     #设置
     if False == os.path.isfile(node_path+"/"+page_name+"/nr_hugepages"):
         return "Failed to find "+node_path+"/"+page_name+"/nr_hugepages"
-    old_hugepages = maker_public.execCmdAndGetOutput(\
-        "cat "+node_path+"/"+page_name+"/nr_hugepages").replace("\n", "")
-    if str(page_cnt)!=old_hugepages and 0!=os.system(\
+    old_hugepages = get_hugepage_size(node_path, page_name)
+    if page_cnt>old_hugepages and 0!=os.system(\
         "echo "+str(page_cnt)+" > "+node_path+"/"+page_name+"/nr_hugepages"):
         os.system("echo "+old_hugepages+" > "+node_path+"/"+page_name+"/nr_hugepages")
         return "Failed to set "+node_path+"/"+page_name+"/nr_hugepages"
-    cur_hugepages = maker_public.execCmdAndGetOutput(\
-        "cat "+node_path+"/"+page_name+"/nr_hugepages").replace("\n", "")
-    if cur_hugepages != str(page_cnt):
+    if page_cnt > get_hugepage_size(node_path, page_name):
         os.system("echo "+old_hugepages+" > "+node_path+"/"+page_name+"/nr_hugepages")
         return "Set "+node_path+"/"+page_name+"/nr_hugepages failed"
     return ""  
