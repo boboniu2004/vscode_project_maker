@@ -22,7 +22,7 @@ g_verconfig = {
     "libunwind"  :  "1.6.2",
     "gperftools" :  "2.9.1",
     "go"         :  "1.16.12",
-    "vpp"        :  "21.10",
+    "vpp"        :  "20.09",
     "x86_64-hs"  :  "5.4.0",
     "aarch64-hs" :  "5.3.0.aarch64"
 }
@@ -340,7 +340,7 @@ def download_driverctl(dst_path):
     if 0 == os.system("git clone https://gitlab.com/driverctl/driverctl.git "+dst_path):
         return ""
     os.system("rm -rf "+dst_path)
-    if 0 == os.system("git clone https://ghproxy.com/github.com/boboniu2004/driverctl.git "\
+    if 0 != os.system("git clone https://ghproxy.com/github.com/boboniu2004/driverctl.git "\
         +dst_path):
         return "download driverctl failed"
     return ""
