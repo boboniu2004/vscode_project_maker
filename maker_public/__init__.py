@@ -337,12 +337,12 @@ def get_python():
 
 #功能：下载driverctl；参数：存储路径：返回：错误码
 def download_driverctl(dst_path):
-    if 0 == os.system("git clone https://gitlab.com/driverctl/driverctl.git "+dst_path):
-        return ""
-    os.system("rm -rf "+dst_path)
-    if 0 != os.system("git clone https://ghproxy.com/github.com/boboniu2004/driverctl.git "\
+    if 0 == os.system("git clone https://ghproxy.com/github.com/boboniu2004/driverctl.git "\
         +dst_path):
+        return ""
+    if 0 != os.system("git clone https://gitlab.com/driverctl/driverctl.git "+dst_path):
         return "download driverctl failed"
+    os.system("rm -rf "+dst_path)
     return ""
 
 
