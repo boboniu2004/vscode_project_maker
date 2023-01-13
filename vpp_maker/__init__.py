@@ -91,61 +91,10 @@ def config_dpdk(vpp_path, vscode_project_maker):
     sz_err = maker_public.get_DPDKscrits(vpp_path+"/vpp")
     if "" != sz_err:
         return sz_err
-    #写入igb_uio的meson文件
-    err = maker_public.writeTxtFile(vpp_path+"/vpp"+\
-        "/dpdk-kmods/linux/igb_uio/meson.build", \
-            "# SPDX-License-Identifier: BSD-3-Clause\n"\
-            "# Copyright(c) 2017 Intel Corporation\n"\
-            "\n"\
-            "uio_mkfile = custom_target('igb_uio_makefile',\n"\
-            "        output: 'Makefile',\n"\
-            "        command: ['touch', '@OUTPUT@'])\n"\
-            "\n"\
-            "uio_sources = files(\n"\
-            "        'igb_uio.c',\n"\
-            "        'Kbuild',\n"\
-            ")\n"\
-            "\n"\
-            "custom_target('igb_uio',\n"\
-            "        input: uio_sources,\n"\
-            "        output: 'igb_uio.ko',\n"\
-            "        command: ['make', '-j4', '-C', kernel_build_dir,\n"\
-            "                'M=' + meson.current_build_dir(),\n"\
-            "                'src=' + meson.current_source_dir(),\n"\
-            "                'MODULE_CFLAGS=-include ' + meson.source_root() + '/config/rte_config.h' +\n"\
-            "                ' -I' + meson.source_root() + '/lib/eal/include' +\n"\
-            "                ' -I' + meson.build_root() +\n"\
-            "                ' -I' + meson.current_source_dir(),\n"\
-            "           'modules'] + cross_args,\n"\
-            "        depends: uio_mkfile,\n"\
-            "        install: install,\n"\
-            "        install_dir: kernel_install_dir,\n"\
-            "        build_by_default: get_option('enable_kmods'))\n")
-    if ""!=err:
-        return err
-    #修改DPDK的CMakelist
-    cmakedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp/build/external/packages/dpdk.mk")
-    #打开内核模块编译开关
-    dstdat = "\n\nDPDK_MESON_ARGS += \"-Denable_kmods=true\"\n\nPIP_DOWNLOAD_DIR"
-    cmakedat = cmakedat.replace("\n\nPIP_DOWNLOAD_DIR", dstdat)
-    #打开igb_uio.ko的编译
-    dstdat = "\n\ndefine dpdk_config_cmds"+\
-        "\n\tcp -rf "+vpp_path+"/vpp"+"/dpdk-kmods/linux/* $(dpdk_src_dir)/kernel/linux/"+\
-        " && \\"+\
-        "\n\tsed -i 's/\['\"'\"'kni'\"'\"'\]/\['\"'\"'kni'\"'\"','\"'\"'igb_uio'\"'\"'\]/' $(dpdk_src_dir)/kernel/linux/meson.build"+\
-        " && \\"
-    cmakedat = cmakedat.replace("\n\ndefine dpdk_config_cmds", dstdat)
-    #将ko文件安装到安装目录
-    dstdat = "\n\tmeson install && \\"+\
-        "\n\tmkdir -p $(dpdk_install_dir)/lib/modules && \\"+\
-        "\n\tcp -rf $(dpdk_build_dir)/kernel/linux/igb_uio/igb_uio.ko $(dpdk_install_dir)/lib/modules/ && \\"+\
-        "\n\tcp -rf $(dpdk_build_dir)/kernel/linux/kni/rte_kni.ko $(dpdk_install_dir)/lib/modules/"
-    cmakedat = cmakedat.replace("\n\tmeson install", dstdat)
-    sz_err = maker_public.writeTxtFile(vpp_path+"/vpp/build/external/packages/dpdk.mk", 
-        cmakedat)
-    if "" != sz_err:
-        return sz_err
-    return ""
+    #
+    rep_list = [["\\n[ \\t]+ASLR_flg[ \\t]+=.*", "\n    ASLR_flg = \"0\""]]
+    return maker_public.replace_content(vpp_path+"/vpp/dpdk_scrits/__init__.py",
+        rep_list)
 
     
 #功能：下载配置vpp；参数：无；返回：错误码
