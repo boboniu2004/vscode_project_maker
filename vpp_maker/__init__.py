@@ -143,17 +143,6 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
         makedat = re.sub(" yum[ \\t]+groupinstall ", " yum groupinstall -y ", makedat)
         makedat = re.sub(" dnf[ \\t]+install ", " dnf install -y ", makedat)
         makedat = re.sub(" dnf[ \\t]+groupinstall ", " dnf groupinstall -y ", makedat)
-    #设置链接库
-    makedat = re.sub("_debug,\\$\\(addsuffix[ ]+-install,.*", \
-        "_debug,$(addsuffix -install,$(TARGETS)))\n\t"\
-        "-rm -rf /etc/ld.so.conf.d/vpp-debug.conf\n\t"\
-        "-echo '"+vpp_path+"/vpp"+"/build-root/install-vpp_debug-native/"\
-        "vpp/lib64' > /etc/ld.so.conf.d/vpp-debug.conf\n\t"\
-        "-ldconfig", makedat)
-    makedat = re.sub("_debug,\\$\\(addsuffix[ ]+-wipe,.*", \
-        "_debug,$(addsuffix -wipe,$(TARGETS)))\n\t"\
-        "-rm -rf /etc/ld.so.conf.d/vpp-debug.conf\n\t"\
-        "-ldconfig", makedat)
     sz_err = maker_public.writeTxtFile(vpp_path+"/vpp"+"/Makefile", makedat)
     if "" != sz_err:
         return sz_err
@@ -174,7 +163,7 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
             mkcont)
         if ""!=err:
             return err
-    #修改DPDK的编译文件和打开内核模块
+    #修改DPDK的编译文件
     return config_dpdk(vpp_path, vscode_project_maker)
 
 
