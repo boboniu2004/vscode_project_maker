@@ -206,13 +206,13 @@ def configGcc():
 
 
 #configGolang 配置GOLANG；参数：无；返回：错误描述
-def configGolang():
+def configGolang(go_proxy):
     #安装 golang
     szErr = installOrUpdateRpm("golang", platform.machine(), "")
     if 0 < len(szErr):
         return szErr
     #安装工具
-    szErr = maker_public.installGolangTools("go")
+    szErr = maker_public.installGolangTools("go",go_proxy)
     if 0 < len(szErr):
         return szErr
     #
@@ -220,7 +220,7 @@ def configGolang():
 
 
 #configPython 配置PYTHON；参数：无；返回：错误描述
-def configPython():
+def configPython(py_host,py_url):
     pyver = maker_public.getVer("python")
     installOrUpdateRpm("python3", "", "")
     cur_ver = re.search("[pP]ython[ \\t]+(3\\.\d+)\\.\d+.*", 
@@ -242,7 +242,7 @@ def configPython():
     if 0 < len(szErr):
         return szErr
     #配置PIP
-    szErr = maker_public.configPip("python3", "pip")
+    szErr = maker_public.configPip("python3", "pip", py_host, py_url)
     if 0 < len(szErr):
         return szErr
     return ""
@@ -372,7 +372,8 @@ def installHYPERSCAN():
 
 
 #InitEnv 初始化环境；参数：无；返回：错误描述
-def InitEnv():
+def InitEnv(sys_par):
+    par_dic = dict(sys_par)
     #释放yum资源
     releaseYum()
     #安装扩展库
@@ -384,9 +385,10 @@ def InitEnv():
     if 0 < len(szErr):
         return("Config CentOS failed:%s" %(szErr))
     #配置SSHD
-    szErr = configSshd()
-    if 0 < len(szErr):
-        return("Config CentOS failed:%s" %(szErr))
+    if "online" == par_dic["work_mod"]:
+        szErr = configSshd()
+        if 0 < len(szErr):
+            return("Config CentOS failed:%s" %(szErr))
     #安装GIT
     szErr = configGit()
     if 0 < len(szErr):
@@ -396,11 +398,11 @@ def InitEnv():
     if 0 < len(szErr):
         return("Config CentOS failed:%s" %(szErr))
     #安装GOLANG
-    szErr = configGolang()
+    szErr = configGolang(par_dic["go_proxy"])
     if 0 < len(szErr):
         return("Config CentOS failed:%s" %(szErr))
     #安装PYTHON和PIP
-    szErr = configPython()
+    szErr = configPython(par_dic["py_host"],par_dic["py_url"])
     if 0 < len(szErr):
         return("Config CentOS failed:%s" %(szErr))
     #安装JAVA
@@ -408,14 +410,15 @@ def InitEnv():
     if 0 < len(szErr):
         return("Config CentOS failed:%s" %(szErr))
     #关闭图形界面
-    if 0 != os.system("systemctl set-default multi-user.target"):
-        return("Config CentOS failed: can not disable GNOME")
+    if "online" == par_dic["work_mod"]:
+        if 0 != os.system("systemctl set-default multi-user.target"):
+            return("Config CentOS failed: can not disable GNOME")
     #升级PIP
     #if 0 != os.system("pip3 install --upgrade pip"):
     #    return("Update PIP failed")
     #配置内部网络
-    if 1 < len(sys.argv):
-        szErr = configInternalNet("有线连接 1", "eth1", sys.argv[1])
+    if "online" == par_dic["work_mod"]:
+        szErr = configInternalNet("有线连接 1", "eth1", par_dic["ip"])
         if 0 < len(szErr):
             return("Config CentOS failed:%s" %(szErr))
     #
@@ -423,8 +426,8 @@ def InitEnv():
 
 
 #InitInternalNet 初始化内部网络；参数：内部网络的IP地址；返回：错误描述
-def InitInternalNet():
-    szErr = configInternalNet("有线连接 1", "eth1", sys.argv[2])
+def InitInternalNet(ip_addr):
+    szErr = configInternalNet("有线连接 1", "eth1", ip_addr)
     if 0 < len(szErr):
         return("Config IP failed:%s" %(szErr))
     #

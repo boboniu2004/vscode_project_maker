@@ -8,54 +8,98 @@ import maker_public
 import centosenv_maker
 import ubuntuenv_maker
 
+
+#功能：获取错误字符串；参数：无；返回：错误字符串
+def get_format_str():
+        format_str = "osenv_maker:    [--work_mod|--deb_src|--go_proxy|--git_proxy]\n"\
+            "            --work_mod [mod]        工作模式，online|offline|config_IP。默认是online\n"\
+            "            --ip [192.168.137.xx]   在线模式下第二块网卡的IP地址，默认为192.168.137网段。\n"\
+            "            --deb_src [url]         deb源(如ghproxy.com)，默认为http://mirrors.aliyun.com/ubuntu。\n"\
+            "            --py_src [host] [url]   python源(如ghproxy.com)，默认为host=mirrors.aliyun.com url=http://mirrors.aliyun.com/pypi/simple。\n"\
+            "            --go_proxy [url]        go的代理(如ghproxy.com)，默认为https://proxy.golang.com.cn。\n"\
+            "            --git_proxy [url]       github的代理(如ghproxy.com)，默认为空。\n"
+        return format_str
+
+
+#功能：解析参数；参数：无；返回：参数、错误描述
+def parse_argv(szOSName):
+    sys_par = {"work_mod":"online",\
+        "deb_src":"http://mirrors.aliyun.com/ubuntu",\
+        "py_host":"mirrors.aliyun.com",\
+        "py_url":"http://mirrors.aliyun.com/pypi/simple",\
+        "go_proxy":"https://proxy.golang.com.cn",\
+        "git_proxy":""}
+    if "ubuntu"==szOSName or "ubuntu-wsl2"==szOSName:
+        sys_par["ip"] = "192.168.137.102"
+    else:
+        sys_par["ip"] = "192.168.137.101"
+    format_str = get_format_str()
+    #循环解析参数
+    pos = 1
+    while len(sys.argv) > pos:
+        if len(sys.argv) <= pos+1:
+            return sys_par,("bad param %s\n" %sys.argv[pos])+format_str
+        par_name = sys.argv[pos][2:]
+        par_val = sys.argv[pos+1]
+        if "--work_mod" == sys.argv[pos]:
+            if None == re.search("^(online|offline|config_IP)$",\
+                par_val):
+                return sys_par,("bad work_mod %s\n" %par_val)+format_str
+            sys_par[par_name] = par_val
+        elif "--ip" == sys.argv[pos]:
+            if None == re.search("^192\\.168\\.137\\.\\d+$", par_val):
+                return sys_par,("bad ip %s\n" %par_val)+format_str
+            sys_par[par_name] = par_val
+        elif "--deb_src" == sys.argv[pos]:
+            sys_par[par_name] = par_val
+        elif "--py_src" == sys.argv[pos]:
+            if len(sys.argv) <= pos+2:
+                return sys_par,("bad py_src %s\n" %par_val)+format_str
+            sys_par["py_host"] = par_val
+            sys_par["py_url"] = sys.argv[pos+2]
+            pos = pos+1
+        elif "--go_proxy" == sys.argv[pos]:
+            sys_par[par_name] = par_val
+        elif "--git_proxy" == sys.argv[pos]:
+            sys_par[par_name] = par_val
+        else:
+            return sys_par,("unknow param %s\n" %sys.argv[pos])+format_str
+        pos = pos+2
+    return sys_par,""
+
+
 #函数功能：主函数
 #函数参数：可执行文件全路径，启动时加入的参数
 #函数返回：执行成功返回0，否则返回负值的错误码
 if __name__ == "__main__":
-    #获取发行版本
+    #获取发行版本     
     szOSName = maker_public.getOSName()
-    if 2<len(sys.argv) and "config_IP"==sys.argv[1]:
-        if "config_IP"==sys.argv[1]:
-            if "centos" == szOSName:
-                szErr = centosenv_maker.InitInternalNet()
-            elif "ubuntu" == szOSName:
-                szErr = ubuntuenv_maker.InitInternalNet()
-            else:
-                szErr = "Invaild OS"
-        else:
-            szErr = "Invaild operation" 
-    elif 2<len(sys.argv) and -1!=str(sys.argv[1]).find("config_DPDK"):
-        #这部分代码被舍弃掉的原因是，可以使用af护着pcap驱动启动DPDK，
-        # 所以不需要判断是否具备运行DPDK的环境
-        #first_ver,second_ver,_ = maker_public.get_kernel_ver()
-        #if ""==maker_public.execCmdAndGetOutput("lspci") and (None==first_ver or \
-        #    first_ver<4 or (first_ver==4 and second_ver<18)):
-        #    szErr = "Invaild virture machine"
-        #else:
+    #解析参数
+    sys_par,szErr = parse_argv(szOSName)
+    if "" != szErr:
+        print(szErr)
+        exit(-1)
+    #执行
+    if "config_IP"==sys_par["work_mod"]:
         if "centos" == szOSName:
-            szErr = centosenv_maker.ConfigDPDK(sys.argv[1], sys.argv[2])
-        elif "ubuntu" == szOSName or "ubuntu-wsl2"==szOSName:
-            szErr = ubuntuenv_maker.ConfigDPDK(sys.argv[1], sys.argv[2])
+            szErr = centosenv_maker.InitInternalNet(sys_par["ip"])
+        elif "ubuntu" == szOSName:
+            szErr = ubuntuenv_maker.InitInternalNet(sys_par["ip"])
         else:
             szErr = "Invaild OS"
-    elif 1<len(sys.argv) and None==re.match("^\\d+\\.\\d+\\.\\d+\\.\\d+$",
-        sys.argv[1]):
-        szErr = "osenv_maker: null|config_IP [xx.xx.xx.xx]|"\
-            "config_DPDK [install/uninstall]|config_DPDK-meson [install/uninstall]"
     else:
         if "centos" == szOSName:
-            szErr = centosenv_maker.InitEnv()
+            szErr = centosenv_maker.InitEnv(sys_par)
         elif "ubuntu"==szOSName or "ubuntu-wsl2"==szOSName:
-            szErr = ubuntuenv_maker.InitEnv()
+            szErr = ubuntuenv_maker.InitEnv(sys_par)
         else:
             szErr = "Invaild OS"
+    #处理返回
     if 0 < len(szErr):
         print(szErr)
         exit(-1)
-    elif 2<len(sys.argv) and "config_IP"==sys.argv[1]:
+    elif "config_IP"==sys_par["work_mod"]:
         print("Config IP finish")
-    elif 2<len(sys.argv) and -1!=str(sys.argv[1]).find("config_DPDK"):
-        print("Config DPDK finish")
     elif re.search("^2\\..*", sys.version):
         maker_public.do_reboot("make development environment of %s finish, "\
             "press any key to reboot..." %(szOSName))

@@ -183,7 +183,7 @@ def configGolang():
         if 0 < len(szErr):
             return szErr
         if None == re.search("\\nexport[ \\t]+GOPATH[ \\t]*=[ \\t]*\\/root/go", szConfig):
-            szConfig += "\nexport GOPATH=/root/go"
+            szConfig += "\nexport GOPATH=/usr/local/go/bin"
         if None == re.search("\\nexport[ \\t]+PATH[ \\t]*=[ \\t]*\\$PATH:\\$GOPATH/bin:/usr/local/go/bin", \
             szConfig):
             szConfig += "\nexport PATH=$PATH:$GOPATH/bin:/usr/local/go/bin"
@@ -486,8 +486,8 @@ def InitEnv():
 
 
 #InitInternalNet 初始化内部网络；参数：内部网络的IP地址；返回：错误描述
-def InitInternalNet():
-    szErr = configInternalNet("eth1", sys.argv[2])
+def InitInternalNet(ip_addr):
+    szErr = configInternalNet("eth1", ip_addr)
     if 0 < len(szErr):
         return("Config IP failed:%s" %(szErr))
     #

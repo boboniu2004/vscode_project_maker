@@ -10,6 +10,12 @@
             "request": "launch",
             "program": "${workspaceFolder}/osenv_maker.py",
             "args": [
+                "--work_mod","online",
+                "--deb_src","http://mirrors.aliyun.com/ubuntu",
+                "--py_src","mirrors.aliyun.com","http://mirrors.aliyun.com/pypi/simple",
+                "--go_proxy","https://proxy.golang.com.cn",
+                "--git_proxy","ghproxy.com",
+                "--ip","192.168.137.102",
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"
