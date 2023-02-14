@@ -220,8 +220,26 @@ def configGolang(go_proxy):
     szErr = installOrUpdateRpm("golang", platform.machine(), "")
     if 0 < len(szErr):
         return szErr
+    #设置环境变量
+    go_path = "/usr/local/go/gopath"
+    if False == os.path.exists(go_path):
+        os.system("mkdir -p %s" %go_path)
+    szConfig,szErr = maker_public.readTxtFile("/etc/profile")
+    if 0 < len(szErr):
+        return szErr
+    if None == re.search("\\nexport[ \\t]+GOPATH[ \\t]*=.*", szConfig):
+        szConfig += ("\nexport GOPATH=%s" %go_path)
+    else:
+        szConfig = re.sub("\\nexport[ \\t]+GOPATH[ \\t]*=.*", \
+            ("\nexport GOPATH=%s" %go_path),szConfig)
+    if None == re.search("\\nexport[ \\t]+PATH[ \\t]*=[ \\t]*\\$PATH:\\$GOPATH/bin", \
+        szConfig):
+        szConfig += "\nexport PATH=$PATH:$GOPATH/bin"
+    szErr = maker_public.writeTxtFile("/etc/profile", szConfig)
+    if 0 < len(szErr):
+        return szErr
     #安装工具
-    szErr = maker_public.installGolangTools("go",go_proxy,"/usr/local/go/gopath")
+    szErr = maker_public.installGolangTools("go",go_proxy,go_path)
     if 0 < len(szErr):
         return szErr
     #
@@ -386,6 +404,9 @@ def installHYPERSCAN():
 #InitEnv 初始化环境；参数：无；返回：错误描述
 def InitEnv(sys_par):
     par_dic = dict(sys_par)
+    configGolang(par_dic["go_proxy"])
+    configPython(par_dic["py_host"],par_dic["py_url"])
+    return ""
     #释放yum资源
     releaseYum()
     #安装扩展库

@@ -194,7 +194,7 @@ def configPip(szPython, szPip, py_host, py_url):
     if 0 != os.system("su -c \""+szPython+" -m pip install --upgrade pip \""):
         return "Update PIP failed"
     #安装pylint
-    if 0 != os.system("su -c \""+szPython+" -m pip install \"pylint \""):
+    if 0 != os.system("su -c \""+szPython+" -m pip install --upgrade pylint \""):
         return "Update Pylint failed"
     return ""
 
