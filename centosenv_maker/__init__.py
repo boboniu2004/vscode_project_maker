@@ -28,19 +28,13 @@ def GetCentosVer():
 #installOrUpdateRpm 检查rpm包的版本，并且尝试安装该包；参数：rpm包名称，机器版本；返回：错误描述
 def installOrUpdateRpm(szRpmName, szMacVer, szRpmPath):
     #获取RPM包的安装信息
+    tmpinf = maker_public.execCmdAndGetOutput("yum list installed | grep %s" %szRpmName)
     if "" != szMacVer:
-        szRpmInfo= maker_public.execCmdAndGetOutput(\
-            "yum list installed | grep -E \""+szRpmName+"."+szMacVer+"\"")
+        InstalledMatchList = re.match("(^|\\n)"+szRpmName+"\\."+szMacVer+\
+            "[\\s]{1,}([^\\s]{1,})[\\s]{1,}[^\\s]{1,}", tmpinf)
     else:
-        szRpmInfo= maker_public.execCmdAndGetOutput(\
-            "yum list installed | grep -E \"^"+szRpmName+"\"")
-    szRpmInfoArr = szRpmInfo.split("\n")
-    InstalledMatchList = None
-    for szCurRpm in szRpmInfoArr:
-        InstalledMatchList = re.match("^"+szRpmName+"\\."+szMacVer+\
-            "[\\s]{1,}([^\\s]{1,})[\\s]{1,}[^\\s]{1,}", szCurRpm)
-        if None != InstalledMatchList:
-            break
+        InstalledMatchList = re.match("(^|\\n)"+szRpmName+\
+            "[\\s]{1,}([^\\s]{1,})[\\s]{1,}[^\\s]{1,}", tmpinf)
     #如果没有安装则进行安装，否则就进行升级
     if None == InstalledMatchList:
         if 0 >= len(szRpmPath):
@@ -208,7 +202,10 @@ def configSshd():
 
 
 #configGit 配置GIT；参数：无；返回：错误描述
-def configGit():
+def configGitSvn():
+    err = installOrUpdateRpm("subversion", platform.machine(), "")
+    if 0 < len(err):
+        return err
     return installOrUpdateRpm("git", platform.machine(), "")
 
 
@@ -256,9 +253,10 @@ def configPython(py_host,py_url):
     szErr = maker_public.configPip("python3", "pip3", py_host, py_url)
     if 0 < len(szErr):
         return szErr
-    szErr = maker_public.configPip("python"+pyver, "pip3", py_host, py_url)
-    if 0 < len(szErr):
-        return szErr
+    if ""==cur_pyver or cur_pyver<pyver:
+        szErr = maker_public.configPip("python"+pyver, "pip3", py_host, py_url)
+        if 0 < len(szErr):
+            return szErr
     return ""
 
 
@@ -403,8 +401,8 @@ def InitEnv(sys_par):
         szErr = configSshd()
         if 0 < len(szErr):
             return("Config CentOS failed:%s" %(szErr))
-    #安装GIT
-    szErr = configGit()
+    #安装GIT和svn
+    szErr = configGitSvn()
     if 0 < len(szErr):
         return("Config CentOS failed:%s" %(szErr))
     #安装GCC
