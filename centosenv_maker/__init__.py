@@ -9,11 +9,31 @@ import sys
 import maker_public
 
 
+#GetCentosVer 获取centos版本；参数：版本，错误描述
+def GetCentosVer():
+    szCentOSVer = maker_public.execCmdAndGetOutput("rpm -q centos-release")
+    MatchList = re.match("^centos\\-release\\-([\\d]+)\\-[\\d]+\\.[\\d]+"+\
+        "\\.[\\d]+\\.[^\\.]+\\.centos\\.[^\\.^\\s]+$", szCentOSVer)
+    if None == MatchList:
+        szCentOSVer,sz_err = maker_public.readTxtFile("/etc/redhat-release")
+        if "" != sz_err:
+            return None,"can not read /etc/redhat-release"
+        MatchList = re.search("CentOS[ \\t]+Linux[ \\t]+release[ \\t]+(\\d+)\\.\\d+\\.\\d+", 
+            szCentOSVer)
+        if None == MatchList:
+            return None,("Unknow OS:%s" %szCentOSVer)
+    return MatchList.group(1),""
+
+
 #installOrUpdateRpm 检查rpm包的版本，并且尝试安装该包；参数：rpm包名称，机器版本；返回：错误描述
 def installOrUpdateRpm(szRpmName, szMacVer, szRpmPath):
     #获取RPM包的安装信息
-    szRpmInfo= maker_public.execCmdAndGetOutput(\
-        "yum list installed | grep -E \""+szRpmName+"."+szMacVer+"\"")
+    if "" != szMacVer:
+        szRpmInfo= maker_public.execCmdAndGetOutput(\
+            "yum list installed | grep -E \""+szRpmName+"."+szMacVer+"\"")
+    else:
+        szRpmInfo= maker_public.execCmdAndGetOutput(\
+            "yum list installed | grep -E \"^"+szRpmName+"\"")
     szRpmInfoArr = szRpmInfo.split("\n")
     InstalledMatchList = None
     for szCurRpm in szRpmInfoArr:
@@ -54,20 +74,12 @@ def releaseYum():
 #configRepo 配置扩展源；参数：无；返回：错误描述
 def configRepo():
     #获取centos版本
-    szCentOSVer = maker_public.execCmdAndGetOutput("rpm -q centos-release")
-    MatchList = re.match("^centos\\-release\\-([\\d]+)\\-[\\d]+\\.[\\d]+"+\
-        "\\.[\\d]+\\.[^\\.]+\\.centos\\.[^\\.^\\s]+$", szCentOSVer)
-    if None == MatchList:
-        szCentOSVer,sz_err = maker_public.readTxtFile("/etc/redhat-release")
-        if "" != sz_err:
-            return "can not read /etc/redhat-release"
-        MatchList = re.search("CentOS[ \\t]+Linux[ \\t]+release[ \\t]+(\\d+)\\.\\d+\\.\\d+", 
-            szCentOSVer)
-        if None == MatchList:
-            return ("Unknow OS:%s" %szCentOSVer)
+    osver,err = GetCentosVer()
+    if "" != err:
+        return err
     #更新基础源为阿里源rue
-    if "8" == MatchList.group(1):
-        os.system( ("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))) )
+    if "8" == osver:
+        os.system( ("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(osver)) )
         if True == os.path.exists("/etc/yum.repos.d/CentOS-Base.repo"):
             os.system("rm -Rf /etc/yum.repos.d/CentOS-Base.repo.bark")
             os.system("mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/"\
@@ -89,52 +101,52 @@ def configRepo():
             "/etc/yum.repos.d/CentOS-Linux-Plus.repo.bark")
         os.system("mv /etc/yum.repos.d/CentOS-Linux-PowerTools.repo "\
             "/etc/yum.repos.d/CentOS-Linux-PowerTools.repo.bark")
-        os.system( ("rm -Rf /etc/yum.repos.d/CentOS%s-Base-163.repo" %(MatchList.group(1))) )
+        os.system( ("rm -Rf /etc/yum.repos.d/CentOS%s-Base-163.repo" %(osver)) )
         #安装epel源
         os.system("yum erase -y epel-release.noarch")
         #szRpmPath = ("https://mirrors.aliyun.com/epel/epel-release-latest-%s.noarch.rpm" 
-        #    %(MatchList.group(1)))
+        #    %(osver))
         szErr = installOrUpdateRpm("epel-release", "noarch", "")
         if 0 < len(szErr):
             return "Install epel failed"
         #if 0 != os.system("sed -i 's|^[ \\t]*#[ \\t]*baseurl[ \\t]*=.*|"\
         #    "baseurl=https://mirrors.aliyun.com/epel/%s/Modular/SRPMS|' "\
         #    "/etc/yum.repos.d/epel* && "\
-        #    "sed -i 's|^metalink|#metalink|' /etc/yum.repos.d/epel*" %(MatchList.group(1))):
+        #    "sed -i 's|^metalink|#metalink|' /etc/yum.repos.d/epel*" %(osver)):
         #    return "Install epel failed"
     else:
-        os.system(("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(MatchList.group(1))))  
+        os.system(("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(osver)))  
         if False==os.path.exists( ("/etc/yum.repos.d/CentOS%s-Base-163.repo" \
-            %(MatchList.group(1))) ) and \
+            %(osver)) ) and \
             0!=os.system( ("wget -O /etc/yum.repos.d/CentOS%s-Base-163.repo "\
                 "http://mirrors.163.com/.help/CentOS%s-Base-163.repo" 
-                %(MatchList.group(1), MatchList.group(1))) ):
+                %(osver, osver)) ):
             os.system( ("rm -Rf /etc/yum.repos.d/CentOS%s-Base-163.repo" 
-                %(MatchList.group(1))) )
+                %(osver)) )
             os.system("mv /etc/yum.repos.d/CentOS-Base.repo.bark "\
                 "/etc/yum.repos.d/CentOS-Base.repo")
             return "Download aliyun.repo failed"    
         #安装epel源
         os.system("yum erase -y epel-release.noarch")
-        if False==os.path.exists( ("/etc/yum.repos.d/epel-%s.repo" %(MatchList.group(1))) ) or \
-            0==os.path.getsize( ("/etc/yum.repos.d/epel-%s.repo" %(MatchList.group(1))) ):
+        if False==os.path.exists( ("/etc/yum.repos.d/epel-%s.repo" %(osver)) ) or \
+            0==os.path.getsize( ("/etc/yum.repos.d/epel-%s.repo" %(osver)) ):
             if 0!=os.system( ("wget -O /etc/yum.repos.d/epel-%s.repo "\
                 "http://mirrors.aliyun.com/repo/epel-%s.repo" 
-                %(MatchList.group(1), MatchList.group(1))) ):
+                %(osver, osver)) ):
                 return "Download epel.repo failed"
     os.system("yum clean all; yum makecache")
     #安装WANGdisco
     cpuarch = platform.machine()
-    if "8" != MatchList.group(1):
+    if "8" != osver:
         szRpmPath = ("http://opensource.wandisco.com/centos/%s"\
             "/git/"+cpuarch+"/wandisco-git-release-%s-2.noarch.rpm" 
-            %(MatchList.group(1),MatchList.group(1)))
+            %(osver,osver))
         szErr = installOrUpdateRpm("wandisco-git-release", "noarch", szRpmPath)
         if 0 >= len(szErr):
             return ""
         szRpmPath = ("http://opensource.wandisco.com/centos/%s"\
             "/git/"+cpuarch+"/wandisco-git-release-%s-1.noarch.rpm" 
-            %(MatchList.group(1),MatchList.group(1)))
+            %(osver,osver))
         szErr = installOrUpdateRpm("wandisco-git-release", "noarch", szRpmPath)
         if 0 < len(szErr):
             return szErr
@@ -212,7 +224,7 @@ def configGolang(go_proxy):
     if 0 < len(szErr):
         return szErr
     #安装工具
-    szErr = maker_public.installGolangTools("go",go_proxy)
+    szErr = maker_public.installGolangTools("go",go_proxy,"/usr/local/go/gopath")
     if 0 < len(szErr):
         return szErr
     #
@@ -221,28 +233,30 @@ def configGolang(go_proxy):
 
 #configPython 配置PYTHON；参数：无；返回：错误描述
 def configPython(py_host,py_url):
-    pyver = maker_public.getVer("python")
-    installOrUpdateRpm("python3", "", "")
-    cur_ver = re.search("[pP]ython[ \\t]+(3\\.\d+)\\.\d+.*", 
+    pyver = maker_public.getVer("python-centos")
+    tmpinf = maker_public.execCmdAndGetOutput(\
+        "yum list installed | grep -E \"python3\"")
+    if None == re.search(("(^python3\\d+\\.)|(\\npython3\\d+\\.)"),tmpinf):
+        installOrUpdateRpm("python"+pyver.replace(".",""), platform.machine(), "")
+    match_lst = re.search("[pP]ython[ \\t]+(3\\.\d+)\\.\d+.*", 
         maker_public.execCmdAndGetOutput("python3 --version"))
-    if None == cur_ver:
-        return "No python3"
-    szErr = installOrUpdateRpm("python"+pyver, platform.machine(), "")
-    if 0 < len(szErr):
-        return szErr
-    if False == os.path.islink("/etc/alternatives/python3"):
-        return "No /etc/alternatives/python3"
-    pyver = re.sub("^3", "3.", pyver)
-    if False == os.path.isfile("/usr/bin/python"+pyver):
-        return "No /usr/bin/python"+pyver
-    if 0!=os.system("ln -snf /usr/bin/python"+pyver+" /etc/alternatives/python3"):
-        return "Can not link /etc/alternatives/python3"
+    if None == match_lst:
+        cur_pyver = ""
+    else:
+        cur_pyver = match_lst.group(1)
+    if ""==cur_pyver or cur_pyver<pyver:
+        szErr = installOrUpdateRpm("python"+pyver.replace(".",""), platform.machine(), "")
+        if 0 < len(szErr):
+            return szErr
     #
     szErr = installOrUpdateRpm("python3-pip", "noarch", "")
     if 0 < len(szErr):
         return szErr
     #配置PIP
-    szErr = maker_public.configPip("python3", "pip", py_host, py_url)
+    szErr = maker_public.configPip("python3", "pip3", py_host, py_url)
+    if 0 < len(szErr):
+        return szErr
+    szErr = maker_public.configPip("python"+pyver, "pip3", py_host, py_url)
     if 0 < len(szErr):
         return szErr
     return ""
@@ -413,9 +427,6 @@ def InitEnv(sys_par):
     if "online" == par_dic["work_mod"]:
         if 0 != os.system("systemctl set-default multi-user.target"):
             return("Config CentOS failed: can not disable GNOME")
-    #升级PIP
-    #if 0 != os.system("pip3 install --upgrade pip"):
-    #    return("Update PIP failed")
     #配置内部网络
     if "online" == par_dic["work_mod"]:
         szErr = configInternalNet("有线连接 1", "eth1", par_dic["ip"])

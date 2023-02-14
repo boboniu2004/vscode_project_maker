@@ -16,6 +16,8 @@
                 "--go_proxy","https://proxy.golang.com.cn",
                 "--git_proxy","ghproxy.com",
                 "--ip","192.168.137.102",
+                "--rpm_src","http://mirrors.aliyun.com/repo/Centos-vault-8.5.2111.repo",
+                "--epel_src","http://mirrors.aliyun.com/repo/epel-7.repo",
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"

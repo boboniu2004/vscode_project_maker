@@ -12,19 +12,20 @@ import time
 
 #存储了所有需要配置的版本信息，方便后续对脚本中用到的模块的版本进行管理
 g_verconfig = {
-    "python"     :  "38",
-    "java"       :  "11",
-    "ragel"      :  "6.10",
-    "f-stack"    :  "1.21",
-    "launch"     :  "0.2.0",
-    "task"       :  "2.0.0",
-    "prop"       :  "4",
-    "libunwind"  :  "1.6.2",
-    "gperftools" :  "2.9.1",
-    "go"         :  "1.16.12",
-    "vpp"        :  "20.09",
-    "x86_64-hs"  :  "5.4.0",
-    "aarch64-hs" :  "5.3.0.aarch64"
+    "python-ubuntu"     :  "38",
+    "python-centos"     :  "3.8",
+    "java"              :  "11",
+    "ragel"             :  "6.10",
+    "f-stack"           :  "1.21",
+    "launch"            :  "0.2.0",
+    "task"              :  "2.0.0",
+    "prop"              :  "4",
+    "libunwind"         :  "1.6.2",
+    "gperftools"        :  "2.9.1",
+    "go"                :  "1.16.12",
+    "vpp"               :  "20.09",
+    "x86_64-hs"         :  "5.4.0",
+    "aarch64-hs"        :  "5.3.0.aarch64"
 }
 
 
@@ -106,11 +107,11 @@ def download_src(name, versufx, ver, url, vscode_project_maker, uncomp_path):
 #函数功能：安装golang工i具
 #函数参数：GO可执行程序位置
 #函数返回：错误描述
-def installGolangTools(szGo,go_proxy):
+def installGolangTools(szGo,go_proxy,go_path):
     tmformat = "%Y %m %d %H:%M:%S"
     curtime_str = time.strftime(tmformat, time.localtime(time.time()))
-    if True == os.path.isfile("/var/log/go_install_log"):
-        date_str,sz_err = readTxtFile("/var/log/go_install_log")
+    if True == os.path.isfile("%s/go_install_log" %go_path):
+        date_str,sz_err = readTxtFile("%s/go_install_log" %go_path)
         date_str = date_str.replace("\n", "")
         if "" != sz_err:
             return sz_err
@@ -127,6 +128,8 @@ def installGolangTools(szGo,go_proxy):
     if 0 != os.system("su -c \""+szGo+" env -w GO111MODULE=on\""):
         return "Set GO111MODULE=on failed"
     if 0 != os.system("su -c \"%s env -w GOPROXY=\\\"%s,direct\\\"\"" %(szGo,go_proxy)):
+        return "Set GOPROXY failed"
+    if 0 != os.system("su -c \"%s env -w GOPATH=\\\"%s\\\"\"" %(szGo,go_path)):
         return "Set GOPROXY failed"
     os.system("su -c \""+szGo+" env\"")
     #安装go-outline
@@ -171,7 +174,8 @@ def installGolangTools(szGo,go_proxy):
     #安装godoctor
     os.system("su -c \"%s install github.com/godoctor/godoctor@latest\"" %(szGo))
     #
-    os.system("rm -rf /var/log/go_install_log && echo \""+curtime_str+"\" > /var/log/go_install_log")
+    os.system("rm -rf %s/go_install_log && echo \"%s\" > %s/go_install_log" \
+        %(go_path,curtime_str,go_path))
     return ""
     
 
@@ -184,13 +188,13 @@ def configPip(szPython, szPip, py_host, py_url):
         return "Add PIP source failed"
     os.system("su -c \"rm -rf ~/.pip/pip.conf\"")
     if 0 != os.system("su -c \" echo \\\"[global]\ntimeout = 6000\nindex-url = "\
-        "%s\ntrusted-host = %s\\\" >> ~/.pip/pip.conf\"" %(py_host,py_url)):
+        "%s\ntrusted-host = %s\\\" >> ~/.pip/pip.conf\"" %(py_url,py_host)):
         return "Failed to writr pip.conf"
     #升级PIP
-    if 0 != os.system("su -c \""+szPip+" install --upgrade pip\""):
+    if 0 != os.system("su -c \""+szPython+" -m pip install --upgrade pip \""):
         return "Update PIP failed"
     #安装pylint
-    if 0 != os.system("su -c \""+szPython+" -m pip install -U \\\"pylint\\\" --user\""):
+    if 0 != os.system("su -c \""+szPython+" -m pip install \"pylint \""):
         return "Update Pylint failed"
     return ""
 

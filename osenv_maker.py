@@ -15,6 +15,8 @@ def get_format_str():
             "            --work_mod [mod]        工作模式，online|offline|config_IP。默认是online\n"\
             "            --ip [192.168.137.xx]   在线模式下第二块网卡的IP地址，默认为192.168.137网段。\n"\
             "            --deb_src [url]         deb源(如ghproxy.com)，默认为http://mirrors.aliyun.com/ubuntu。\n"\
+            "            --rpm_src [url]         rpm源(如ghproxy.com)，默认根据centos版本选定。\n"\
+            "            --epel_src [url]        epel源(如ghproxy.com)，默认根据centos版本选定。\n"\
             "            --py_src [host] [url]   python源(如ghproxy.com)，默认为host=mirrors.aliyun.com url=http://mirrors.aliyun.com/pypi/simple。\n"\
             "            --go_proxy [url]        go的代理(如ghproxy.com)，默认为https://proxy.golang.com.cn。\n"\
             "            --git_proxy [url]       github的代理(如ghproxy.com)，默认为空。\n"
@@ -33,6 +35,15 @@ def parse_argv(szOSName):
         sys_par["ip"] = "192.168.137.102"
     else:
         sys_par["ip"] = "192.168.137.101"
+        centver,err = centosenv_maker.GetCentosVer()
+        if "" != err:
+            return sys_par,err
+        if "8" == centver:
+            sys_par["rpm_src"] = "http://mirrors.aliyun.com/repo/Centos-vault-8.5.2111.repo"
+        else:
+            sys_par["rpm_src"] = ("http://mirrors.163.com/.help/CentOS%s-Base-163.repo" %centver)
+            sys_par["epel_src"] = ("http://mirrors.aliyun.com/repo/epel-%s.repo" %centver)
+
     format_str = get_format_str()
     #循环解析参数
     pos = 1
@@ -61,6 +72,10 @@ def parse_argv(szOSName):
         elif "--go_proxy" == sys.argv[pos]:
             sys_par[par_name] = par_val
         elif "--git_proxy" == sys.argv[pos]:
+            sys_par[par_name] = par_val
+        elif "--rpm_src" == sys.argv[pos]:
+            sys_par[par_name] = par_val
+        elif "--epel_src" == sys.argv[pos]:
             sys_par[par_name] = par_val
         else:
             return sys_par,("unknow param %s\n" %sys.argv[pos])+format_str
