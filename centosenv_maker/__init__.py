@@ -383,7 +383,7 @@ def installHYPERSCAN():
     return maker_public.buildHYPERSCAN()
 
 
-#InitEnv 初始化环境；参数：无；返回：错误描述
+#InitEnv 初始化环境；参数：参数字典；返回：错误描述
 def InitEnv(sys_par):
     par_dic = dict(sys_par)
     #释放yum资源

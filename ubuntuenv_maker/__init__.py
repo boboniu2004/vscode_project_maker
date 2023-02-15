@@ -87,7 +87,7 @@ def openRoot():
 
 
 #configDebSource配置扩展源；参数：os类型；返回：错误描述
-def configDebSource(szOSName):
+def configDebSource(szOSName, deb_src):
     if "ubuntu" == szOSName:
         #获取Ubuntu的版本名称
         CodeNameObj = re.match("^Codename[ \\t]*\\:[ \\t]*([\\S]+)", \
@@ -97,26 +97,20 @@ def configDebSource(szOSName):
         szCodeName = CodeNameObj.group(1)
         #安装阿里源
         szAptSource = \
-            "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-                " main restricted universe multiverse\n"\
-            "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-                "-security main restricted universe multiverse\n"\
-            "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-                "-updates main restricted universe multiverse\n"\
-            "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-                "-proposed main restricted universe multiverse\n"\
-            "deb http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-                "-backports main restricted universe multiverse\n"\
-            "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-                " main restricted universe multiverse\n"\
-            "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-                "-security main restricted universe multiverse\n"\
-            "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-                "-updates main restricted universe multiverse\n"\
-            "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-                "-proposed main restricted universe multiverse\n"\
-            "deb-src http://mirrors.aliyun.com/ubuntu/ "+szCodeName+\
-                "-backports main restricted universe multiverse\n"
+            ("deb %s %s main restricted universe multiverse\n"\
+            "deb %s %s-security main restricted universe multiverse\n"\
+            "deb %s %s-updates main restricted universe multiverse\n"\
+            "deb %s %s-proposed main restricted universe multiverse\n"\
+            "deb %s %s-backports main restricted universe multiverse\n"\
+            "deb-src %s %s main restricted universe multiverse\n"\
+            "deb-src %s %s-security main restricted universe multiverse\n"\
+            "deb-src %s %s-updates main restricted universe multiverse\n"\
+            "deb-src %s %s-proposed main restricted universe multiverse\n"\
+            "deb-src %s %s-backports main restricted universe multiverse\n" \
+            %(deb_src,szCodeName, deb_src,szCodeName, deb_src,szCodeName, \
+              deb_src,szCodeName, deb_src,szCodeName, \
+              deb_src,szCodeName, deb_src,szCodeName, deb_src,szCodeName, 
+              deb_src,szCodeName, deb_src,szCodeName))
         #
         szErr = maker_public.writeTxtFile("/etc/apt/sources.list", szAptSource)
         if 0 < len(szErr):
@@ -148,8 +142,8 @@ def updateSystem():
 
 
 #configGit 配置GIT；参数：无；返回：错误描述
-def configGit():
-    if 0 != os.system("apt-get -y install git"):
+def configGitSvn():
+    if 0 != os.system("apt-get -y install git subversion"):
         return "Install git failed"
     #
     return ""
@@ -175,23 +169,32 @@ def configGolang():
     if -1 == maker_public.execCmdAndGetOutput(\
         "su -c \"/usr/local/go/bin/go version\"").find("go"+gover):
         os.system("rm -Rf /usr/local/go")
-        os.system("rm -Rf /root/go")
         if 0 != os.system("tar -C /usr/local -zxvf ./go"+gover+".linux-"+gomac+".tar.gz"):
             return "Failed to uncompress go"+gover
         #设置环境变量
+        #设置环境变量
+        go_path = "/usr/local/go/gopath"
+        if False == os.path.exists(go_path):
+            os.system("mkdir -p %s" %go_path)
         szConfig,szErr = maker_public.readTxtFile("/etc/profile")
         if 0 < len(szErr):
             return szErr
-        if None == re.search("\\nexport[ \\t]+GOPATH[ \\t]*=[ \\t]*\\/root/go", szConfig):
-            szConfig += "\nexport GOPATH=/usr/local/go/bin"
-        if None == re.search("\\nexport[ \\t]+PATH[ \\t]*=[ \\t]*\\$PATH:\\$GOPATH/bin:/usr/local/go/bin", \
+        if None == re.search("\\nexport[ \\t]+GOPATH[ \\t]*=.*", szConfig):
+            szConfig += ("\nexport GOPATH=%s" %go_path)
+        else:
+            szConfig = re.sub("\\nexport[ \\t]+GOPATH[ \\t]*=.*", \
+                ("\nexport GOPATH=%s" %go_path),szConfig)
+        if None == re.search("\\nexport[ \\t]+PATH[ \\t]*=[ \\t]*\\$PATH:\\$GOPATH/bin.*", \
             szConfig):
             szConfig += "\nexport PATH=$PATH:$GOPATH/bin:/usr/local/go/bin"
+        else:
+            szConfig = re.sub("\\nexport[ \\t]+PATH[ \\t]*=[ \\t]*\\$PATH:\\$GOPATH/bin.*", \
+                "\nexport PATH=$PATH:$GOPATH/bin:/usr/local/go/bin",szConfig)
         szErr = maker_public.writeTxtFile("/etc/profile", szConfig)
         if 0 < len(szErr):
             return szErr
     #安装工具
-    szErr = maker_public.installGolangTools("/usr/local/go/bin/go")
+    szErr = maker_public.installGolangTools("/usr/local/go/bin/go", go_proxy,go_path)
     if 0 < len(szErr):
         return szErr
     #
@@ -199,7 +202,7 @@ def configGolang():
 
 
 #configPython 配置PYTHON；参数：OS版本；返回：错误描述
-def configPython(szOSName):
+def configPython(py_host, py_url):
     if 0 != os.system("apt-get -y install python3"):
         return "Install python3 failed"
     if 0 != os.system("apt-get -y install python3-pip"):
@@ -210,7 +213,6 @@ def configPython(szOSName):
         return szErr   
     #获取python版本
     pyver = maker_public.getVer("python")
-    pyver = re.sub("^3", "3.", pyver)
     match_lst = re.search("(\\d+\\.\\d+)\\.\\d+", \
         maker_public.execCmdAndGetOutput("python3 --version"))
     if None == match_lst:
@@ -220,20 +222,14 @@ def configPython(szOSName):
     if ""==cur_pyver or cur_pyver<pyver:
         if 0 != os.system("apt-get install -y python%s" %pyver):
             return ("Install python%s failed" %pyver)
-        if "ubuntu"==szOSName and \
-            0!=os.system("su -c \"python"+pyver+" -m pip install -U \\\"pylint\\\" --user\""):
-            return "Update Pylint failed"
-        #将两个版本都安装到update-alternatives中，并且切换到新的版本
-        if None != re.search("3\\.\\d+", cur_pyver):
-            os.system(\
-                "update-alternatives --install /usr/bin/python3 python3 "\
-                "/usr/bin/python"+cur_pyver+" 444 && "\
-                "update-alternatives --install /usr/bin/python3 python3 "\
-                "/usr/bin/python"+pyver+" 443 && "\
-                "update-alternatives --install /usr/bin/python3 python3 "\
-                "/usr/bin/python"+cur_pyver+" 2 && "\
-                "update-alternatives --install /usr/bin/python3 python3 "\
-                "/usr/bin/python"+pyver+" 1")
+    #配置PIP
+    szErr = maker_public.configPip("python3", "pip3", py_host, py_url)
+    if 0 < len(szErr):
+        return szErr
+    if ""==cur_pyver or cur_pyver<pyver:
+        szErr = maker_public.configPip("python"+pyver, "pip3", py_host, py_url)
+        if 0 < len(szErr):
+            return szErr
     return ""
 
 
@@ -417,18 +413,19 @@ def installHYPERSCAN():
     #安装 HYPERSCAN
     return maker_public.buildHYPERSCAN()
 
-#InitEnv 初始化环境；参数：无；返回：错误描述
-def InitEnv():
+#InitEnv 初始化环境；参数：参数字典；返回：错误描述
+def InitEnv(sys_par):
+    par_dic = dict(sys_par)
     szOSName = maker_public.getOSName()
     #释放apt资源
     releaseApt()
     #打开ROOT
-    if "ubuntu" == szOSName:
+    if "ubuntu" == szOSName and "online" == par_dic["work_mod"]:
         szErr = openRoot()
         if 0 < len(szErr):
             return("Config Ubuntu failed:%s" %(szErr))
     #初始化源
-    szErr = configDebSource(szOSName)
+    szErr = configDebSource(szOSName, par_dic["deb_src"])
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #将系统升级到最新版本
@@ -436,12 +433,12 @@ def InitEnv():
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #配置SSHD
-    if "ubuntu" == szOSName:
+    if "ubuntu" == szOSName and "online" == par_dic["work_mod"]:
         szErr = configSshd()
         if 0 < len(szErr):
             return("Config Ubuntu failed:%s" %(szErr))
     #安装GIT
-    szErr = configGit()
+    szErr = configGitSvn()
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #安装GCC
@@ -449,11 +446,11 @@ def InitEnv():
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #安装GOLANG
-    szErr = configGolang()
+    szErr = configGolang(par_dic["go_proxy"])
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #安装PYTHON和PIP
-    szErr = configPython(szOSName)
+    szErr = configPython(par_dic["py_host"],par_dic["py_url"])
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #安装JAVA
@@ -465,19 +462,16 @@ def InitEnv():
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #关闭图形界面
-    if "ubuntu" == szOSName:
+    if "ubuntu" == szOSName and "online" == par_dic["work_mod"]:
         if 0 != os.system("systemctl set-default multi-user.target"):
             return("Config Ubuntu failed: can not disable GNOME")
-    #升级PIP
-    #if 0 != os.system("pip3 install --upgrade pip"):
-    #    return ("Update PIP3 failed")
     #配置内部网络
-    if "ubuntu" == szOSName:
+    if "ubuntu" == szOSName and "online" == par_dic["work_mod"]:
         if 1 < len(sys.argv):
             szErr = configInternalNet("eth1", sys.argv[1])
             if 0 < len(szErr):
                 return("Config CentOS failed:%s" %(szErr))
-    if "ubuntu-wsl2" == szOSName:
+    if "ubuntu-wsl2" == szOSName and "online" == par_dic["work_mod"]:
         szErr = configWSLmodules()
         if 0 < len(szErr):
             return("Config Ubuntu failed:%s" %(szErr))
