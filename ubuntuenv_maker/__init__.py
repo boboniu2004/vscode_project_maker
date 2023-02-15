@@ -463,10 +463,9 @@ def InitEnv(sys_par):
             return("Config Ubuntu failed: can not disable GNOME")
     #配置内部网络
     if "ubuntu" == szOSName and "online" == par_dic["work_mod"]:
-        if 1 < len(sys.argv):
-            szErr = configInternalNet("eth1", sys.argv[1])
-            if 0 < len(szErr):
-                return("Config CentOS failed:%s" %(szErr))
+        szErr = configInternalNet("eth1", par_dic["ip"])
+        if 0 < len(szErr):
+            return("Config CentOS failed:%s" %(szErr))
     if "ubuntu-wsl2" == szOSName and "online" == par_dic["work_mod"]:
         szErr = configWSLmodules()
         if 0 < len(szErr):
