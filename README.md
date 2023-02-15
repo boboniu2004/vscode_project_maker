@@ -94,6 +94,17 @@
 ### Ubuntu安装注意事项
 1 安装ubuntu18.04、ubuntu20.04时**强烈建议**关闭主机的网络连接，否则在下载deb包时会卡死。
 
+2 osenv_maker.py脚本可以帮助初始化centos或者ubuntu，其参数命令如下：
+
+        osenv_maker:    [--work_mod|--deb_src|--go_proxy|--git_proxy]
+            --work_mod [mod]        工作模式，online|offline|config_IP。默认是online
+            --ip [192.168.137.xx]   在线模式下第二块网卡的IP地址，hyper-v默认为192.168.137.xx；virtualbox默认为192.168.56.xx网段。
+            --deb_src [url]         deb源，默认为http://mirrors.aliyun.com/ubuntu
+            --rpm_src [url]         rpm源，centos7下默认为http://mirrors.163.com/.help/CentOS%s-Base-163.repo；centos8下默认为http://mirrors.aliyun.com/repo/Centos-vault-8.5.2111.repo。
+            --epel_src [url]        epel源，只在centos7生效，默认http://mirrors.aliyun.com/repo/epel-7.repo。
+            --go_proxy [url]        go的代理，默认为https://proxy.golang.com.cn。
+            --git_proxy [url]       github的代理(如ghproxy.com)，默认为空。
+
 ### 设置centos7开发环境
 以root账号进入系统，打开终端，运行一下命令：
 
@@ -101,13 +112,9 @@
         wget https://github.com/boboniu2004/vscode_project_maker/archive/refs/heads/master.zip -O ./vscode_project_maker.zip
         unzip ./vscode_project_maker.zip
         cd ./vscode_project_maker-master
+        python osenv_maker.py --ip [192.168.137.xx|192.168.56.xx]。
 
-    在hyper-v环境下：
-        python osenv_maker.py 192.168.137.xx/24
-    其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。
-    在virtualbox环境下：
-        python osenv_maker.py
-    系统会自动将第一张网卡设置为10.0.2.15/24，第二张网卡设置为192.168.56.xx/24。
+其中192.168.137.xx为和windows宿主机通信的地址，hyper-v下是192.168.137.0/24网段；virtualbox下是192.168.137.0/24网段。WSL虚拟机环境下 **--ip** 字段不生效。
 
 ### 设置centos8开发环境
 以root账号进入系统，打开终端，运行一下命令：
@@ -116,13 +123,9 @@
         wget https://github.com/boboniu2004/vscode_project_maker/archive/refs/heads/master.zip -O ./vscode_project_maker.zip
         unzip ./vscode_project_maker.zip
         cd ./vscode_project_maker-master
+        python3 osenv_maker.py --ip [192.168.137.xx|192.168.56.xx]。
 
-    在hyper-v环境下：
-        python3 osenv_maker.py 192.168.137.xx/24
-    其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。
-    在virtualbox环境下：
-        python3 osenv_maker.py
-    系统会自动将第一张网卡设置为10.0.2.15/24，第二张网卡设置为192.168.56.xx/24。
+其中192.168.137.xx为和windows宿主机通信的地址，hyper-v下是192.168.137.0/24网段；virtualbox下是192.168.137.0/24网段。WSL虚拟机环境下 **--ip** 字段不生效。
 
 **注意：WSL不支持centos7和centos8**。
 
@@ -134,13 +137,9 @@ ubuntu安装时默认不开启root账号，所以只能已普通账号进入系�
         wget https://github.com/boboniu2004/vscode_project_maker/archive/refs/heads/master.zip -O ./vscode_project_maker.zip
         unzip ./vscode_project_maker.zip
         cd ./vscode_project_maker-master
+        python3 osenv_maker.py --ip [192.168.137.xx|192.168.56.xx]。
 
-    在hyper-v/wsl环境下：
-        python3 osenv_maker.py 192.168.137.xx/24
-    其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。在wsl模式下，运行完脚本后不会重启，此时需要在windows10 arm64/windows11 arm64下已管理员权限运行.ssh中的restartwsl2.bat来使设置生效。
-    在virtualbox环境下：
-        python3 osenv_maker.py
-    系统会自动将第一张网卡设置为10.0.2.15/24，第二张网卡设置为192.168.56.xx/24。
+其中192.168.137.xx为和windows宿主机通信的地址，hyper-v下是192.168.137.0/24网段；virtualbox下是192.168.137.0/24网段。WSL虚拟机环境下 **--ip** 字段不生效。
 
 安装脚本会自动升级系统到最新版；系统安装配置GCC，PYTHON，JAVA，GO，GIT，SSHD等软件；配置网络；关闭图形界面；还会给ubuntu系统开启root账号并设置密码。**注意：因为网络原因，在安装GO和GIT时可能会因为网络问题而失败，此时只需要多试几次即可**。安装完毕重启系统后即可用字符界面登录(**注意：hyper-v环境下ubuntu20.04系统在重启时可能会停顿在hyper-v界面，此时只需要等待一端时间，然后按组合键Ctrl+Alt+F1就可以进入登录界面**)。![init_linux](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/init_linux.jpg)
 
@@ -180,18 +179,11 @@ wsl虚拟机Ubuntu[18.04|20.04]就会被备份到D:\bark\ubuntu[1804|2004].tar�
 会将虚拟机Ubuntu[18.04|20.04]还原到D:\WSL\ubuntu[1804|2004]中。
 
 # 配置网络
-在hyper-v环境下，可能需要对第二块内部网卡独立配置IP，此时可以在vscode_project_maker目录下运行如下命令：
+在hyper-v和virtualbox环境下，可能需要对第二块内部网卡独立配置IP，此时可以在vscode_project_maker目录下运行如下命令：
 
-        python3 osenv_maker.py config_IP 192.168.137.xx/24
+        python3|python osenv_maker.py --work_mod config_IP --ip [192.168.137.xx|192.168.56.xx]
         
-其中的IP地址为和windows 10主机通信的地址，必须是192.168.137.0/24网段。
-
-# 配置DPDK和hyperscan
-在virtualbox环境下、或者hyper-v环境下的centos8/Ubuntu[18.04|20.04]系统，如果网卡支持DPDK，则可以安装DPDK开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
-
-        python3 osenv_maker.py config_DPDK install/uninstall
-
-其中的install为安装DPDK环境到/usr/local/dpdk中去，uninstall为卸载/usr/local/dpdk目录。默认会配置256个2M大小的巨页；驱动放置在/usr/local/dpdk/kernel下。该命令同时还会安装/卸载hyperscan。
+其中192.168.137.xx为和windows宿主机通信的地址，hyper-v下是192.168.137.0/24网段；virtualbox下是192.168.137.0/24网段。
 
 # 新建工程
 目前可以通过vscode_project_maker创建c、c++、python、java、golang开发工程。可以在vscode_project_maker目录下运行如下命令创建：
@@ -204,6 +196,14 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 ![vscode_open_folder_1](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/vscode_open_folder_1.jpg) ![vscode_open_folder_2](https://github.com/boboniu2004/vscode_project_maker/blob/master/picture/vscode_open_folder_2.jpg)
 
 # 编译调试工程
+
+
+# 配置DPDK和hyperscan
+在virtualbox环境下、或者hyper-v环境下的centos8/Ubuntu[18.04|20.04]系统，可以安装DPDK开发环境。在vscode_project_maker目录下运行如下命令：
+
+        python3 osenv_maker.py config_DPDK install/uninstall
+
+其中的install为安装DPDK环境到/usr/local/dpdk中去，uninstall为卸载/usr/local/dpdk目录。默认会配置256个2M大小的巨页；驱动放置在/usr/local/dpdk/kernel下。该命令同时还会安装/卸载hyperscan。
 
 # 创建f-stack开发环境
 在virtualbox环境下、或者hyper-v环境下的centos8/Ubuntu[18.04|20.04]系统，如果网卡支持DPDK，且已经正确安装了DPDK到/usr/local/dpdk下，则可以配置f-stack开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：

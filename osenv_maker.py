@@ -13,18 +13,19 @@ import ubuntuenv_maker
 def get_format_str():
         format_str = "osenv_maker:    [--work_mod|--deb_src|--go_proxy|--git_proxy]\n"\
             "            --work_mod [mod]        工作模式，online|offline|config_IP。默认是online\n"\
-            "            --ip [192.168.137.xx]   在线模式下第二块网卡的IP地址，默认为192.168.137网段。\n"\
-            "            --deb_src [url]         deb源(如ghproxy.com)，默认为http://mirrors.aliyun.com/ubuntu。\n"\
-            "            --rpm_src [url]         rpm源(如ghproxy.com)，默认根据centos版本选定。\n"\
-            "            --epel_src [url]        epel源(如ghproxy.com)，默认根据centos版本选定。\n"\
-            "            --py_src [host] [url]   python源(如ghproxy.com)，默认为host=mirrors.aliyun.com url=http://mirrors.aliyun.com/pypi/simple。\n"\
-            "            --go_proxy [url]        go的代理(如ghproxy.com)，默认为https://proxy.golang.com.cn。\n"\
+            "            --ip [192.168.137.xx]   在线模式下第二块网卡的IP地址，hyper-v默认为192.168.137.xx；virtualbox默认为192.168.56.xx网段。\n"\
+            "            --deb_src [url]         deb源，默认为http://mirrors.aliyun.com/ubuntu。\n"\
+            "            --rpm_src [url]         rpm源，centos7下默认为http://mirrors.163.com/.help/CentOS%s-Base-163.repo；centos8下默认为http://mirrors.aliyun.com/repo/Centos-vault-8.5.2111.repo。\n"\
+            "            --epel_src [url]        epel源，只在centos7生效，默认http://mirrors.aliyun.com/repo/epel-7.repo。\n"\
+            "            --py_src [host] [url]   python源，默认为host=mirrors.aliyun.com url=http://mirrors.aliyun.com/pypi/simple。\n"\
+            "            --go_proxy [url]        go的代理，默认为https://proxy.golang.com.cn。\n"\
             "            --git_proxy [url]       github的代理(如ghproxy.com)，默认为空。\n"
         return format_str
 
 
 #功能：解析参数；参数：无；返回：参数、错误描述
 def parse_argv(szOSName):
+    lspci = maker_public.execCmdAndGetOutput("lspci")
     sys_par = {"work_mod":"online",\
         "deb_src":"http://mirrors.aliyun.com/ubuntu",\
         "py_host":"mirrors.aliyun.com",\
@@ -32,9 +33,15 @@ def parse_argv(szOSName):
         "go_proxy":"https://proxy.golang.com.cn",\
         "git_proxy":""}
     if "ubuntu"==szOSName or "ubuntu-wsl2"==szOSName:
-        sys_par["ip"] = "192.168.137.102"
+        if "" == lspci:
+            sys_par["ip"] = "192.168.137.102"
+        else:
+            sys_par["ip"] = "192.168.56.102"
     else:
-        sys_par["ip"] = "192.168.137.101"
+        if "" == lspci:
+            sys_par["ip"] = "192.168.137.101"
+        else:
+            sys_par["ip"] = "192.168.56.101"
         centver,err = centosenv_maker.GetCentosVer()
         if "" != err:
             return sys_par,err

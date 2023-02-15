@@ -279,6 +279,7 @@ def configJava():
 
 #configInternalNet 配置内部网络；参数：内部网卡的中英文名称，szIpAddr本机的IP地址；返回：错误描述
 def configInternalNet(szEthChName, szEthEnName, szIpAddr):
+    net_prefx = re.sub("\\.\\d+$", "", szIpAddr)
     #获取设备对应的UUID
     szDevConf = maker_public.execCmdAndGetOutput("nmcli con")
     MatchList = re.match(".*"+szEthChName+"[ \\t]+([\\S]+)[ \\t]+[\\S]+[ \\t]+.*", \
@@ -306,8 +307,8 @@ def configInternalNet(szEthChName, szEthEnName, szIpAddr):
         "ONBOOT=\"yes\"\n"+\
         "IPADDR="+szIpAddr+"\n"+\
         "NETMASK=255.255.255.0\n"+\
-        "GATEWAY=192.168.137.1\n"+\
-        "DNS1=192.168.137.1\n"
+        "GATEWAY="+net_prefx+".1\n"+\
+        "DNS1="+net_prefx+".1\n"
     #写入配置
     szErr = maker_public.writeTxtFile("/etc/sysconfig/network-scripts/ifcfg-"+szEthEnName, szConfig)
     if 0 < len(szErr):

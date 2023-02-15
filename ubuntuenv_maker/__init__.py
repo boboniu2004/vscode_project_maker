@@ -276,6 +276,7 @@ def configSshd():
 
 #configInternalNet 配置内部网络；参数：内部网卡的名称，szIpAddr本机的IP地址；返回：错误描述
 def configInternalNet(szEthEnName, szIpAddr):
+    net_prefx = re.sub("\\.\\d+$", "", szIpAddr)
     if os.path.isfile("/etc/netplan/01-network-manager-all.yaml"):
         szConfig = \
             "# Let NetworkManager manage all devices on this system\n"+\
@@ -286,9 +287,9 @@ def configInternalNet(szEthEnName, szIpAddr):
             "    "+szEthEnName+":\n"\
             "      addresses: ["+szIpAddr+"/24]\n"\
             "      dhcp4: no\n"\
-            "      gateway4: 192.168.137.1\n"\
+            "      gateway4: "+net_prefx+".1\n"\
             "      nameservers:\n"\
-            "        addresses: [192.168.137.1]"
+            "        addresses: ["+net_prefx+".1]"
         #写入配置
         szErr = maker_public.writeTxtFile("/etc/netplan/01-network-manager-all.yaml", szConfig)
         if 0 < len(szErr):
