@@ -12,8 +12,7 @@ import time
 
 #存储了所有需要配置的版本信息，方便后续对脚本中用到的模块的版本进行管理
 g_verconfig = {
-    "python-ubuntu"     :  "38",
-    "python-centos"     :  "3.8",
+    "python"            :  "3.8",
     "java"              :  "11",
     "ragel"             :  "6.10",
     "f-stack"           :  "1.21",

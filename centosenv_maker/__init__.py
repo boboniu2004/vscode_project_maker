@@ -65,25 +65,24 @@ def releaseYum():
         os.system("kill -9 "+szOtherProc)
     os.system("rm -rf /var/run/yum.pid")
 
-#configRepo 配置扩展源；参数：无；返回：错误描述
-def configRepo():
+#configRepo 配置扩展源；参数：软件源；返回：错误描述
+def configRepo(rpm_src, epel_src):
     #获取centos版本
     osver,err = GetCentosVer()
     if "" != err:
         return err
-    #更新基础源为阿里源rue
+    #更新基础源
+    os.system( ("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(osver)) )
+    if True == os.path.exists("/etc/yum.repos.d/CentOS-Base.repo"):
+        os.system("rm -Rf /etc/yum.repos.d/CentOS-Base.repo.bark")
+        os.system("mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/"\
+            "CentOS-Base.repo.bark")
+    if 0!=os.system( "wget -O /etc/yum.repos.d/CentOS-Base.repo %s" %rpm_src):
+        os.system("rm -Rf /etc/yum.repos.d/CentOS-Base.repo")
+        os.system("mv /etc/yum.repos.d/CentOS-Base.repo.bark "\
+            "/etc/yum.repos.d/CentOS-Base.repo")
+        return ("Download %s failed" %rpm_src)
     if "8" == osver:
-        os.system( ("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(osver)) )
-        if True == os.path.exists("/etc/yum.repos.d/CentOS-Base.repo"):
-            os.system("rm -Rf /etc/yum.repos.d/CentOS-Base.repo.bark")
-            os.system("mv /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/"\
-                "CentOS-Base.repo.bark")
-        if 0!=os.system( "wget -O /etc/yum.repos.d/CentOS-Base.repo "\
-                "http://mirrors.aliyun.com/repo/Centos-vault-8.5.2111.repo"):
-            os.system("rm -Rf /etc/yum.repos.d/CentOS-Base.repo")
-            os.system("mv /etc/yum.repos.d/CentOS-Base.repo.bark "\
-                "/etc/yum.repos.d/CentOS-Base.repo")
-            return "Download aliyun.repo failed"
         #删除不要的源
         os.system("mv /etc/yum.repos.d/CentOS-Linux-AppStream.repo "\
             "/etc/yum.repos.d/CentOS-Linux-AppStream.repo.bark")
@@ -98,35 +97,18 @@ def configRepo():
         os.system( ("rm -Rf /etc/yum.repos.d/CentOS%s-Base-163.repo" %(osver)) )
         #安装epel源
         os.system("yum erase -y epel-release.noarch")
-        #szRpmPath = ("https://mirrors.aliyun.com/epel/epel-release-latest-%s.noarch.rpm" 
-        #    %(osver))
         szErr = installOrUpdateRpm("epel-release", "noarch", "")
         if 0 < len(szErr):
             return "Install epel failed"
-        #if 0 != os.system("sed -i 's|^[ \\t]*#[ \\t]*baseurl[ \\t]*=.*|"\
-        #    "baseurl=https://mirrors.aliyun.com/epel/%s/Modular/SRPMS|' "\
-        #    "/etc/yum.repos.d/epel* && "\
-        #    "sed -i 's|^metalink|#metalink|' /etc/yum.repos.d/epel*" %(osver)):
-        #    return "Install epel failed"
     else:
-        os.system(("rm -Rf /etc/yum.repos.d/Centos-%s.repo" %(osver)))  
-        if False==os.path.exists( ("/etc/yum.repos.d/CentOS%s-Base-163.repo" \
-            %(osver)) ) and \
-            0!=os.system( ("wget -O /etc/yum.repos.d/CentOS%s-Base-163.repo "\
-                "http://mirrors.163.com/.help/CentOS%s-Base-163.repo" 
-                %(osver, osver)) ):
-            os.system( ("rm -Rf /etc/yum.repos.d/CentOS%s-Base-163.repo" 
-                %(osver)) )
-            os.system("mv /etc/yum.repos.d/CentOS-Base.repo.bark "\
-                "/etc/yum.repos.d/CentOS-Base.repo")
-            return "Download aliyun.repo failed"    
+        #删除不要的源
+        os.system( ("rm -Rf /etc/yum.repos.d/CentOS%s-Base-163.repo" %(osver)) )  
         #安装epel源
         os.system("yum erase -y epel-release.noarch")
         if False==os.path.exists( ("/etc/yum.repos.d/epel-%s.repo" %(osver)) ) or \
             0==os.path.getsize( ("/etc/yum.repos.d/epel-%s.repo" %(osver)) ):
-            if 0!=os.system( ("wget -O /etc/yum.repos.d/epel-%s.repo "\
-                "http://mirrors.aliyun.com/repo/epel-%s.repo" 
-                %(osver, osver)) ):
+            if 0!=os.system( ("wget -O /etc/yum.repos.d/epel-%s.repo %s" \
+                %(osver, epel_src)) ):
                 return "Download epel.repo failed"
     os.system("yum clean all; yum makecache")
     #安装WANGdisco
@@ -248,7 +230,7 @@ def configGolang(go_proxy):
 
 #configPython 配置PYTHON；参数：无；返回：错误描述
 def configPython(py_host,py_url):
-    pyver = maker_public.getVer("python-centos")
+    pyver = maker_public.getVer("python")
     tmpinf = maker_public.execCmdAndGetOutput(\
         "yum list installed | grep -E \"python3\"")
     if None == re.search(("(^python3\\d+\\.)|(\\npython3\\d+\\.)"),tmpinf):
@@ -407,7 +389,7 @@ def InitEnv(sys_par):
     #释放yum资源
     releaseYum()
     #安装扩展库
-    szErr = configRepo()
+    szErr = configRepo(par_dic["rpm_src"],par_dic["epel_src"])
     if 0 < len(szErr):
         return("Config CentOS failed:%s" %(szErr))
     #将系统升级到最新版本
