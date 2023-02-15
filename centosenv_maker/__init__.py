@@ -404,9 +404,6 @@ def installHYPERSCAN():
 #InitEnv 初始化环境；参数：无；返回：错误描述
 def InitEnv(sys_par):
     par_dic = dict(sys_par)
-    configGolang(par_dic["go_proxy"])
-    configPython(par_dic["py_host"],par_dic["py_url"])
-    return ""
     #释放yum资源
     releaseYum()
     #安装扩展库
