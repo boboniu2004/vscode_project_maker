@@ -157,7 +157,7 @@ def configGcc():
 
 
 #configGolang配置GOLANG；参数：无；返回：错误描述
-def configGolang():
+def configGolang(go_proxy):
     gover = maker_public.getVer("go")
     gomac = "amd64"
     if "" != maker_public.execCmdAndGetOutput("lscpu | grep -E \"aarch64\""):
@@ -171,28 +171,28 @@ def configGolang():
         os.system("rm -Rf /usr/local/go")
         if 0 != os.system("tar -C /usr/local -zxvf ./go"+gover+".linux-"+gomac+".tar.gz"):
             return "Failed to uncompress go"+gover
-        #设置环境变量
-        #设置环境变量
-        go_path = "/usr/local/go/gopath"
-        if False == os.path.exists(go_path):
-            os.system("mkdir -p %s" %go_path)
-        szConfig,szErr = maker_public.readTxtFile("/etc/profile")
-        if 0 < len(szErr):
-            return szErr
-        if None == re.search("\\nexport[ \\t]+GOPATH[ \\t]*=.*", szConfig):
-            szConfig += ("\nexport GOPATH=%s" %go_path)
-        else:
-            szConfig = re.sub("\\nexport[ \\t]+GOPATH[ \\t]*=.*", \
-                ("\nexport GOPATH=%s" %go_path),szConfig)
-        if None == re.search("\\nexport[ \\t]+PATH[ \\t]*=[ \\t]*\\$PATH:\\$GOPATH/bin.*", \
-            szConfig):
-            szConfig += "\nexport PATH=$PATH:$GOPATH/bin:/usr/local/go/bin"
-        else:
-            szConfig = re.sub("\\nexport[ \\t]+PATH[ \\t]*=[ \\t]*\\$PATH:\\$GOPATH/bin.*", \
-                "\nexport PATH=$PATH:$GOPATH/bin:/usr/local/go/bin",szConfig)
-        szErr = maker_public.writeTxtFile("/etc/profile", szConfig)
-        if 0 < len(szErr):
-            return szErr
+    #设置环境变量
+    go_path = "/usr/local/go/gopath"
+    if False == os.path.exists(go_path):
+        os.system("mkdir -p %s" %go_path)
+    os.system("rm -rf ~/go")
+    szConfig,szErr = maker_public.readTxtFile("/etc/profile")
+    if 0 < len(szErr):
+        return szErr
+    if None == re.search("\\nexport[ \\t]+GOPATH[ \\t]*=.*", szConfig):
+        szConfig += ("\nexport GOPATH=%s" %go_path)
+    else:
+        szConfig = re.sub("\\nexport[ \\t]+GOPATH[ \\t]*=.*", \
+            ("\nexport GOPATH=%s" %go_path),szConfig)
+    if None == re.search("\\nexport[ \\t]+PATH[ \\t]*=[ \\t]*\\$PATH:\\$GOPATH/bin.*", \
+        szConfig):
+        szConfig += "\nexport PATH=$PATH:$GOPATH/bin:/usr/local/go/bin"
+    else:
+        szConfig = re.sub("\\nexport[ \\t]+PATH[ \\t]*=[ \\t]*\\$PATH:\\$GOPATH/bin.*", \
+            "\nexport PATH=$PATH:$GOPATH/bin:/usr/local/go/bin",szConfig)
+    szErr = maker_public.writeTxtFile("/etc/profile", szConfig)
+    if 0 < len(szErr):
+        return szErr
     #安装工具
     szErr = maker_public.installGolangTools("/usr/local/go/bin/go", go_proxy,go_path)
     if 0 < len(szErr):
@@ -207,10 +207,6 @@ def configPython(py_host, py_url):
         return "Install python3 failed"
     if 0 != os.system("apt-get -y install python3-pip"):
         return "Install  python3-pip failed"
-    #配置PIP
-    szErr = maker_public.configPip("python3", "pip3")
-    if 0 < len(szErr):
-        return szErr   
     #获取python版本
     pyver = maker_public.getVer("python")
     match_lst = re.search("(\\d+\\.\\d+)\\.\\d+", \

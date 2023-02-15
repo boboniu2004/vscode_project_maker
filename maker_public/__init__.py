@@ -124,54 +124,54 @@ def installGolangTools(szGo,go_proxy,go_path):
     if time.localtime(time.time()-24*3600*31*3)<date:
         return ""
     #设置GO模块代理
-    if 0 != os.system("su -c \""+szGo+" env -w GO111MODULE=on\""):
+    if 0 != os.system("su -c \"source /etc/profile && "+szGo+" env -w GO111MODULE=on\""):
         return "Set GO111MODULE=on failed"
-    if 0 != os.system("su -c \"%s env -w GOPROXY=\\\"%s,direct\\\"\"" %(szGo,go_proxy)):
+    if 0 != os.system("su -c \"source /etc/profile &&  %s env -w GOPROXY=\\\"%s,direct\\\"\"" %(szGo,go_proxy)):
         return "Set GOPROXY failed"
-    if 0 != os.system("su -c \"%s env -w GOPATH=\\\"%s\\\"\"" %(szGo,go_path)):
+    if 0 != os.system("su -c \"source /etc/profile && %s env -w GOPATH=\\\"%s\\\"\"" %(szGo,go_path)):
         return "Set GOPROXY failed"
-    os.system("su -c \""+szGo+" env\"")
+    os.system("su -c \"source /etc/profile && "+szGo+" env\"")
     #安装go-outline
-    os.system("su -c \"%s install github.com/ramya-rao-a/go-outline@latest\"" %(szGo))
+    os.system("su -c \"source /etc/profile && %s install github.com/ramya-rao-a/go-outline@latest\"" %(szGo))
     #安装go-find-references
-    os.system("su -c \"%s install github.com/lukehoban/go-find-references@latest\"" %(szGo))
+    os.system("su -c \"source /etc/profile && %s install github.com/lukehoban/go-find-references@latest\"" %(szGo))
     #安装gocode
-    os.system("su -c \"%s install github.com/mdempsky/gocode@latest\"" %(szGo))
+    os.system("su -c \"source /etc/profile && %s install github.com/mdempsky/gocode@latest\"" %(szGo))
     #安装gopkgs
-    os.system("su -c \"%s install github.com/uudashr/gopkgs/cmd/gopkgs@latest\"" %(szGo))
+    os.system("su -c \"source /etc/profile && %s install github.com/uudashr/gopkgs/cmd/gopkgs@latest\"" %(szGo))
     #安装godef
-    os.system("su -c \"%s install github.com/rogpeppe/godef@latest\"" %(szGo))
+    os.system("su -c \"source /etc/profile && %s install github.com/rogpeppe/godef@latest\"" %(szGo))
     #安装goreturns
-    os.system("su -c \"%s install sourcegraph.com/sqs/goreturns@latest\"" %szGo)
+    os.system("su -c \"source /etc/profile && %s install sourcegraph.com/sqs/goreturns@latest\"" %szGo)
     #安装gorename
-    os.system("su -c \"%s install golang.org/x/tools/cmd/gorename@latest\"" %szGo)
+    os.system("su -c \"source /etc/profile && %s install golang.org/x/tools/cmd/gorename@latest\"" %szGo)
     #安装go-symbols
-    os.system("su -c \"%s install github.com/newhook/go-symbols@latest\"" %(szGo))
+    os.system("su -c \"source /etc/profile && %s install github.com/newhook/go-symbols@latest\"" %(szGo))
     #安装gopls
-    os.system("su -c \"%s install golang.org/x/tools/gopls@latest\"" %szGo)
-    os.system("su -c \"%s mod download golang.org/x/tools/gopls\"" %szGo)
+    os.system("su -c \"source /etc/profile && %s install golang.org/x/tools/gopls@latest\"" %szGo)
+    os.system("su -c \"source /etc/profile && %s mod download golang.org/x/tools/gopls\"" %szGo)
     #安装dlv
-    os.system("su -c \"%s install github.com/go-delve/delve/cmd/dlv@latest\"" %(szGo))
+    os.system("su -c \"source /etc/profile && %s install github.com/go-delve/delve/cmd/dlv@latest\"" %(szGo))
     #安装staticcheck
-    os.system("su -c \"%s install honnef.co/go/tools/cmd/staticcheck@latest\"" %szGo)
+    os.system("su -c \"source /etc/profile && %s install honnef.co/go/tools/cmd/staticcheck@latest\"" %szGo)
     #安装goimports
-    os.system("su -c \"%s install golang.org/x/tools/cmd/goimports@latest\"" %szGo)
+    os.system("su -c \"source /etc/profile && %s install golang.org/x/tools/cmd/goimports@latest\"" %szGo)
     #安装guru
-    os.system("su -c \"%s install golang.org/x/tools/cmd/guru@latest\"" %szGo)
+    os.system("su -c \"source /etc/profile && %s install golang.org/x/tools/cmd/guru@latest\"" %szGo)
     #安装golint
-    os.system("su -c \"%s install golang.org/x/lint/golint@latest\"" %szGo)
+    os.system("su -c \"source /etc/profile && %s install golang.org/x/lint/golint@latest\"" %szGo)
     #安装gotests
-    os.system("su -c \"%s install github.com/cweill/gotests@latest\"" %(szGo))
+    os.system("su -c \"source /etc/profile && %s install github.com/cweill/gotests@latest\"" %(szGo))
     #安装gomodifytags
-    os.system("su -c \"%s install github.com/fatih/gomodifytags@latest\"" %(szGo))
+    os.system("su -c \"source /etc/profile && %s install github.com/fatih/gomodifytags@latest\"" %(szGo))
     #安装impl
-    os.system("su -c \"%s install github.com/josharian/impl@latest\"" %(szGo))
+    os.system("su -c \"source /etc/profile && %s install github.com/josharian/impl@latest\"" %(szGo))
     #安装fillstruct
-    os.system("su -c \"%s install github.com/davidrjenni/reftools/cmd/fillstruct@latest\"" %(szGo))
+    os.system("su -c \"source /etc/profile && %s install github.com/davidrjenni/reftools/cmd/fillstruct@latest\"" %(szGo))
     #安装goplay
-    os.system("su -c \"%s install github.com/haya14busa/goplay/cmd/goplay@latest\"" %(szGo))
+    os.system("su -c \"source /etc/profile && %s install github.com/haya14busa/goplay/cmd/goplay@latest\"" %(szGo))
     #安装godoctor
-    os.system("su -c \"%s install github.com/godoctor/godoctor@latest\"" %(szGo))
+    os.system("su -c \"source /etc/profile && %s install github.com/godoctor/godoctor@latest\"" %(szGo))
     #
     os.system("rm -rf %s/go_install_log && echo \"%s\" > %s/go_install_log" \
         %(go_path,curtime_str,go_path))

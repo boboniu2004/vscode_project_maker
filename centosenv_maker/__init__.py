@@ -206,6 +206,7 @@ def configGolang(go_proxy):
     go_path = "/usr/local/go/gopath"
     if False == os.path.exists(go_path):
         os.system("mkdir -p %s" %go_path)
+    os.system("rm -rf ~/go")
     szConfig,szErr = maker_public.readTxtFile("/etc/profile")
     if 0 < len(szErr):
         return szErr
