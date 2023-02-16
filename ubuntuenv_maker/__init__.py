@@ -2,20 +2,9 @@
 # -*- coding: utf-8 -*-
 
 
-from pickle import NONE
 import re
 import os
-import sys
 import maker_public
-
-
-#getUbuntuVer 获取ubuntu版本；参数：无；返回：ubuntu版本、错误描述
-def getUbuntuVer():
-    osinfo = maker_public.execCmdAndGetOutput("lsb_release -a")
-    ubuntu_ver = re.search("\\nRelease[ \\t]*:[ \\t]*(\d+\\.\d+)", osinfo)
-    if None == ubuntu_ver:
-        return "","have no version"
-    return ubuntu_ver.group(1), ""
 
 
 #openRoot 打开root用户；参数：无；返回：错误描述
@@ -352,63 +341,7 @@ def configWSLmodules():
             os.system("rm -rf /lib/modules/"+match_ret.group(1)+"-microsoft-standard-WSL2")
             return "Failed to make kmod"
     return ""
-    
 
-#installDPDK配置DPDK；参数：编译参数；返回：错误描述
-def installDPDK(complie_type):
-    #安装gawk
-    if 0 != os.system("apt-get -y install gawk"):
-        return "Install gawk failed"
-    #安装ssl
-    if 0 != os.system("apt-get -y install libssl-dev"):
-        return "Install libssl-dev failed"
-    #安装libnuma-dev
-    if 0 != os.system("apt-get -y install libnuma-dev"):
-        return "Install libnuma-dev failed"
-    #安装libpcre3-dev
-    if 0 != os.system("apt-get -y install libpcre3-dev"):
-        return "Install libpcre3-dev failed"
-    #安装zlib
-    if 0 != os.system("apt-get -y install zlib1g-dev"):
-        return "Install libpcre3-dev failed"
-    #if 0 != os.system("apt-get -y install python-is-python3 libpcap-dev libbpfcc-dev"):
-    ubuntu_ver,sz_err = getUbuntuVer()
-    if "" != sz_err:
-        return sz_err
-    if ("20.04" <= ubuntu_ver):
-        if 0 != os.system("apt-get -y install python-is-python3 libpcap-dev"):
-            return "Install python-is-python3,libpcap failed"
-    else:
-        if 0 != os.system("apt-get -y install libpcap-dev"):
-            return "Install libpcap failed"
-    #安装ninja
-    if 0 != os.system("pip3 install ninja"):
-        return "Install ninja failed"
-    #安装meson
-    if 0 != os.system("pip3 install meson"):
-        return "Install meson failed"
-    #安装 DPDK
-    return maker_public.buildDPDK(complie_type)
-
-#installHYPERSCAN配置hyperscan；参数：无；返回：错误描述
-def installHYPERSCAN():
-    #安装cmake
-    if 0 != os.system("apt-get -y install cmake"):
-        return "Install cmake failed"
-    #安装ragel
-    if 0 != os.system("apt-get -y install ragel"):
-        return "Install ragel failed"
-    #安装Pcap
-    if 0 != os.system("apt-get -y install libpcap-dev"):
-        return "Install pcap failed"
-    #安装boost
-    if 0 != os.system("apt-get -y install libboost-dev"):
-        return "Install libboost-dev failed"
-    #安装boost
-    if 0 != os.system("apt-get -y install pkg-config"):
-        return "Install pkg-config failed"
-    #安装 HYPERSCAN
-    return maker_public.buildHYPERSCAN()
 
 #InitEnv 初始化环境；参数：参数字典；返回：错误描述
 def InitEnv(sys_par):
@@ -480,19 +413,5 @@ def InitInternalNet(ip_addr):
     szErr = configInternalNet("eth1", ip_addr)
     if 0 < len(szErr):
         return("Config IP failed:%s" %(szErr))
-    #
-    return ""
-
-#ConfigDPDK 配置DPDK；参数：编译类型；返回：错误描述
-def ConfigDPDK(complie_type, szOperation):
-    if "install" == szOperation:
-        szErr = installDPDK(complie_type)
-        if 0 < len(szErr):
-            return("Config DPDK failed:%s" %(szErr))
-        szErr = installHYPERSCAN()
-        if 0 < len(szErr):
-            return("Config HYPERSCAN failed:%s" %(szErr))
-    else:
-        maker_public.uninstallDPDK()
     #
     return ""

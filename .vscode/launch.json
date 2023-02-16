@@ -8,16 +8,11 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/osenv_maker.py",
+            "program": "${workspaceFolder}/opensrc_maker.py",
             "args": [
-                "--work_mod","online",
-                "--deb_src","http://mirrors.aliyun.com/ubuntu",
-                "--py_src","mirrors.aliyun.com","http://mirrors.aliyun.com/pypi/simple",
-                "--go_proxy","https://proxy.golang.com.cn",
-                "--git_proxy","ghproxy.com",
-                "--ip","192.168.137.102",
-                "--rpm_src","http://mirrors.aliyun.com/repo/Centos-vault-8.5.2111.repo",
-                "--epel_src","http://mirrors.aliyun.com/repo/epel-7.repo",
+                "--hyperscan",
+                "--ins_path","/usr/local",
+                "--git_proxy","ghproxy.com"
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"

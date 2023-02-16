@@ -376,29 +376,10 @@ def export_path(fstack_path, dpdk_path, hs_path):
 
 
 #功能：主函数；参数：无；返回：错误描述
-def makeropensrc():
-    fstack_path = os.getcwd()
-    if 2<len(sys.argv):
-        fstack_path = sys.argv[2]
-    if False==os.path.isdir(fstack_path):
-        return "Invaild f-stack path"
-    fstack_path = os.path.abspath(fstack_path)
-    dpdk_path = "/usr/local/dpdk"
-    if 3<len(sys.argv):
-        dpdk_path = sys.argv[3]
-    if False==os.path.isdir(dpdk_path):
-        return "Invaild dpdk path"
-    dpdk_path = os.path.abspath(dpdk_path)
-    hs_path = ""
-    if 4<len(sys.argv):
-        hs_path = sys.argv[4]
-    if "" != hs_path:
-        if False==os.path.isdir(hs_path):
-            return "Invaild hyperscan path"
-        hs_path = os.path.abspath(hs_path)
+def makeropensrc(ins_path, dpdk_path, hs_path):
     #初始化f-stack
     need_continue = "y"
-    if True == os.path.exists(fstack_path+"/f-stack"):
+    if True == os.path.exists(ins_path+"/f-stack"):
         if re.search("^2\\..*", sys.version):
             need_continue = \
                 raw_input("f-stack is already installed, do you want to continue[y/n]:")
@@ -406,20 +387,20 @@ def makeropensrc():
             need_continue = \
                 input("f-stack is already installed, do you want to continue[y/n]:")
     if "y"==need_continue or "Y"==need_continue:
-        szErr = config_fstack(maker_public.getVer("f-stack"), fstack_path, \
+        szErr = config_fstack(maker_public.getVer("f-stack"), ins_path, \
             os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
             return szErr
         print("config f-stack sucess!")
-        szErr = create_fstack_project(fstack_path, os.environ["HOME"]+"/vscode_project_maker")
+        szErr = create_fstack_project(ins_path, os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
             return szErr
         print("create f-stack project sucess!")
-        szErr = correct_fstack_code(fstack_path)
+        szErr = correct_fstack_code(ins_path)
         if "" != szErr:
             return szErr
         print("correct fstack code sucess!")
-        szErr = export_path(fstack_path, dpdk_path, hs_path)
+        szErr = export_path(ins_path, dpdk_path, hs_path)
         if "" != szErr:
             return szErr
         print("export path sucess!")

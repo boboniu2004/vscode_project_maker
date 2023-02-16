@@ -12,7 +12,7 @@ import ubuntuenv_maker
 #功能：获取错误字符串；参数：无；返回：错误字符串
 def get_format_str():
         format_str = "osenv_maker:    [--work_mod|--deb_src|--go_proxy|--git_proxy]\n"\
-            "            --work_mod [mod]        工作模式，online|offline|config_IP。默认是online\n"\
+            "            --work_mod [mod]        工作模式，online|offline|config_IP。默认是online。\n"\
             "            --ip [192.168.137.xx]   在线模式下第二块网卡的IP地址，hyper-v默认为192.168.137.xx；virtualbox默认为192.168.56.xx网段。\n"\
             "            --deb_src [url]         deb源，默认为http://mirrors.aliyun.com/ubuntu。\n"\
             "            --rpm_src [url]         rpm源，centos7下默认为http://mirrors.163.com/.help/CentOS%s-Base-163.repo；centos8下默认为http://mirrors.aliyun.com/repo/Centos-vault-8.5.2111.repo。\n"\

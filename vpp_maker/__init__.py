@@ -168,16 +168,10 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
 
 
 #功能：主函数；参数：无；返回：错误描述
-def makeropensrc():
-    vpp_path = os.getcwd()
-    if 2<len(sys.argv):
-        vpp_path = sys.argv[2]
-    if False==os.path.isdir(vpp_path):
-        return "Invaild vpp path"
-    vpp_path = os.path.abspath(vpp_path)
+def makeropensrc(ins_path):
     #初始化vpp
     need_continue = "y"
-    if True == os.path.exists(vpp_path+"/vpp"):
+    if True == os.path.exists(ins_path+"/vpp"):
         if re.search("^2\\..*", sys.version):
             need_continue = \
                 raw_input("vpp is already installed, do you want to continue[y/n]:")
@@ -185,16 +179,16 @@ def makeropensrc():
             need_continue = \
                 input("vpp is already installed, do you want to continue[y/n]:")
     if "y"==need_continue or "Y"==need_continue:
-        szErr = config_vpp(maker_public.getVer("vpp"), vpp_path, \
+        szErr = config_vpp(maker_public.getVer("vpp"), ins_path, \
             os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
             return szErr
-        szErr = make_dep(vpp_path)
+        szErr = make_dep(ins_path)
         if "" != szErr:
             return szErr
         print("config vpp sucess!")
         #生成工程
-        szErr = create_vpp_project(vpp_path,  os.environ["HOME"]+"/vscode_project_maker")
+        szErr = create_vpp_project(ins_path,  os.environ["HOME"]+"/vscode_project_maker")
         if "" != szErr:
             return szErr
         print("create vpp project sucess!")

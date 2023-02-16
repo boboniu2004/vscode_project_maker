@@ -321,70 +321,6 @@ def configInternalNet(szEthChName, szEthEnName, szIpAddr):
     return ""
 
 
-#installDPDK配置DPDK；参数：无；返回：错误描述
-def installDPDK(complie_type):
-    #安装libnuma-dev
-    szErr = installOrUpdateRpm("numactl-devel", platform.machine(), "")
-    if 0 < len(szErr):
-        return szErr
-    #安装pcre
-    szErr = installOrUpdateRpm("pcre-devel", platform.machine(), "")
-    if 0 < len(szErr):
-        return szErr
-    #安装openssl
-    szErr = installOrUpdateRpm("openssl-devel", platform.machine(), "")
-    if 0 < len(szErr):
-        return szErr
-    #安装zlib
-    szErr = installOrUpdateRpm("zlib-devel", platform.machine(), "")
-    if 0 < len(szErr):
-        return szErr
-    #安装pcap
-    if 0 != os.system("dnf --enablerepo=PowerTools install -y libpcap-devel"):
-        return "Can not install libpcap-devel"
-    #安装libbpf
-    #if 0 != os.system("dnf --enablerepo=PowerTools install -y libbpf-devel"):
-    #    return "Can not install libpcap-devel"
-    #安装ninja
-    if 0 != os.system("pip3 install ninja"):
-        return "Install ninja failed"
-    #安装meson
-    if 0 != os.system("pip3 install meson"):
-        return "Install meson failed"
-    #安装 DPDK
-    return maker_public.buildDPDK(complie_type)
-
-
-#installHYPERSCAN配置hyperscan；参数：无；返回：错误描述
-def installHYPERSCAN():
-    #安装cmake
-    szErr = installOrUpdateRpm("cmake", platform.machine(), "")
-    if 0 < len(szErr):
-        return szErr
-    #安装ragel
-    ragel_ver = maker_public.getVer("ragel")
-    if False == os.path.exists("./ragel-"+ragel_ver+".tar.gz"):
-        if 0 != os.system("wget http://www.colm.net/files/ragel/ragel-"+ragel_ver+".tar.gz "\
-            "-O ./ragel-"+ragel_ver+".tar.gz"):
-            os.system("rm -f ./ragel-"+ragel_ver+".tar.gz")
-            return "Failed to download ragel"
-    if False == os.path.exists("/usr/local/ragel"):
-        os.system("tar -xvf ./ragel-"+ragel_ver+".tar.gz  -C /tmp/")
-        if 0 != os.system("cd /tmp/ragel-"+ragel_ver+" && ./configure --prefix=/usr/local/ragel "\
-            "&& make -j $(nproc) && make install"):
-            os.system("make uninstall")
-            os.system("rm -Rf /tmp/ragel-"+ragel_ver)
-            return "Failed to make hyperscan"
-        os.system("ln -s /usr/local/ragel/bin/ragel /usr/local/bin/")
-        os.system("rm -Rf /tmp/ragel-"+ragel_ver)
-    #安装boost
-    szErr = installOrUpdateRpm("boost-devel", platform.machine(), "")
-    if 0 < len(szErr):
-        return szErr
-    #安装 HYPERSCAN
-    return maker_public.buildHYPERSCAN()
-
-
 #InitEnv 初始化环境；参数：参数字典；返回：错误描述
 def InitEnv(sys_par):
     par_dic = dict(sys_par)
@@ -441,22 +377,5 @@ def InitInternalNet(ip_addr):
     szErr = configInternalNet("有线连接 1", "eth1", ip_addr)
     if 0 < len(szErr):
         return("Config IP failed:%s" %(szErr))
-    #
-    return ""
-
-
-#InitDPDK 配置DPDK；参数：编译类型；返回：错误描述
-def ConfigDPDK(complie_type, szOperation):
-    if "install" == szOperation:
-        szErr = installDPDK(complie_type)
-        if 0 < len(szErr):
-            return("Config DPDK failed:%s" %(szErr))
-        szErr = installHYPERSCAN()
-        if 0 < len(szErr):
-            return("Config HYPERSCAN failed:%s" %(szErr))
-    else:
-        maker_public.uninstallDPDK()
-        os.system("rm -rf /usr/bin/ragel")
-        os.system("rm -rf /usr/local/ragel")
     #
     return ""

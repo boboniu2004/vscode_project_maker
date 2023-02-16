@@ -370,173 +370,13 @@ def replace_content(file_path, replace_lst):
     return writeTxtFile(file_path, file_dat)
 
 
-#build_normal_dpdk 编译普通版本的DPDK；参数：dpdk源码路径；返回：错误描述
-def build_normal_dpdk(vscode_project_maker, fstack_ver):
-    if False==issame_kernel_ver("/usr/local/dpdk") or \
-        False==os.path.exists("/usr/local/dpdk"):
-        os.system("rm -Rf /usr/local/dpdk")
-        os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
-        #解压缩
-        os.system("unzip -d /tmp/ "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
-        #打开PMD驱动
-        sz_err = replace_content("/tmp/f-stack-"+fstack_ver+"/dpdk/config/common_base", 
-            [
-                [
-                    "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_AF_PACKET[ \\t]*=.*",
-                    "\nCONFIG_RTE_LIBRTE_PMD_AF_PACKET=y",
-                ],
-                [
-                    "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_PCAP[ \\t]*=.*",
-                    "\nCONFIG_RTE_LIBRTE_PMD_PCAP=y",
-                ],
-#                [
-#                    "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_AF_XDP[ \\t]*=.*",
-#                    "\nCONFIG_RTE_LIBRTE_PMD_AF_XDP=y",
-#                ],
-            ])
-        if "" != sz_err:
-            return ("config DPDK failed[%s]" %(sz_err))
-        #配置
-        if 0 != os.system("cd /tmp/f-stack-"+fstack_ver+"/dpdk && make defconfig"):
-            os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
-            return "config DPDK failed"
-        #编译安装
-        if 0 != os.system("cd /tmp/f-stack-"+fstack_ver+"/dpdk && "\
-            "make -j $(nproc) && make install prefix=/usr/local/dpdk"):
-            os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
-            return "config DPDK failed"
-        #设置
-        sz_err = build_s_link("/usr/local/dpdk/include/dpdk", 
-            "/usr/local/dpdk/include", None)
-        if "" != sz_err:
-            return sz_err
-        if 0 != os.system("cp -rf /tmp/f-stack-"+fstack_ver+"/dpdk/build/kmod /usr/local/dpdk/"):
-            os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
-            return "config DPDK failed"       
-        os.system("rm -rf /usr/local/dpdk/kernel_verion && "\
-            "uname -r >> /usr/local/dpdk/kernel_verion")
-    return ""
-
-
-#build_meson_dpdk 编译meson版本的DPDK；参数：无；返回：错误描述
-def build_meson_dpdk(vscode_project_maker, fstack_ver):
-    if False==issame_kernel_ver("/usr/local/dpdk") or \
-        False==os.path.exists("/usr/local/dpdk"):
-        os.system("rm -Rf /usr/local/dpdk")
-        os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
-        #解压缩
-        os.system("unzip -d /tmp/ "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
-        #打开PMD驱动
-        sz_err = replace_content("/tmp/f-stack-"+fstack_ver+"/dpdk/config/common_base", 
-            [
-                [
-                    "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_AF_PACKET[ \\t]*=.*",
-                    "\nCONFIG_RTE_LIBRTE_PMD_AF_PACKET=y",
-                ],
-                [
-                    "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_PCAP[ \\t]*=.*",
-                    "\nCONFIG_RTE_LIBRTE_PMD_PCAP=y",
-                ],
-#                [
-#                    "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_AF_XDP[ \\t]*=.*",
-#                    "\nCONFIG_RTE_LIBRTE_PMD_AF_XDP=y",
-#                ],
-            ])
-        if "" != sz_err:
-            return ("config DPDK failed[%s]" %(sz_err))
-        #编译安装meson版本
-        if 0 != os.system("cd /tmp/f-stack-"+fstack_ver+"/dpdk && "\
-            "meson ./dpdk_build && cd ./dpdk_build && "\
-            "meson configure -Dprefix=/usr/local/dpdk "\
-            "-Dibverbs_link=static -Ddefault_library=static"):
-            os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
-            return "config DPDK failed"
-        if 0 != os.system("cd /tmp/f-stack-"+fstack_ver+"/dpdk/dpdk_build && "\
-            "ninja -j"+str(multiprocessing.cpu_count())+" && ninja install"):
-            os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
-            return "config DPDK failed"
-        #设置
-        if 0 != os.system("mkdir -p /usr/local/dpdk/kmod && "\
-            "cp -rf /tmp/f-stack-"+fstack_ver+"/dpdk/dpdk_build/kernel/linux/*/*.ko "\
-            "/usr/local/dpdk/kmod"):
-            os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
-            return "config DPDK failed"  
-        os.system("mkdir -p /usr/local/dpdk/sbin")
-        os.system("rm -rf /usr/local/dpdk/kernel_verion && "\
-            "uname -r >> /usr/local/dpdk/kernel_verion")
-    pkg_path = "/usr/local/dpdk/lib64/pkgconfig"
-    if True == os.path.exists("/usr/local/dpdk/lib"):
-        pkg_path = execCmdAndGetOutput(
-        "cd /usr/local/dpdk/lib/*/pkgconfig && pwd").split("\n")[0]
-    return install_pc(pkg_path)
-
-
-#buildDPDK 编译DPDK；参数：编译方式；返回：错误码
-def buildDPDK(complie_type):
-    vscode_project_maker = os.environ["HOME"]+"/vscode_project_maker"
-    fstack_ver = getVer("f-stack")
-    sz_err = download_src("f-stack", "v", fstack_ver, \
-        "https://ghproxy.com/github.com/F-Stack/f-stack.git", vscode_project_maker, None)
-    if "" != sz_err:
-        return sz_err
-    #测试DPDK的版本是否需要更新
-    #编译安装DPDK
-    if -1 == str(complie_type).find("-meson"):
-        sz_err = build_normal_dpdk(vscode_project_maker, fstack_ver)
-    else:
-        sz_err = build_meson_dpdk(vscode_project_maker, fstack_ver)
-    if "" != sz_err:
-        return sz_err
-    os.system("rm -Rf /tmp/f-stack-"+fstack_ver)
-    #下载绑定工具
-    first_ver,second_ver,_ = get_kernel_ver()
-    if None==first_ver or first_ver<4 or (first_ver==4 and second_ver<18):
-        return ""
-    if ""==execCmdAndGetOutput("lspci") and \
-        True == os.path.exists("/usr/local/dpdk/sbin") and \
-        False == os.path.exists("/usr/local/dpdk/sbin/driverctl"):
-        sz_err = download_driverctl("/usr/local/dpdk/sbin/driverctl")
-        if "" != sz_err:
-            return sz_err
-    return ""
-
-
-    #功能：安装hyperscan；参数：操作系统名称；返回：错误码
-def buildHYPERSCAN():
-    vscode_project_maker = os.environ["HOME"]+"/vscode_project_maker"
-    hs_ver = getVer(platform.machine()+"-hs")
-    hyperscan_url = "https://ghproxy.com/github.com/intel/hyperscan.git"
-    if "aarch64" == platform.machine():
-        hyperscan_url = "https://ghproxy.com/github.com/kunpengcompute/hyperscan.git"
-    #安装hyperscan
-    sz_err = download_src("hyperscan", "v", hs_ver, hyperscan_url, vscode_project_maker, None)
-    if "" != sz_err:
-        return sz_err
-    hyperscan_tmp = "/tmp/hyperscan-"+hs_ver
-    hyperscan_src = vscode_project_maker+"/hyperscan-"+hs_ver+".zip"
-    if False == os.path.exists("/usr/local/hyperscan"):
-        #解压缩
-        os.system("rm -Rf "+hyperscan_tmp)
-        os.system("unzip -d /tmp/ "+hyperscan_src)
-        try:
-            os.system("rm -Rf "+hyperscan_tmp+"/build")
-            os.makedirs(hyperscan_tmp+"/build")
-        except:
-            os.system("rm -Rf "+hyperscan_tmp)
-            return "Make "+hyperscan_tmp+" failed"
-        if 0 != os.system("cd "+hyperscan_tmp+"/build && "\
-            "cmake -DCMAKE_BUILD_TYPE=release -DBUILD_STATIC_AND_SHARED=ON "\
-            "-DCMAKE_INSTALL_PREFIX=/usr/local/hyperscan ../"):
-            os.system("rm -Rf "+hyperscan_tmp)
-            return "Failed to config hyperscan"
-        if 0 != os.system("cd "+hyperscan_tmp+"/build && make -j $(nproc) && make install"):
-            os.system("rm -Rf "+hyperscan_tmp)
-            os.system("rm -Rf /usr/local/hyperscan")
-            return "Failed to make hyperscan"
-        os.system("rm -Rf "+hyperscan_tmp)
-    #安装pc文件
-    return install_pc(execCmdAndGetOutput(
-        "cd /usr/local/hyperscan/lib*/pkgconfig && pwd").split("\n")[0])
+#getUbuntuVer 获取ubuntu版本；参数：无；返回：ubuntu版本、错误描述
+def getUbuntuVer():
+    osinfo = execCmdAndGetOutput("lsb_release -a")
+    ubuntu_ver = re.search("\\nRelease[ \\t]*:[ \\t]*(\d+\\.\d+)", osinfo)
+    if None == ubuntu_ver:
+        return "","have no version"
+    return ubuntu_ver.group(1), ""
 
 
 #remove_s_link 将源目录中的全部文件对应的软链接删除；参数：源目录、目标目录；
@@ -552,17 +392,53 @@ def remove_s_link(src_dir, dst_dir):
     return ""
 
 
+#功能：卸载pc文件；参数：原路径；返回：错误码
+def uninstall_pc(pkgconfig_path):
+    #尝试删除pc文件
+    if ""!=pkgconfig_path and None!=re.search("^\\d+\\.\\d+\\.\\d+\\n$", 
+        execCmdAndGetOutput("pkg-config --version")):
+        pkg_path_lst = execCmdAndGetOutput(
+            "pkg-config --variable pc_path pkg-config").split(":")
+        for pkg_path in pkg_path_lst:
+            if "\n" == pkg_path[len(pkg_path)-1:]:
+                pkg_path = pkg_path[:len(pkg_path)-1]
+            if "" == pkg_path:
+                continue
+            remove_s_link(pkgconfig_path, pkg_path)
+    return ""
+
+
+#功能：检查是否要继续进行安装；参数：工程名、安装路径：返回：继续安装返回y
+def check_reinstall(proj_name, proj_path, pkg_path, other_condit):
+    need_reinstall = "y"
+    if True == os.path.exists(proj_path) and True == other_condit:
+        if re.search("^2\\..*", sys.version):
+            need_reinstall = \
+                raw_input(proj_name+" is already installed, do you want to reinstall[y/n]:")
+        else:
+            need_reinstall = \
+                input(proj_name+" is already installed, do you want to reinstall[y/n]:")
+    if True==os.path.isdir(proj_path) and ("y"==need_reinstall or "Y"==need_reinstall):
+        if None != pkg_path:
+            uninstall_pc(execCmdAndGetOutput("cd %s && pwd" %pkg_path).split("\n")[0])
+        remove_s_link(proj_path+"/lib", "/usr/local/lib")
+        remove_s_link(proj_path+"/include", "/usr/local/include")
+        os.system("rm -rf "+proj_path)
+        need_reinstall = "y"
+    return need_reinstall
+
+
 #uninstallDPDK 卸载DPDK；参数：无；返回：错误码
-def uninstallDPDK():
+def uninstallDPDK(ins_path):
     #尝试删除pc文件
     if None != re.search("^\\d+\\.\\d+\\.\\d+\\n$", 
         execCmdAndGetOutput("pkg-config --version")):
         pkg_path_lst = execCmdAndGetOutput(
         "pkg-config --variable pc_path pkg-config").split(":")
-        meson_pkg_path = "/usr/local/dpdk/lib64/pkgconfig"
-        if True == os.path.exists("/usr/local/dpdk/lib"):
+        meson_pkg_path = ("%s/dpdk/lib64/pkgconfig" %ins_path)
+        if True == os.path.exists("%s/dpdk/lib" %ins_path):
             meson_pkg_path = execCmdAndGetOutput(
-                "cd /usr/local/dpdk/lib/*/pkgconfig && pwd").split("\n")[0]
+                "cd %s/dpdk/lib/*/pkgconfig && pwd" %ins_path).split("\n")[0]
         for pkg_path in pkg_path_lst:
             if "\n" == pkg_path[len(pkg_path)-1:]:
                 pkg_path = pkg_path[:len(pkg_path)-1]
@@ -571,11 +447,9 @@ def uninstallDPDK():
             if True == os.path.isdir(meson_pkg_path):
                 remove_s_link(meson_pkg_path, pkg_path)
             remove_s_link(execCmdAndGetOutput(
-        "cd /usr/local/hyperscan/lib*/pkgconfig && pwd").split("\n")[0], pkg_path)
-            
+        "cd %s/hyperscan/lib*/pkgconfig && pwd" %ins_path).split("\n")[0], pkg_path)
     #删除其他文件
-    os.system("rm -rf /usr/local/dpdk")
-    os.system("rm -rf /usr/local/hyperscan")
+    os.system("rm -rf %s/dpdk" %ins_path)
 
 
 #获取DPDK管理脚本；参数：管理脚本存储路径，会在该路径下创建dpdk_scrits目录；返回：错误码
