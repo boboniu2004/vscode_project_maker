@@ -86,6 +86,7 @@ def install_centos_dep():
     #安装boost
     if 0 != os.system("yum -y install boost-devel.%s" %platform.machine()):
         return "Install cmake failed"
+    return ""
 
 
 #功能：主函数；参数：无；返回：错误描述

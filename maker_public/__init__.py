@@ -421,8 +421,12 @@ def check_reinstall(proj_name, proj_path, pkg_path, other_condit):
     if True==os.path.isdir(proj_path) and ("y"==need_reinstall or "Y"==need_reinstall):
         if None != pkg_path:
             uninstall_pc(execCmdAndGetOutput("cd %s && pwd" %pkg_path).split("\n")[0])
-        remove_s_link(proj_path+"/lib", "/usr/local/lib")
-        remove_s_link(proj_path+"/include", "/usr/local/include")
+        if True == os.path.exists(proj_path+"/lib"):
+            remove_s_link(proj_path+"/lib", "/usr/local/lib")
+        if True == os.path.exists(proj_path+"/lib64"):
+            remove_s_link(proj_path+"/lib64", "/usr/local/lib64")
+        if True == os.path.exists(proj_path+"/include"):
+            remove_s_link(proj_path+"/include", "/usr/local/include")
         os.system("rm -rf "+proj_path)
         need_reinstall = "y"
     return need_reinstall

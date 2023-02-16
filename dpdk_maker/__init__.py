@@ -166,11 +166,12 @@ def install_centos_dep():
     if 0 != os.system("dnf --enablerepo=PowerTools install -y libpcap-devel"):
         return "Can not install libpcap-devel"
     #安装ninja
-    if 0 != os.system("python3 -m pip3 install ninja"):
+    if 0 != os.system("python3 -m pip install ninja"):
         return "Install ninja failed"
     #安装meson
-    if 0 != os.system("python3 -m pip3 install meson"):
+    if 0 != os.system("python3 -m pip install meson"):
         return "Install meson failed"
+    return ""
 
 
 #功能：主函数；参数：无；返回：错误描述
@@ -187,7 +188,7 @@ def makeropensrc(ins_path, complie_type, git_proxy):
         pkg_path = None
     else:
         pkg_path = ("%s/dpdk/lib64/pkgconfig" %ins_path)
-        if True == os.path.exists("%s/lib" %ins_path):
+        if True == os.path.exists("%s/dpdk/lib" %ins_path):
             pkg_path = maker_public.execCmdAndGetOutput(
                 "cd %s/dpdk/lib/*/pkgconfig && pwd" %ins_path).split("\n")[0]
     #初始化

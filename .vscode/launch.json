@@ -12,7 +12,7 @@
             "args": [
                 "--vpp",
                 "--ins_path","/root",
-//                "--git_proxy","ghproxy.com"
+                "--git_proxy","ghproxy.com"
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"
