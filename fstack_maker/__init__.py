@@ -56,9 +56,10 @@ def config_dpdk(fstack_path, vscode_project_maker):
 
 
 #功能：下载配置f-stack；参数：无；返回：错误码
-def config_fstack(fstack_ver, fstack_path, vscode_project_maker):
+def config_fstack(fstack_ver, fstack_path, vscode_project_maker, git_proxy):
     sz_err = maker_public.download_src("f-stack", "v", fstack_ver, \
-        "https://ghproxy.com/github.com/F-Stack/f-stack.git", vscode_project_maker, None)
+        ("https://%sgithub.com/F-Stack/f-stack.git" %git_proxy), \
+        vscode_project_maker, None)
     if "" != sz_err:
         return sz_err
     if False == os.path.exists(fstack_path+"/f-stack"):
@@ -376,7 +377,7 @@ def export_path(fstack_path, dpdk_path, hs_path):
 
 
 #功能：主函数；参数：无；返回：错误描述
-def makeropensrc(ins_path, dpdk_path, hs_path):
+def makeropensrc(ins_path, dpdk_path, hs_path, git_proxy):
     #初始化f-stack
     need_continue = "y"
     if True == os.path.exists(ins_path+"/f-stack"):
@@ -388,7 +389,7 @@ def makeropensrc(ins_path, dpdk_path, hs_path):
                 input("f-stack is already installed, do you want to continue[y/n]:")
     if "y"==need_continue or "Y"==need_continue:
         szErr = config_fstack(maker_public.getVer("f-stack"), ins_path, \
-            os.environ["HOME"]+"/vscode_project_maker")
+            os.environ["HOME"]+"/vscode_project_maker", git_proxy)
         if "" != szErr:
             return szErr
         print("config f-stack sucess!")

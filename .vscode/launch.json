@@ -10,9 +10,9 @@
             "request": "launch",
             "program": "${workspaceFolder}/opensrc_maker.py",
             "args": [
-                "--hyperscan",
-                "--ins_path","/usr/local",
-                "--git_proxy","ghproxy.com"
+                "--vpp",
+                "--ins_path","/root",
+//                "--git_proxy","ghproxy.com"
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"

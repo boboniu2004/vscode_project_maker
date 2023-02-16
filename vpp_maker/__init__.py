@@ -98,12 +98,12 @@ def config_dpdk(vpp_path, vscode_project_maker):
 
     
 #功能：下载配置vpp；参数：无；返回：错误码
-def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
+def config_vpp(vpp_ver, vpp_path, vscode_project_maker, git_proxy):
     if False == os.path.exists(vscode_project_maker+"/vpp-"+vpp_ver+".zip"):
         os.system("rm -rf "+vscode_project_maker+"/vpp-"+vpp_ver)
         if 0 != os.system(\
-            "git clone --branch v"+vpp_ver+" https://ghproxy.com/github.com/FDio/vpp.git "+\
-            vscode_project_maker+"/vpp-"+vpp_ver):
+            "git clone --branch v%s https://%sgithub.com/FDio/vpp.git "\
+            "%s/vpp-%s" %(vpp_ver,git_proxy,vscode_project_maker,vpp_ver)):
             os.system("rm -rf "+vscode_project_maker+"/vpp-"+vpp_ver)
             return "Failed to download vpp-"+vpp_ver
         if 0 != os.system(\
@@ -111,13 +111,6 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
             vscode_project_maker+"/vpp-"+vpp_ver+"/dpdk-kmods"):
             os.system("rm -rf "+vscode_project_maker+"/vpp-"+vpp_ver+"/dpdk-kmods")
             return "Failed to download dpdk-kmods"
-        #下载绑定器
-        if ""==maker_public.execCmdAndGetOutput("lspci") and \
-            False == os.path.exists(vscode_project_maker+"/vpp-"+vpp_ver+"/driverctl"):
-            sz_err = maker_public.download_driverctl(\
-                vscode_project_maker+"/vpp-"+vpp_ver+"/driverctl")
-            if "" != sz_err:
-                return sz_err
         if 0 != os.system("cd "+vscode_project_maker+\
             " && zip -r "+"vpp-"+vpp_ver+".zip vpp-"+vpp_ver):
             os.system("rm -f "+vscode_project_maker+"/vpp-"+vpp_ver+".zip")
@@ -158,7 +151,8 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
             vpp_path+"/vpp"+"/build/external/packages/"+mkfile)
         if ""!=err:
             return err
-        mkcont = re.sub("://github\\.com", "://ghproxy.com/github.com", mkcont)
+        if "" != git_proxy:
+            mkcont = re.sub("://github\\.com", "://%sgithub.com", mkcont)
         err = maker_public.writeTxtFile(vpp_path+"/vpp"+"/build/external/packages/"+mkfile, 
             mkcont)
         if ""!=err:
@@ -168,7 +162,7 @@ def config_vpp(vpp_ver, vpp_path, vscode_project_maker):
 
 
 #功能：主函数；参数：无；返回：错误描述
-def makeropensrc(ins_path):
+def makeropensrc(ins_path, git_proxy):
     #初始化vpp
     need_continue = "y"
     if True == os.path.exists(ins_path+"/vpp"):
@@ -180,7 +174,7 @@ def makeropensrc(ins_path):
                 input("vpp is already installed, do you want to continue[y/n]:")
     if "y"==need_continue or "Y"==need_continue:
         szErr = config_vpp(maker_public.getVer("vpp"), ins_path, \
-            os.environ["HOME"]+"/vscode_project_maker")
+            os.environ["HOME"]+"/vscode_project_maker", git_proxy)
         if "" != szErr:
             return szErr
         szErr = make_dep(ins_path)

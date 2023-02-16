@@ -100,9 +100,9 @@ if __name__ == "__main__":
         err = gperftools_maker.makeropensrc(sys_par["ins_path"], sys_par["git_proxy"])
     elif "fstack"==sys_par["opensrc"]:
         err = fstack_maker.makeropensrc(sys_par["ins_path"],\
-            sys_par["dpdk_path"],sys_par["hs_path"])
+            sys_par["dpdk_path"],sys_par["hs_path"], sys_par["git_proxy"])
     elif "vpp"==sys_par["opensrc"]:
-        err = vpp_maker.makeropensrc(sys_par["ins_path"])
+        err = vpp_maker.makeropensrc(sys_par["ins_path"], sys_par["git_proxy"])
     else:
         err = ("bad opensrc %s.\b%s" %(sys_par["opensrc"],get_format_str()))
     if ""!=err:
