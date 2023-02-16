@@ -331,7 +331,7 @@ page_cnt_lst参数为需要设置的巨页的数量，按照NUMA节点进行分�
 
 devbind_path参数为PCI设备的DPDK绑定脚本所在的路径，一般在DPDK安装路径的usertools下。如果配置为相对目录，则最后的绝对目录为：脚本所在目录的上一级/配置的路径。不需要时可以配置为None。
     
-drvctl_path参数为VMBUS设备的DPDK绑定脚本所在的路径，该设备是微软hyper-v虚拟机的绑定程序，可以从https://gitlab.com/driverctl/driverctl下载。如果配置为相对目录，则最后的绝对目录为：脚本所在目录的上一级/配置的路径。devbind_path和drvctl_path不能同时生效，如果drvctl_path是有效的目录，则devbind_path会被忽略。不需要时可以配置为None。
+drvctl_path参数为VMBUS设备的DPDK绑定脚本所在的路径，该设备是微软hyper-v虚拟机的绑定程序，可以从 https://gitlab.com/driverctl/driverctl 下载。如果配置为相对目录，则最后的绝对目录为：脚本所在目录的上一级/配置的路径。devbind_path和drvctl_path不能同时生效，如果drvctl_path是有效的目录，则devbind_path会被忽略。不需要时可以配置为None。
     
 kmod_path参数为DPDK内核模块所在的路径，主要是igb_uio.ko和rte_kni.ko所在的路径，在编译DPDK时获取。注意：在DPDK20以后版本中默认是不打开igb_uio的，需要额外下载igb_uio源代码并且构建编译脚本，具体可以参见本工程中对VPP的DPDK的编译方法。如果配置为相对目录，则最后的绝对目录为：脚本所在目录的上一级/配置的路径。不需要时可以配置为None。
     
