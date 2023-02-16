@@ -73,9 +73,9 @@ def parse_argv():
     #检查参数正确性
     if "" != sys_par["git_proxy"] and "/" != sys_par["git_proxy"][-1]:
          sys_par["git_proxy"] =  sys_par["git_proxy"]+"/"
-    if None == sys_par["ins_path"]:
+    if None == sys_par.get("ins_path"):
         return sys_par,"need ins_path param.\n"+format_str
-    if None == sys_par["opensrc"]:
+    if None == sys_par.get("opensrc"):
         return sys_par,"need --dpdk|--hyperscan|--gperftools|--fstack|--vpp param.\n"\
             +format_str
     return sys_par,""

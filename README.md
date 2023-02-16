@@ -20,7 +20,7 @@
 对于满足硬件、OS、网络要求的机器：
 第一步，下载vscode_project_maker( https://github.com/boboniu2004/vscode_project_maker )。
 
-第二步，解压缩vscode_project_maker，把**vscode_project_maker\\.ssh**目录拷贝到当前用户的主目录下，进入.ssh目录后选中**inithyper-v.bat**脚本，单击右键以管理员权限运行，如果执行权限不对或者不是windows10/windows11专业版，脚本会报错。因为目前在windows10 arm64/windows11 arm64下没有可以运行在hyper-v中的的linux发行版，所以windows10 arm64/windows11 arm64下**inithyper-v.bat**会同时开启hyper-v和WSL(Windows Subsystem for Linux)。
+第二步，解压缩vscode_project_maker，把**vscode_project_maker\\.ssh**目录拷贝到当前用户的主目录下，进入.ssh目录后选中**inithyper-v.bat**脚本，单击右键以管理员权限运行，如果执行权限不对或者不是windows10/windows11专业版，脚本会报错。因为目前在windows10 arm64/windows11 arm64下没有可以运行在hyper-v中的的linux发行版，所以windows10 arm64/windows11 arm64下**inithyper-v.bat**会同时开启hyper-v和WSL(Windows Subsystem for Linux)。**后续如果不特别说明，则hyper-v默认包含了WSL**。
 
 第三步，如果正确开启了hyper-v，则会要求重启，重新启动后进入**vscode_project_maker\\.ssh**目录，以管理员权限再次运行**inithyper-v.bat**脚本，会创建虚拟网卡供后续安装的虚拟机进行通信，同时也会在桌面创建一个**hyper-v管理器快捷方式**。
 
@@ -97,7 +97,7 @@
 2 osenv_maker.py脚本可以帮助初始化centos或者ubuntu，其参数命令如下：
 
         osenv_maker:    [--work_mod|--deb_src|--go_proxy|--git_proxy]
-            --work_mod [mod]        工作模式，online|offline|config_IP。默认是online
+            --work_mod [mod]        工作模式，online|offline|config_IP。默认是online。
             --ip [192.168.137.xx]   在线模式下第二块网卡的IP地址，hyper-v默认为192.168.137.xx；virtualbox默认为192.168.56.xx网段。
             --deb_src [url]         deb源，默认为http://mirrors.aliyun.com/ubuntu
             --rpm_src [url]         rpm源，centos7下默认为http://mirrors.163.com/.help/CentOS%s-Base-163.repo；centos8下默认为http://mirrors.aliyun.com/repo/Centos-vault-8.5.2111.repo。
@@ -197,37 +197,39 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 
 # 编译调试工程
 
+# 配置开源框架
+在virtualbox环境下、或者hyper-v环境下，可以使用opensrc_maker.py来配置开源框架，目前支持dpdk、hyperscan、gperftools、fstack、vpp。
 
-# 配置DPDK和hyperscan
-在virtualbox环境下、或者hyper-v环境下的centos8/Ubuntu[18.04|20.04]系统，可以安装DPDK开发环境。在vscode_project_maker目录下运行如下命令：
+        osenv_maker:    [--dpdk|--hyperscan|--gperftools|--fstack|--vpp|--ins_path|--wor_mod]
+            --dpdk        [normal|meson]         安装dpdk，可选传统编译模式，或者meson编译模式。默认normal
+            --hyperscan                          安装hyperscan。
+            --gperftools                         安装google的性能分析工具，包括tcmalloc内存池。
+            --fstack      [dpdk_path] [hs_path]  安装f-stack用户态协议栈，需要设置dpdk路径和hyperscan路径。
+            --vpp                                安装VPP框架。
+            --ins_path    [path]                 安装目录，必须指明，如/usr/local。
+            --git_proxy   [url]                  github的代理(如ghproxy.com)，默认为空。
 
-        python3 osenv_maker.py config_DPDK install/uninstall
+# 配置DPDK-hyperscan
+在virtualbox环境下、或者hyper-v环境下的centos8/Ubuntu[18.04|20.04]系统，可以安装DPDK、hyperscan开发环境。在vscode_project_maker目录下运行如下命令：
+
+        python3 osenv_maker.py --dpdk [normal|meson] --ins_path [path]
+        python3 osenv_maker.py --hyperscan --ins_path [path]
 
 其中的install为安装DPDK环境到/usr/local/dpdk中去，uninstall为卸载/usr/local/dpdk目录。默认会配置256个2M大小的巨页；驱动放置在/usr/local/dpdk/kernel下。该命令同时还会安装/卸载hyperscan。
 
 # 创建f-stack开发环境
 在virtualbox环境下、或者hyper-v环境下的centos8/Ubuntu[18.04|20.04]系统，如果网卡支持DPDK，且已经正确安装了DPDK到/usr/local/dpdk下，则可以配置f-stack开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
 
-        python3 opensrc_maker.py f-stack [f-stack path] [dpdk path] [hyperscan path]
+        python3 opensrc_maker.py --fstack [dpdk path] [hyperscan path] --ins_path [path]
 
-安装完毕后，需要重启虚拟机，然后就可以使用vscode打开f-stack开发目录，首先运行**gcc clean active file**任务重新配置，后续只需要运行**gcc build active file**任务就可以进行编译了，该任务会自动生成debug调试目录，该目录中可以修改f-stack和nginx的配置，非常方便。开机后第一次调试前需要运行**gcc init active file**任务初始化dpdk环境，如果在hyper-v环境下的centos8/Ubuntu[18.04|20.04]系统下想查看已经绑定的设备，可以运行命令：
-
-        /usr/local/dpdk/sbin/driverctl/driverctl -b vmbus list-overrides
-
-如果没有绑定任何设备，那么可能是LINUX内核进行了升级导致DPDK的内核模块失效了，此时需要重新安装DPDK，可以参见章节**配置DPDK**。
+安装完毕后，需要重启虚拟机，然后就可以使用vscode打开f-stack开发目录，首先运行**gcc clean active file**任务重新配置，后续只需要运行**gcc build active file**任务就可以进行编译了，该任务会自动生成debug调试目录，该目录中可以修改f-stack和nginx的配置，非常方便。开机后第一次调试前需要运行**gcc init active file**任务初始化dpdk环境，在hyper-v下可以使用veth结合DPDK的虚拟设备来进行收发包，virtualbox建议使用系统自带的VFIO来绑定设备。
 
 # 创建vpp开发环境
 在virtualbox环境下、或者hyper-v环境下的centos8/Ubuntu[18.04|20.04]系统，如果网卡支持DPDK，则可以配置vpp开发环境。首先需要参见hyper-v虚拟机安装步骤的**第七步**、或者virtual box虚拟机安装步骤的**第四步**给虚拟机增加网卡，然后可以在vscode_project_maker目录下运行如下命令：
 
-        python3 opensrc_maker.py vpp [vpp path]
+        python3 opensrc_maker.py --vpp --ins_path [path]
 
-安装完毕后，然后就可以使用vscode打开vpp开发目录，该目录中的build-root/install-vpp_debug-native/vpp/etc/startup.conf中可以修改vpp配置。后续就可以使用vscode进行集成开发和调试了，非常方便。开机后第一次调试前需要运行**gcc init active file**任务初始化dpdk环境，如果在hyper-v环境下的centos8/Ubuntu[18.04|20.04]系统下想查看已经绑定的设备，可以运行命令：
-
-        driverctl/driverctl -b vmbus list-overrides
-
-注意：
-
-1 如果driverctl/driverctl命令没有绑定任何设备，那么可能是LINUX内核进行了升级导致DPDK的内核模块失效了，此时需要重新安装vpp的依赖，可以运行**gcc clean active file**任务清理vpp环境，然后运行**gcc build active file**任务重新编译vpp。
+安装完毕后，然后就可以使用vscode打开vpp开发目录，该目录中的build-root/install-vpp_debug-native/vpp/etc/startup.conf中可以修改vpp配置。后续就可以使用vscode进行集成开发和调试了，非常方便。开机后第一次调试前需要运行**gcc init active file**任务初始化dpdk环境，在hyper-v下可以使用veth结合DPDK的虚拟设备来进行收发包，virtualbox建议使用系统自带的VFIO来绑定设备。
 
 2 每次调试开始后，网卡处于非激活状态，此时需要运行build-root/install-vpp_debug-native/vpp/bin/vppctl，输入命令：
 
@@ -242,7 +244,7 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 # 安装gperftools
 gperftools是Google开源的一款非常使用的性能分析工具集。由tcmalloc(高性能内存池)、heap-profiler(内存使用监控器)、heap-checker(内存泄漏检查工具)、cpu-profiler(程序cpu时间统计和分析)四大块构成。利用gperftools可以优化程序的内存分配性能，检查内存泄漏情况，分析程序性能瓶颈。如果需要使用gperftools，可以在vscode_project_maker目录下运行如下命令安装：
 
-        python3 opensrc_maker.py gperftools [gperftools path]
+        python3 opensrc_maker.py --gperftools --ins_path [path]
 
 安装时会检测上次安装情况，输入'y'会覆盖原先的安装。在gperftools的安装目录下会有libunwind和gperftools两个子目录，其中libunwind是一个堆栈跟踪回溯工具，gperftools的cpu-profiler会用到它。libunwind/lib和gperftools/lib和目录中存放了需要用到的动态库和静态库。
 
