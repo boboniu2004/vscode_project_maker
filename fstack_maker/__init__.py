@@ -45,8 +45,8 @@ def config_example(fstack_path):
 
 
 #功能：配置dpdk；参数：fstack路径、工程路径；返回：错误码
-def config_dpdk(fstack_path, vscode_project_maker):
-    sz_err = maker_public.get_DPDKscrits(fstack_path+"/f-stack")
+def config_dpdk(fstack_path, work_path):
+    sz_err = maker_public.get_DPDKscrits(work_path, fstack_path+"/f-stack")
     if "" != sz_err:
         return sz_err
     #
@@ -56,19 +56,18 @@ def config_dpdk(fstack_path, vscode_project_maker):
 
 
 #功能：下载配置f-stack；参数：无；返回：错误码
-def config_fstack(fstack_ver, fstack_path, vscode_project_maker, git_proxy):
+def config_fstack(fstack_ver, fstack_path, work_path, git_proxy):
     sz_err = maker_public.download_src("f-stack", "v", fstack_ver, \
-        ("https://%sgithub.com/F-Stack/f-stack.git" %git_proxy), \
-        vscode_project_maker, None)
+        ("https://%sgithub.com/F-Stack/f-stack.git" %git_proxy), work_path, None)
     if "" != sz_err:
         return sz_err
     if False == os.path.exists(fstack_path+"/f-stack"):
         os.system("unzip -d "+fstack_path+"/ "+
-            vscode_project_maker+"/f-stack-"+fstack_ver+".zip")
+            work_path+"/f-stack-"+fstack_ver+".zip")
         if 0!=os.system("mv  "+fstack_path+"/f-stack-"+fstack_ver+" "+fstack_path+"/f-stack"):
-            return "Failed to unzip "+vscode_project_maker+"/f-stack-"+fstack_ver+".zip"
+            return "Failed to unzip "+work_path+"/f-stack-"+fstack_ver+".zip"
     #构建dpdk初始化脚本
-    sz_err = config_dpdk(fstack_path, vscode_project_maker)
+    sz_err = config_dpdk(fstack_path, work_path)
     if "" != sz_err:
         return sz_err
     #修改lib下的makefile
@@ -186,8 +185,8 @@ def create_fstack_properties(fstack_path):
 
 
 #功能：制作f-stack工程；参数：无；返回：错误码
-def create_fstack_project(fstack_path, vscode_project_maker):
-    if 0 != os.system(maker_public.get_python()+" "+vscode_project_maker+\
+def create_fstack_project(fstack_path, work_path):
+    if 0 != os.system(maker_public.get_python()+" "+work_path+\
         "/__init__.py c app-dpdk /tmp/nginx"):
         os.system("rm -rf /tmp/nginx")
         return "create f-stack project failed"
@@ -377,7 +376,7 @@ def export_path(fstack_path, dpdk_path, hs_path):
 
 
 #功能：主函数；参数：无；返回：错误描述
-def makeropensrc(ins_path, dpdk_path, hs_path, git_proxy):
+def makeropensrc(work_path, ins_path, dpdk_path, hs_path, git_proxy):
     #初始化f-stack
     need_continue = "y"
     if True == os.path.exists(ins_path+"/f-stack"):
@@ -389,11 +388,11 @@ def makeropensrc(ins_path, dpdk_path, hs_path, git_proxy):
                 input("f-stack is already installed, do you want to continue[y/n]:")
     if "y"==need_continue or "Y"==need_continue:
         szErr = config_fstack(maker_public.getVer("f-stack"), ins_path, \
-            os.environ["HOME"]+"/vscode_project_maker", git_proxy)
+            work_path, git_proxy)
         if "" != szErr:
             return szErr
         print("config f-stack sucess!")
-        szErr = create_fstack_project(ins_path, os.environ["HOME"]+"/vscode_project_maker")
+        szErr = create_fstack_project(ins_path, work_path)
         if "" != szErr:
             return szErr
         print("create f-stack project sucess!")

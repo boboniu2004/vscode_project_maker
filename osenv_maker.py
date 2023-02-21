@@ -3,6 +3,7 @@
 
 
 import re
+import os
 import sys
 import maker_public
 import centosenv_maker
@@ -26,7 +27,8 @@ def get_format_str():
 #功能：解析参数；参数：无；返回：参数、错误描述
 def parse_argv(szOSName):
     lspci = maker_public.execCmdAndGetOutput("lspci")
-    sys_par = {"work_mod":"online",\
+    sys_par = {"work_path":os.path.dirname(os.path.abspath(sys.argv[0])),
+        "work_mod":"online",\
         "deb_src":"http://mirrors.aliyun.com/ubuntu",\
         "py_host":"mirrors.aliyun.com",\
         "py_url":"http://mirrors.aliyun.com/pypi/simple",\

@@ -620,7 +620,8 @@ if __name__ == "__main__":
     #错误描述
     error = "dpdk_opt: [optimsys|recovsys|initenv|loadcom|install|uninstall|monitor|make] [log file]"
     if 2<len(sys.argv) and "make"==sys.argv[1]:
-        error = maker_public.get_DPDKscrits(sys.argv[2])
+        work_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+        error = maker_public.get_DPDKscrits(work_path, sys.argv[2])
         if ""!=error:
             print(error)
             exit(-1)

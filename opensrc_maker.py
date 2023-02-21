@@ -27,7 +27,8 @@ def get_format_str():
 
 #功能：解析参数；参数：无；返回：参数、错误描述
 def parse_argv():
-    sys_par = {"git_proxy":""}
+    sys_par = {"git_proxy":"",\
+        "work_path":os.path.dirname(os.path.abspath(sys.argv[0]))}
 
     format_str = get_format_str()
     #循环解析参数
@@ -92,17 +93,20 @@ if __name__ == "__main__":
        exit(-1)        
     #进行检测
     if "dpdk"==sys_par["opensrc"]:
-        err = dpdk_maker.makeropensrc(sys_par["ins_path"], sys_par["dpdk_ctype"], \
-            sys_par["git_proxy"])
+        err = dpdk_maker.makeropensrc(sys_par["work_path"], sys_par["ins_path"], \
+            sys_par["dpdk_ctype"], sys_par["git_proxy"])
     elif "hyperscan"==sys_par["opensrc"]:
-        err = hyperscan_maker.makeropensrc(sys_par["ins_path"], sys_par["git_proxy"])
+        err = hyperscan_maker.makeropensrc(sys_par["work_path"], sys_par["ins_path"], \
+            sys_par["git_proxy"])
     elif "gperftools"==sys_par["opensrc"]:
-        err = gperftools_maker.makeropensrc(sys_par["ins_path"], sys_par["git_proxy"])
+        err = gperftools_maker.makeropensrc(sys_par["work_path"], sys_par["ins_path"], \
+            sys_par["git_proxy"])
     elif "fstack"==sys_par["opensrc"]:
-        err = fstack_maker.makeropensrc(sys_par["ins_path"],\
+        err = fstack_maker.makeropensrc(sys_par["work_path"], sys_par["ins_path"],\
             sys_par["dpdk_path"],sys_par["hs_path"], sys_par["git_proxy"])
     elif "vpp"==sys_par["opensrc"]:
-        err = vpp_maker.makeropensrc(sys_par["ins_path"], sys_par["git_proxy"])
+        err = vpp_maker.makeropensrc(sys_par["work_path"], sys_par["ins_path"], \
+            sys_par["git_proxy"])
     else:
         err = ("bad opensrc %s.\b%s" %(sys_par["opensrc"],get_format_str()))
     if ""!=err:

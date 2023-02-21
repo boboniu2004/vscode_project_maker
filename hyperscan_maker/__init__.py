@@ -7,17 +7,17 @@ import maker_public
 
 
 #功能：安装hyperscan；参数：版本、安装路径、工程路径；返回：错误描述
-def install_hyperscan(ver, install_path, vscode_project_maker, git_proxy):
+def install_hyperscan(ver, install_path, work_path, git_proxy):
     hyperscan_url = ("https://%sgithub.com/intel/hyperscan.git" %git_proxy)
     if "aarch64" == platform.machine():
         hyperscan_url = ("https://%sgithub.com/kunpengcompute/hyperscan.git" %git_proxy)
     #安装hyperscan
     sz_err = maker_public.download_src("hyperscan", "v", ver, \
-        hyperscan_url, vscode_project_maker, None)
+        hyperscan_url, work_path, None)
     if "" != sz_err:
         return sz_err
     hyperscan_tmp = "/tmp/hyperscan-"+ver
-    hyperscan_src = vscode_project_maker+"/hyperscan-"+ver+".zip"
+    hyperscan_src = work_path+"/hyperscan-"+ver+".zip"
     #解压缩
     os.system("rm -Rf "+hyperscan_tmp)
     os.system("unzip -d /tmp/ "+hyperscan_src)
@@ -90,7 +90,7 @@ def install_centos_dep():
 
 
 #功能：主函数；参数：无；返回：错误描述
-def makeropensrc(ins_path, git_proxy):
+def makeropensrc(work_path, ins_path, git_proxy):
     osname = maker_public.getOSName()
     #安装apt install autoconf
     if -1 != osname.find("ubuntu"):
@@ -103,7 +103,7 @@ def makeropensrc(ins_path, git_proxy):
     if "y"==maker_public.check_reinstall("hyperscan", ins_path+"/hyperscan", \
         ins_path+"/hyperscan/lib/pkgconfig", True):
         szErr = install_hyperscan(maker_public.getVer(platform.machine()+"-hs"), \
-            ins_path+"/hyperscan", os.environ["HOME"]+"/vscode_project_maker",git_proxy)
+            ins_path+"/hyperscan", work_path,git_proxy)
         if "" != szErr:
             return szErr
     print("install hyperscan sucess!") 

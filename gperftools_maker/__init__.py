@@ -8,11 +8,11 @@ import maker_public
 
 
 #功能：安装libunwind；参数：版本、安装路径、工程路径；返回：错误描述
-def install_libunwind(ver, install_path, vscode_project_maker, git_proxy):
+def install_libunwind(ver, install_path, work_path, git_proxy):
     #下载
     sz_err = maker_public.download_src("libunwind", "v", ver, \
         ("https://%sgithub.com/libunwind/libunwind.git" %git_proxy), \
-        vscode_project_maker,"/tmp")
+        work_path,"/tmp")
     if "" != sz_err:
         return sz_err
     #编译
@@ -34,11 +34,11 @@ def install_libunwind(ver, install_path, vscode_project_maker, git_proxy):
 
 
 #功能：安装gperftools；参数：版本、安装路径、工程路径；返回：错误描述
-def install_gperftools(ver, install_path, vscode_project_maker, git_proxy):
+def install_gperftools(ver, install_path, work_path, git_proxy):
     #下载
     sz_err = maker_public.download_src("gperftools", "gperftools-", ver, \
         ("https://%sgithub.com/gperftools/gperftools.git" %git_proxy), \
-        vscode_project_maker,"/tmp")
+        work_path,"/tmp")
     if "" != sz_err:
         return sz_err
     #编译
@@ -57,7 +57,7 @@ def install_gperftools(ver, install_path, vscode_project_maker, git_proxy):
 
 
 #功能：主函数；参数：无；返回：错误描述
-def makeropensrc(ins_path, git_proxy):
+def makeropensrc(work_path, ins_path, git_proxy):
     osname = maker_public.getOSName()
     #安装apt install autoconf
     if -1 != osname.find("ubuntu"):
@@ -70,16 +70,14 @@ def makeropensrc(ins_path, git_proxy):
     if "y"==maker_public.check_reinstall("libunwind", ins_path+"/libunwind",\
         ins_path+"/libunwind/lib/pkgconfig", True):
         szErr = install_libunwind(maker_public.getVer("libunwind"), \
-            ins_path+"/libunwind", os.environ["HOME"]+"/vscode_project_maker", \
-            git_proxy)
+            ins_path+"/libunwind", work_path, git_proxy)
         if "" != szErr:
             return szErr
     print("install libunwind sucess!")      
     if "y"==maker_public.check_reinstall("gperftools", ins_path+"/gperftools", \
         ins_path+"/gperftools/lib/pkgconfig", True):
         szErr = install_gperftools(maker_public.getVer("gperftools"), \
-            ins_path+"/gperftools", os.environ["HOME"]+"/vscode_project_maker", \
-            git_proxy)
+            ins_path+"/gperftools", work_path, git_proxy)
         if "" != szErr:
             return szErr
     print("install gperftools sucess!")    

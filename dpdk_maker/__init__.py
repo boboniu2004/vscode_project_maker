@@ -93,15 +93,14 @@ def install_meson_dpdk(ins_path, fstack_ver):
 
 
 #功能：安装dpdk；参数：版本、安装路径、工程路径；返回：错误描述
-def install_dpdk(ver, install_path, vscode_project_maker, \
+def install_dpdk(ver, install_path, work_path, \
     complie_type, git_proxy):
     sz_err = maker_public.download_src("f-stack", "v", ver, \
-        ("https://%sgithub.com/F-Stack/f-stack.git" %git_proxy), \
-        vscode_project_maker, None)
+        ("https://%sgithub.com/F-Stack/f-stack.git" %git_proxy), work_path, None)
     if "" != sz_err:
         return sz_err
     #测试DPDK的版本是否需要更新
-    os.system("unzip -d /tmp/ "+vscode_project_maker+"/f-stack-"+ver+".zip")
+    os.system("unzip -d /tmp/ "+work_path+"/f-stack-"+ver+".zip")
     #编译安装DPDK
     if "normal" == complie_type:
         sz_err = install_normal_dpdk(install_path, ver)
@@ -175,7 +174,7 @@ def install_centos_dep():
 
 
 #功能：主函数；参数：无；返回：错误描述
-def makeropensrc(ins_path, complie_type, git_proxy):
+def makeropensrc(work_path, ins_path, complie_type, git_proxy):
     osname = maker_public.getOSName()
     #安装apt install autoconf
     if -1 != osname.find("ubuntu"):
@@ -195,7 +194,7 @@ def makeropensrc(ins_path, complie_type, git_proxy):
     if "y"==maker_public.check_reinstall("dpdk", ins_path+"/dpdk", \
         pkg_path, True==maker_public.issame_kernel_ver(ins_path+"/dpdk")):
         szErr = install_dpdk(maker_public.getVer("f-stack"), \
-            ins_path+"/dpdk", os.environ["HOME"]+"/vscode_project_maker", \
+            ins_path+"/dpdk", work_path, \
             complie_type, git_proxy)
         if "" != szErr:
             return szErr

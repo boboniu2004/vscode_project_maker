@@ -146,19 +146,22 @@ def configGcc():
 
 
 #configGolang配置GOLANG；参数：无；返回：错误描述
-def configGolang(go_proxy):
+def configGolang(work_path,go_proxy):
     gover = maker_public.getVer("go")
     gomac = "amd64"
     if "" != maker_public.execCmdAndGetOutput("lscpu | grep -E \"aarch64\""):
         gomac = "arm64"
     #安装 golang
-    if False == os.path.exists("./go"+gover+".linux-"+gomac+".tar.gz"):
-        if 0 != os.system("wget https://studygolang.com/dl/golang/go"+gover+".linux-"+gomac+".tar.gz"):
+    stor_path = ("%s/go%s.linux-%s.tar.gz" %(work_path,gover,gomac))
+    if False == os.path.exists(stor_path):
+        if 0 != os.system("wget https://studygolang.com/dl/golang/go%s.linux-%s.tar.gz "\
+            "-O %s"
+            %(gover,gomac,stor_path)):
             return "Failed to download go"+gover
     if -1 == maker_public.execCmdAndGetOutput(\
         "su -c \"/usr/local/go/bin/go version\"").find("go"+gover):
         os.system("rm -Rf /usr/local/go")
-        if 0 != os.system("tar -C /usr/local -zxvf ./go"+gover+".linux-"+gomac+".tar.gz"):
+        if 0 != os.system("tar -C /usr/local -zxvf %s" %stor_path):
             return "Failed to uncompress go"+gover
     #设置环境变量
     go_path = "/usr/local/go/gopath"
@@ -310,8 +313,7 @@ def configInternalNet(szEthEnName, szIpAddr):
     return ""
 
 #configWSLmodules 添加内核模块编译功能；参数：无；返回：错误描述
-def configWSLmodules():
-    vscode_project_maker = os.environ["HOME"]+"/vscode_project_maker"
+def configWSLmodules(work_path):
     szOSName = maker_public.execCmdAndGetOutput("uname -r")
     match_ret = re.match("([\d\\.]+)-", szOSName)
     if None == match_ret:
@@ -320,18 +322,18 @@ def configWSLmodules():
     if 0 != os.system("apt-get -y install build-essential flex bison libssl-dev libelf-dev dwarves"):
         return "Install build-essential flex bison libssl-dev libelf-dev failed"
     #下载内核，这里不用download_src函数替代的原因是因为库太大，用git下载太慢。
-    if False == os.path.isfile(vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
+    if False == os.path.isfile(work_path+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
         if 0 != os.system("wget https://ghproxy.com/github.com/microsoft/"\
             "WSL2-Linux-Kernel/archive/refs/tags/linux-msft-wsl-"+match_ret.group(1)+\
-            ".zip -O "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
-            os.system("rm -rf "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip")
+            ".zip -O "+work_path+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
+            os.system("rm -rf "+work_path+"/linux-msft-wsl-"+match_ret.group(1)+".zip")
             return "failed to download linux-msft-wsl-"+match_ret.group(1)+".zip"
     if False == os.path.isdir("/usr/src/WSL2-Linux-Kernel-linux-msft-wsl-"+match_ret.group(1)):
         #删除旧版本的数据
         os.system("rm -rf /usr/src/WSL2-Linux-Kernel-linux-msft-wsl*")
         if 0 != os.system("unzip -d /usr/src/ "+
-            vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
-            return "Failed to unzip "+vscode_project_maker+"/linux-msft-wsl-"+match_ret.group(1)+".zip"        
+            work_path+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
+            return "Failed to unzip "+work_path+"/linux-msft-wsl-"+match_ret.group(1)+".zip"        
     if False == os.path.isdir("/lib/modules/"+match_ret.group(1)+"-microsoft-standard-WSL2"):
         #删除旧版本的数据
         os.system("rm -rf /lib/modules/*-microsoft-standard-WSL2")
@@ -347,6 +349,7 @@ def configWSLmodules():
 def InitEnv(sys_par):
     par_dic = dict(sys_par)
     szOSName = maker_public.getOSName()
+    work_path = par_dic["work_path"]
     #释放apt资源
     releaseApt()
     #打开ROOT
@@ -376,7 +379,7 @@ def InitEnv(sys_par):
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #安装GOLANG
-    szErr = configGolang(par_dic["go_proxy"])
+    szErr = configGolang(par_dic["work_path"], par_dic["go_proxy"])
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #安装PYTHON和PIP
@@ -401,7 +404,7 @@ def InitEnv(sys_par):
         if 0 < len(szErr):
             return("Config CentOS failed:%s" %(szErr))
     if "ubuntu-wsl2" == szOSName and "online" == par_dic["work_mod"]:
-        szErr = configWSLmodules()
+        szErr = configWSLmodules(work_path)
         if 0 < len(szErr):
             return("Config Ubuntu failed:%s" %(szErr))
     #
