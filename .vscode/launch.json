@@ -8,11 +8,9 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/opensrc_maker.py",
+            "program": "${workspaceFolder}/osenv_maker.py",
             "args": [
-                "--vpp",
-                "--ins_path","/root",
-                "--git_proxy","ghproxy.com"
+                "--work_mod","offline",
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"

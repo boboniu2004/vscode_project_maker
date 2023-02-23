@@ -146,47 +146,54 @@ def configGcc():
 
 
 #configGolang配置GOLANG；参数：无；返回：错误描述
-def configGolang(work_path,go_proxy):
+def configGolang(go_proxy):
     gover = maker_public.getVer("go")
-    gomac = "amd64"
-    if "" != maker_public.execCmdAndGetOutput("lscpu | grep -E \"aarch64\""):
-        gomac = "arm64"
+    #卸载以前的安装
+    os.system("rm -rf /usr/local/go")
+    szConfig,sz_err = maker_public.readTxtFile("/etc/profile")
+    if "" != sz_err:
+        return sz_err
+    szConfig = re.sub("\\nexport[ \\t]+GOPATH[ \\t]*=.*", "", szConfig)
+    szConfig = re.sub("\\nexport[ \\t]+PATH[ \\t]*=[ \\t]*\\$PATH:\\$GOPATH/bin.*", \
+        "", szConfig)
+    sz_err = maker_public.writeTxtFile("/etc/profile", szConfig)
+    if "" != sz_err:
+        return sz_err
+    os.system("rm -rf ~/go")
     #安装 golang
-    stor_path = ("%s/go%s.linux-%s.tar.gz" %(work_path,gover,gomac))
-    if False == os.path.exists(stor_path):
-        if 0 != os.system("wget https://studygolang.com/dl/golang/go%s.linux-%s.tar.gz "\
-            "-O %s"
-            %(gover,gomac,stor_path)):
-            return "Failed to download go"+gover
-    if -1 == maker_public.execCmdAndGetOutput(\
-        "su -c \"/usr/local/go/bin/go version\"").find("go"+gover):
-        os.system("rm -Rf /usr/local/go")
-        if 0 != os.system("tar -C /usr/local -zxvf %s" %stor_path):
-            return "Failed to uncompress go"+gover
+    if 0 != os.system("apt-get install -y golang-%s" %gover) or \
+        False == os.path.exists("/usr/lib/go-%s" %gover) or \
+        False == os.path.exists("/usr/share/go-%s" %gover):
+        return "Failed to install go"+gover
+    #设置go链接
+    if False == os.path.exists("/usr/lib/go-%s/src" %gover):
+        if 0 != os.system("cd /usr/lib/go-%s/src && rm -f src && "\
+            "ln -s ../../share/go-%s/src src" %(gover, gover)):
+            return "Failed to link go-src"
+    if False == os.path.exists("/usr/lib/go-%s/test" %gover):
+        if 0 != os.system("cd /usr/lib/go-%s/test && rm -f test && "\
+            "ln -s ../../share/go-%s/test test" %(gover, gover)):
+            return "Failed to link go-test"
+    if False == os.path.exists("/usr/lib/go") or \
+        False == os.path.samefile("/usr/lib/go", ("/usr/lib/go-%s" %gover)):
+        if 0 != os.system("cd /usr/lib && rm -f go && ln -s go-%s go" %gover):
+            return "Failed to link go"
+    go_bins = os.listdir("/usr/lib/go-%s/bin" %gover)
+    for gobin in go_bins:
+        if False == os.path.isfile("/usr/lib/go-%s/bin/%s" %(gover, gobin)):
+            continue
+        if True == os.path.exists("/usr/bin/%s" %gobin) and \
+            True == os.path.samefile(("/usr/bin/%s" %gobin), \
+            ("/usr/lib/go-%s/bin/%s" %(gover, gobin))):
+            continue
+        os.system("cd /usr/bin && rm -f %s && ln -s /usr/lib/go-%s/bin/%s %s" \
+            %(gobin, gover, gobin, gobin))        
     #设置环境变量
-    go_path = "/usr/local/go/gopath"
+    go_path = "/usr/local/gopath"
     if False == os.path.exists(go_path):
         os.system("mkdir -p %s" %go_path)
-    os.system("rm -rf ~/go")
-    szConfig,szErr = maker_public.readTxtFile("/etc/profile")
-    if 0 < len(szErr):
-        return szErr
-    if None == re.search("\\nexport[ \\t]+GOPATH[ \\t]*=.*", szConfig):
-        szConfig += ("\nexport GOPATH=%s" %go_path)
-    else:
-        szConfig = re.sub("\\nexport[ \\t]+GOPATH[ \\t]*=.*", \
-            ("\nexport GOPATH=%s" %go_path),szConfig)
-    if None == re.search("\\nexport[ \\t]+PATH[ \\t]*=[ \\t]*\\$PATH:\\$GOPATH/bin.*", \
-        szConfig):
-        szConfig += "\nexport PATH=$PATH:$GOPATH/bin:/usr/local/go/bin"
-    else:
-        szConfig = re.sub("\\nexport[ \\t]+PATH[ \\t]*=[ \\t]*\\$PATH:\\$GOPATH/bin.*", \
-            "\nexport PATH=$PATH:$GOPATH/bin:/usr/local/go/bin",szConfig)
-    szErr = maker_public.writeTxtFile("/etc/profile", szConfig)
-    if 0 < len(szErr):
-        return szErr
     #安装工具
-    szErr = maker_public.installGolangTools("/usr/local/go/bin/go", go_proxy,go_path)
+    szErr = maker_public.installGolangTools("go", go_proxy,go_path)
     if 0 < len(szErr):
         return szErr
     #
@@ -379,7 +386,7 @@ def InitEnv(sys_par):
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #安装GOLANG
-    szErr = configGolang(par_dic["work_path"], par_dic["go_proxy"])
+    szErr = configGolang(par_dic["go_proxy"])
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #安装PYTHON和PIP
