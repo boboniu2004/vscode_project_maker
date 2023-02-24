@@ -21,7 +21,7 @@ g_verconfig = {
     "prop"              :  "4",
     "libunwind"         :  "1.6.2",
     "gperftools"        :  "2.9.1",
-    "go"                :  "1.16",
+    "go"                :  "1.18",
     "vpp"               :  "20.09",
     "x86_64-hs"         :  "5.4.0",
     "aarch64-hs"        :  "5.3.0.aarch64"
@@ -131,6 +131,8 @@ def installGolangTools(szGo,go_proxy,go_path):
     if 0 != os.system("su -c \"%s env -w GOPATH=\\\"%s\\\"\"" %(szGo,go_path)):
         return "Set GOPROXY failed"
     os.system("su -c \""+szGo+" env\"")
+    #staticcheck
+    os.system("su -c \"%s install honnef.co/go/tools/cmd/staticcheck@latest\"" %(szGo))
     #安装go-outline
     os.system("su -c \"%s install github.com/ramya-rao-a/go-outline@latest\"" %(szGo))
     #安装go-find-references
