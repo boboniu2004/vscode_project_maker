@@ -251,11 +251,11 @@ def configPython(py_host,py_url):
     if 0 < len(szErr):
         return szErr
     #配置PIP
-    szErr = maker_public.configPip("python3", "pip3", py_host, py_url)
+    szErr = maker_public.configPip("python3", py_host, py_url)
     if 0 < len(szErr):
         return szErr
     if ""==cur_pyver or cur_pyver<pyver:
-        szErr = maker_public.configPip("python"+pyver, "pip3", py_host, py_url)
+        szErr = maker_public.configPip("python"+pyver, py_host, py_url)
         if 0 < len(szErr):
             return szErr
     return ""

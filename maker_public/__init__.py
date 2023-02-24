@@ -183,8 +183,8 @@ def installGolangTools(szGo,go_proxy,go_path):
 #函数功能：配置PIP
 #函数参数：python可执行文件和PIP可执行文件
 #函数返回：错误描述
-def configPip(szPython, szPip, py_host, py_url):
-    #添加网易源
+def configPip(szPython, py_host, py_url):
+    #添加源
     if 0 != os.system("su -c \"mkdir -p ~/.pip\""):
         return "Add PIP source failed"
     os.system("su -c \"rm -rf ~/.pip/pip.conf\"")
@@ -338,17 +338,6 @@ def get_python():
         return "python"
     else:
         return "python"+man_ver.group(1)
-
-
-#功能：下载driverctl；参数：存储路径：返回：错误码
-def download_driverctl(dst_path):
-    if 0 == os.system("git clone https://ghproxy.com/github.com/boboniu2004/driverctl.git "\
-        +dst_path):
-        return ""
-    if 0 != os.system("git clone https://gitlab.com/driverctl/driverctl.git "+dst_path):
-        return "download driverctl failed"
-    os.system("rm -rf "+dst_path)
-    return ""
 
 
 #功能：替换文件中的内容；参数：文件路径，待替换的文本正则，替换的内容；返回：错误码

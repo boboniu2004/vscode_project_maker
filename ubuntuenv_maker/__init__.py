@@ -4,6 +4,7 @@
 
 import re
 import os
+import time
 import maker_public
 
 
@@ -78,6 +79,11 @@ def openRoot():
 #configDebSource配置扩展源；参数：os类型；返回：错误描述
 def configDebSource(szOSName, deb_src):
     if "ubuntu" == szOSName:
+        #判断是否要更新
+        dep_dat,szErr = maker_public.readTxtFile("/etc/apt/sources.list")
+        dep_mtime = os.path.getmtime("/etc/apt/sources.list")
+        if 0 < len(szErr):
+            return szErr
         #获取Ubuntu的版本名称
         CodeNameObj = re.match("^Codename[ \\t]*\\:[ \\t]*([\\S]+)", \
             maker_public.execCmdAndGetOutput("lsb_release -c"))
@@ -100,13 +106,13 @@ def configDebSource(szOSName, deb_src):
               deb_src,szCodeName, deb_src,szCodeName, \
               deb_src,szCodeName, deb_src,szCodeName, deb_src,szCodeName, 
               deb_src,szCodeName, deb_src,szCodeName))
-        #
-        szErr = maker_public.writeTxtFile("/etc/apt/sources.list", szAptSource)
-        if 0 < len(szErr):
-            return szErr
-    if "ubuntu" == szOSName:
-        if 0 != os.system("apt-get update"):
-            return "Update sources.list failed"
+        #文件内容一致，并且修改时间小于半年，不用更刷新
+        if -1 == dep_dat.find(szAptSource) or time.time()-24*3600*31*3>=dep_mtime:
+            szErr = maker_public.writeTxtFile("/etc/apt/sources.list", szAptSource)
+            if 0 < len(szErr):
+                return szErr
+            if 0 != os.system("apt-get update"):
+                return "Update sources.list failed"
     else:
         os.system("apt-get update")
     return ""
@@ -218,11 +224,11 @@ def configPython(py_host, py_url):
         if 0 != os.system("apt-get install -y python%s" %pyver):
             return ("Install python%s failed" %pyver)
     #配置PIP
-    szErr = maker_public.configPip("python3", "pip3", py_host, py_url)
+    szErr = maker_public.configPip("python3", py_host, py_url)
     if 0 < len(szErr):
         return szErr
     if ""==cur_pyver or cur_pyver<pyver:
-        szErr = maker_public.configPip("python"+pyver, "pip3", py_host, py_url)
+        szErr = maker_public.configPip("python"+pyver, py_host, py_url)
         if 0 < len(szErr):
             return szErr
     return ""
