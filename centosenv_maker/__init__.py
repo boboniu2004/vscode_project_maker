@@ -197,32 +197,24 @@ def configGcc():
 
 
 #configGolang 配置GOLANG；参数：无；返回：错误描述
-def configGolang(go_proxy):
+def configGolang(work_path, go_proxy):
+    gover = maker_public.getVer("go")
+    gomac = "amd64"
+    if "" != maker_public.execCmdAndGetOutput("lscpu | grep -E \"aarch64\""):
+        gomac = "arm64"
     #安装 golang
-    szErr = installOrUpdateRpm("golang", platform.machine(), "")
-    if 0 < len(szErr):
-        return szErr
-    #设置环境变量
-    go_path = "/usr/local/gopath"
-    if False == os.path.exists(go_path):
-        os.system("mkdir -p %s" %go_path)
-    os.system("rm -rf ~/go")
-    szConfig,szErr = maker_public.readTxtFile("/etc/profile")
-    if 0 < len(szErr):
-        return szErr
-    if None == re.search("\\nexport[ \\t]+GOPATH[ \\t]*=.*", szConfig):
-        szConfig += ("\nexport GOPATH=%s" %go_path)
-    else:
-        szConfig = re.sub("\\nexport[ \\t]+GOPATH[ \\t]*=.*", \
-            ("\nexport GOPATH=%s" %go_path),szConfig)
-    if None == re.search("\\nexport[ \\t]+PATH[ \\t]*=[ \\t]*\\$PATH:\\$GOPATH/bin", \
-        szConfig):
-        szConfig += "\nexport PATH=$PATH:$GOPATH/bin"
-    szErr = maker_public.writeTxtFile("/etc/profile", szConfig)
-    if 0 < len(szErr):
-        return szErr
+    if False == os.path.exists("%s/go%s.linux-%s.tar.gz" %(work_path,gover,gomac)):
+        if 0 != os.system("wget https://studygolang.com/dl/golang/go%s.linux-%s.tar.gz "\
+            "-O %s/go%s.linux-%s.tar.gz" %(gover,gomac,work_path,gover,gomac)):
+            return ("Failed to download go%s" %gover)
+    if -1 == maker_public.execCmdAndGetOutput(\
+        "su -c \"/usr/local/go/bin/go version\"").find("go%s" %gover):
+        os.system("rm -Rf /usr/local/go")
+        if 0 != os.system("tar -C /usr/local -zxvf %s/go%s.linux-%s.tar.gz" \
+            %(work_path,gover,gomac)):
+            return ("Failed to uncompress go%s" %gover)
     #安装工具
-    szErr = maker_public.installGolangTools("go",go_proxy,go_path)
+    szErr = maker_public.installGolangTools("/usr/local/go", go_proxy)
     if 0 < len(szErr):
         return szErr
     #
@@ -324,6 +316,7 @@ def configInternalNet(szEthChName, szEthEnName, szIpAddr):
 #InitEnv 初始化环境；参数：参数字典；返回：错误描述
 def InitEnv(sys_par):
     par_dic = dict(sys_par)
+    work_path = par_dic["work_path"]
     #释放yum资源
     releaseYum()
     #安装扩展库
@@ -348,7 +341,7 @@ def InitEnv(sys_par):
     if 0 < len(szErr):
         return("Config CentOS failed:%s" %(szErr))
     #安装GOLANG
-    szErr = configGolang(par_dic["go_proxy"])
+    szErr = configGolang(work_path, par_dic["go_proxy"])
     if 0 < len(szErr):
         return("Config CentOS failed:%s" %(szErr))
     #安装PYTHON和PIP

@@ -156,16 +156,6 @@ def configGolang(go_proxy):
     gover = maker_public.getVer("go")
     #卸载以前的安装
     os.system("rm -rf /usr/local/go")
-    szConfig,sz_err = maker_public.readTxtFile("/etc/profile")
-    if "" != sz_err:
-        return sz_err
-    szConfig = re.sub("\\nexport[ \\t]+GOPATH[ \\t]*=.*", "", szConfig)
-    szConfig = re.sub("\\nexport[ \\t]+PATH[ \\t]*=[ \\t]*\\$PATH:\\$GOPATH/bin.*", \
-        "", szConfig)
-    sz_err = maker_public.writeTxtFile("/etc/profile", szConfig)
-    if "" != sz_err:
-        return sz_err
-    os.system("rm -rf ~/go")
     #安装 golang
     if 0 != os.system("apt-get install -y golang-%s" %gover) or \
         False == os.path.exists("/usr/lib/go-%s" %gover) or \
@@ -184,22 +174,8 @@ def configGolang(go_proxy):
         False == os.path.samefile("/usr/lib/go", ("/usr/lib/go-%s" %gover)):
         if 0 != os.system("cd /usr/lib && rm -f go && ln -s go-%s go" %gover):
             return "Failed to link go"
-    go_bins = os.listdir("/usr/lib/go-%s/bin" %gover)
-    for gobin in go_bins:
-        if False == os.path.isfile("/usr/lib/go-%s/bin/%s" %(gover, gobin)):
-            continue
-        if True == os.path.exists("/usr/bin/%s" %gobin) and \
-            True == os.path.samefile(("/usr/bin/%s" %gobin), \
-            ("/usr/lib/go-%s/bin/%s" %(gover, gobin))):
-            continue
-        os.system("cd /usr/bin && rm -f %s && ln -s /usr/lib/go-%s/bin/%s %s" \
-            %(gobin, gover, gobin, gobin))        
-    #设置环境变量
-    go_path = "/usr/local/gopath"
-    if False == os.path.exists(go_path):
-        os.system("mkdir -p %s" %go_path)
     #安装工具
-    szErr = maker_public.installGolangTools("go", go_proxy,go_path)
+    szErr = maker_public.installGolangTools(("/usr/lib/go-%s" %gover), go_proxy)
     if 0 < len(szErr):
         return szErr
     #
