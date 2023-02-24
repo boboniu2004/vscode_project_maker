@@ -320,7 +320,7 @@ def InitEnv(sys_par):
     #释放yum资源
     releaseYum()
     #安装扩展库
-    szErr = configRepo(par_dic["rpm_src"],par_dic["epel_src"])
+    szErr = configRepo(par_dic["rpm_src"],par_dic.get("epel_src"))
     if 0 < len(szErr):
         return("Config CentOS failed:%s" %(szErr))
     #将系统升级到最新版本
