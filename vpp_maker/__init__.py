@@ -10,9 +10,18 @@ import platform
 
 #功能：安装依赖；参数：无；返回：错误码
 def make_dep(vpp_path):
+    #非root模式直接退出
+    if 0 != os.geteuid():
+        return ""
+    
     cpuarch = platform.machine()
     osname = maker_public.getOSName()
-
+    #设置用户组
+    #os.system("groupadd -f -r vpp")
+    #获取OS版本
+    osver = maker_public.getOSName()
+    if osver == "centos":
+        os.system("yum erase -y epel-release.noarch")
     if osname=="ubuntu" or osname=="ubuntu-wsl2":
         os.system("apt-get --purge autoremove vpp-ext-deps."+cpuarch)
         if 0!=os.system("cd "+vpp_path+"/vpp && make UNATTENDED=y install-dep"):
@@ -121,12 +130,6 @@ def config_vpp(vpp_ver, vpp_path, work_path, git_proxy):
             return "Failed to unzip "+work_path+"/vpp-"+vpp_ver+".zip"
         if 0!=os.system("mv  "+vpp_path+"/vpp-"+vpp_ver+" "+vpp_path+"/vpp"):
             return "Failed to unzip "+work_path+"/vpp-"+vpp_ver+".zip"
-    #设置用户组
-    os.system("groupadd -f -r vpp")
-    #获取OS版本
-    osver = maker_public.getOSName()
-    if osver == "centos":
-        os.system("yum erase -y epel-release.noarch")
     #修改makefile
     makedat,sz_err = maker_public.readTxtFile(vpp_path+"/vpp"+"/Makefile")
     if "" != sz_err:
