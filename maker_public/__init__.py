@@ -103,8 +103,8 @@ def download_src(name, versufx, ver, url, vscode_project_maker, uncomp_path):
     return ""
 
 
-#函数功能：安装golang工i具
-#函数参数：GO可执行程序位置
+#函数功能：配置go的环境变量
+#函数参数：GO安装位置和模块安装位置
 #函数返回：错误描述
 def configGolangTools(inst_path,go_path):
     #删除以前的安装
@@ -150,6 +150,15 @@ def configGolangTools(inst_path,go_path):
     return ""
 
 
+#函数功能：执行安装
+#函数参数：安装指令
+#函数返回：错误描述
+def do_get_gotools(cmd, version):
+    if 0 != os.system("su -c \"%s@%s\"" %(cmd,version)) and \
+        0 != os.system("su -c \"%s\"" %cmd):
+        print("run %s error" %cmd)
+
+
 #函数功能：安装golang工i具
 #函数参数：GO可执行程序位置
 #函数返回：错误描述
@@ -185,46 +194,46 @@ def installGolangTools(inst_path, go_proxy):
         return "Set GOPROXY failed"
     os.system("su -c \"go env\"")
     #安装go-outline
-    os.system("su -c \"go install github.com/ramya-rao-a/go-outline@latest\"")
+    do_get_gotools("go install github.com/ramya-rao-a/go-outline", "latest")
     #安装go-find-references
-    os.system("su -c \"go install github.com/lukehoban/go-find-references@latest\"")
+    do_get_gotools("go install github.com/lukehoban/go-find-references", "latest")
     #安装gocode
-    os.system("su -c \"go install github.com/mdempsky/gocode@latest\"")
+    do_get_gotools("go install github.com/mdempsky/gocode", "latest")
     #安装gopkgs
-    os.system("su -c \"go install github.com/uudashr/gopkgs/cmd/gopkgs@latest\"")
+    do_get_gotools("go install github.com/uudashr/gopkgs/cmd/gopkgs", "latest")
     #安装godef
-    os.system("su -c \"go install github.com/rogpeppe/godef@latest\"")
+    do_get_gotools("go install github.com/rogpeppe/godef", "latest")
     #安装goreturns
-    os.system("su -c \"go install sourcegraph.com/sqs/goreturns@latest\"")
+    do_get_gotools("go install sourcegraph.com/sqs/goreturns", "latest")
     #安装gorename
-    os.system("su -c \"go install golang.org/x/tools/cmd/gorename@latest\"")
+    do_get_gotools("go install golang.org/x/tools/cmd/gorename", "latest")
     #安装go-symbols
-    os.system("su -c \"go install github.com/newhook/go-symbols@latest\"")
+    do_get_gotools("go install github.com/newhook/go-symbols", "latest")
     #安装gopls
-    os.system("su -c \"go install golang.org/x/tools/gopls@latest\"")
-    os.system("su -c \"go mod download golang.org/x/tools/gopls@latest\"")
+    do_get_gotools("go install golang.org/x/tools/gopls", "latest")
+    do_get_gotools("go mod download golang.org/x/tools/gopls", "latest")
     #安装dlv
-    os.system("su -c \"go install github.com/go-delve/delve/cmd/dlv@latest\"")
+    do_get_gotools("go install github.com/go-delve/delve/cmd/dlv", "latest")
     #安装staticcheck
-    os.system("su -c \"go install honnef.co/go/tools/cmd/staticcheck@v0.3.2\"")
+    do_get_gotools("go install honnef.co/go/tools/cmd/staticcheck", "v0.3.2")
     #安装goimports
-    os.system("su -c \"go install golang.org/x/tools/cmd/goimports@latest\"")
+    do_get_gotools("go install golang.org/x/tools/cmd/goimports", "latest")
     #安装guru
-    os.system("su -c \"go install golang.org/x/tools/cmd/guru@latest\"")
+    do_get_gotools("go install golang.org/x/tools/cmd/guru", "latest")
     #安装golint
-    os.system("su -c \"go install golang.org/x/lint/golint@latest\"")
+    do_get_gotools("go install golang.org/x/lint/golint", "latest")
     #安装gotests
-    os.system("su -c \"go install github.com/cweill/gotests@latest\"")
+    do_get_gotools("go install github.com/cweill/gotests", "latest")
     #安装gomodifytags
-    os.system("su -c \"go install github.com/fatih/gomodifytags@latest\"")
+    do_get_gotools("go install github.com/fatih/gomodifytags", "latest")
     #安装impl
-    os.system("su -c \"go install github.com/josharian/impl@latest\"")
+    do_get_gotools("go install github.com/josharian/impl", "latest")
     #安装fillstruct
-    os.system("su -c \"go install github.com/davidrjenni/reftools/cmd/fillstruct@latest\"")
+    do_get_gotools("go install github.com/davidrjenni/reftools/cmd/fillstruct", "latest")
     #安装goplay
-    os.system("su -c \"go install github.com/haya14busa/goplay/cmd/goplay@latest\"")
+    do_get_gotools("go install github.com/haya14busa/goplay/cmd/goplay", "latest")
     #安装godoctor
-    os.system("su -c \"go install github.com/godoctor/godoctor@latest\"")
+    do_get_gotools("go install github.com/godoctor/godoctor", "latest")
     #
     os.system("rm -rf %s/go_install_log && echo \"%s\" > %s/go_install_log" \
         %(go_path,curtime_str,go_path))
