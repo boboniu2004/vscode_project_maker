@@ -32,7 +32,7 @@ def parse_argv(szOSName):
         "deb_src":"http://mirrors.aliyun.com/ubuntu",\
         "py_host":"mirrors.aliyun.com",\
         "py_url":"http://mirrors.aliyun.com/pypi/simple",\
-        "go_proxy":"https://proxy.golang.com.cn",\
+        "go_proxy":"https://goproxy.io",\
         "git_proxy":""}
     if "ubuntu"==szOSName or "ubuntu-wsl2"==szOSName:
         if "" == lspci:
