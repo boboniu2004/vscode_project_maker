@@ -198,7 +198,7 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 # 编译调试工程
 
 ## c/c++交叉编译
-利用vscode_project_maker/__init__.py创建c/c++工程后，可以使用如下方式实现交叉编译。
+利用vscode_project_maker/__init__.py创建c/c++工程后，可以使用如下方式实现交叉编译。首先需要在编译机上安装交叉编译工具链。
 
 非dpdk工程：
 
@@ -223,6 +223,7 @@ dpdk工程：
         RTE_SDK是该交叉编译链编译出的DPDK的安装目录。
 
 ## golang交叉编译
+利用vscode_project_maker/__init__.py创建golang工程后，可以使用如下方式实现交叉编译。golang无需安装交叉编译工具链。
 
         cd project-path/
         make CROSS_FLAG=xx
