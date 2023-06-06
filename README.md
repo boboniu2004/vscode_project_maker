@@ -197,6 +197,38 @@ c、c++、golang可以创建可执行程序、动态库、静态库工程，pyth
 
 # 编译调试工程
 
+## c/c++交叉编译
+利用vscode_project_maker/__init__.py创建c/c++工程后，可以使用如下方式实现交叉编译。
+
+非dpdk工程：
+
+        cd project-path/
+        make TOOLCHAIN=xx SYSROOT=xx CROSS_CFLAG=xx CROSS_LFLAG=xx MACHINE_CPUARCH=xx
+
+        TOOLCHAIN是交叉编译工具的前缀，如xx-gcc，则TOOLCHAIN=xx-；
+        SYSROOT是交叉编译链的根目录，内置的头文件和链接库从该目录中查找；
+        CROSS_CFLAG是交叉编译工具链的额外编译参数；
+        CROSS_LFLAG是交叉编译工具链的额外链接参数；
+        MACHINE_CPUARCH是目标程序的CPU运行环境，如aarch64，x86_64。
+
+dpdk工程：
+
+        cd project-path/
+        make TOOLCHAIN=xx SYSROOT=xx CROSS_CFLAG=xx CROSS_LFLAG=xx RTE_SDK=xx
+
+        TOOLCHAIN是交叉编译工具的前缀，如xx-gcc，则TOOLCHAIN=xx-；
+        SYSROOT是交叉编译链的根目录，内置的头文件和链接库从该目录中查找；
+        CROSS_CFLAG是交叉编译工具链的额外编译参数；
+        CROSS_LFLAG是交叉编译工具链的额外链接参数；
+        RTE_SDK是该交叉编译链编译出的DPDK的安装目录。
+
+## golang交叉编译
+
+        cd project-path/
+        make CROSS_FLAG=xx
+
+        CROSS_FLAG是交叉编译参数，如要在x86下编译arm原本，可以使用CROSS_FLAG="GOOS=linux GOARCH=arm64 GOARM=7"。
+
 # 配置开源框架
 在virtualbox环境下、或者hyper-v环境下，可以使用opensrc_maker.py来配置开源框架，目前支持dpdk、hyperscan、gperftools、fstack、vpp。
 

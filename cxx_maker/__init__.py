@@ -19,7 +19,7 @@ def make_nomal_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
         return szErr
     #替换编译器
     szMakeCont = re.sub("\\n[ \\t]*CC[ \\t]*:=.*", 
-        ("\nCC := %s" %(szComplier)), szMakeCont)
+        ("\nCC := $(TOOLCHAIN)%s" %(szComplier)), szMakeCont)
     #替换后缀
     szMakeCont = re.sub("\\n[ \\t]*SUFFIX[ \\t]*:=.*", 
         ("\nSUFFIX := %s" %(szSuffix)), szMakeCont)
@@ -46,12 +46,12 @@ def make_nomal_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
             %(szStd)), szMakeCont)
     #替换链接器
     if -1!=str(szAppType).find("app") or -1!=str(szAppType).find("shared"):
-        szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := "+szComplier, 
+        szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := $(TOOLCHAIN)"+szComplier, 
             szMakeCont)
         szMakeCont = re.sub("\\n[ \\t]*LDOUTFLG[ \\t]*:=.*", 
             "\nLDOUTFLG := -o", szMakeCont)
     else:
-        szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := ar", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := $(TOOLCHAIN)ar", szMakeCont)
         szMakeCont = re.sub("\\n[ \\t]*LDOUTFLG[ \\t]*:=.*", 
             "\nLDOUTFLG := ", szMakeCont)
     #替换链接选项
@@ -103,7 +103,7 @@ def make_dpdk_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
         return szErr
     #替换编译器
     szMakeCont = re.sub("\\n[ \\t]*CC[ \\t]*:=.*", 
-        ("\nCC := %s" %(szComplier)), szMakeCont)
+        ("\nCC := $(TOOLCHAIN)%s" %(szComplier)), szMakeCont)
     #替换后缀
     szMakeCont = re.sub("\\n[ \\t]*SUFFIX[ \\t]*:=.*", 
         ("\nSUFFIX := %s" %(szSuffix)), szMakeCont)
@@ -132,12 +132,12 @@ def make_dpdk_makefile(szAppType, szProjPath, szComplier, szSuffix, szStd):
             "$(shell $(PKGCONF) --cflags libdpdk)" %(szStd)), szMakeCont)
     #替换链接器
     if -1!=str(szAppType).find("app") or -1!=str(szAppType).find("shared"):
-        szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := "+szComplier, 
+        szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := $(TOOLCHAIN)"+szComplier, 
             szMakeCont)
         szMakeCont = re.sub("\\n[ \\t]*LDOUTFLG[ \\t]*:=.*", 
             "\nLDOUTFLG := -o", szMakeCont)
     else:
-        szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := ar", szMakeCont)
+        szMakeCont = re.sub("\\n[ \\t]*LD[ \\t]*:=.*", "\nLD := $(TOOLCHAIN)ar", szMakeCont)
         szMakeCont = re.sub("\\n[ \\t]*LDOUTFLG[ \\t]*:=.*", 
             "\nLDOUTFLG := ", szMakeCont)
     #替换链接选项
