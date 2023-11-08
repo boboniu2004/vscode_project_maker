@@ -132,7 +132,7 @@ def updateSystem():
     if 0 != os.system("apt-get -y install curl"):
         return "Install curl failed"
     if 0 != os.system("apt-get -y install zip"):
-        return "Install curl failed"
+        return "Install zip failed"
     return ""
 
 
