@@ -289,6 +289,9 @@ def ConfigSshd():
         "\nPermitRootLogin yes", szSshdConf)
     szSshdConf = re.sub("\\n[ \\t]*#[ \\t]*PermitRootLogin.+", \
         "\nPermitRootLogin yes", szSshdConf)
+    #ubuntu-server可能不带PermitRootLogin选项
+    if None == re.search("\\n[ \\t]*#[ \\t]*PermitRootLogin.+", szSshdConf):
+        szSshdConf += "\nPermitRootLogin yes"
     #写入配置文件
     szErr = writeTxtFile("/etc/ssh/sshd_config", szSshdConf)
     if 0 < len(szErr):

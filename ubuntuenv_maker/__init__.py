@@ -17,6 +17,9 @@ def releaseApt():
 def openRoot():
     if 0 != os.system("passwd root"):
         return "Failed to change password of root"
+    #在未安装图形界面的情况下，不用进行后续的设置
+    if False == os.path.isfile("/usr/share/lightdm/lightdm.conf.d/50-ubuntu.conf"):
+        return ""
     #修改第一个文件项
     szConfig, szErr = maker_public.readTxtFile("/usr/share/lightdm/lightdm.conf.d/50-ubuntu.conf")
     if 0 < len(szErr):
@@ -342,7 +345,7 @@ def InitEnv(sys_par):
     #释放apt资源
     releaseApt()
     #打开ROOT
-    if "ubuntu" == szOSName and "online" == par_dic["work_mod"]:
+    if "ubuntu" == szOSName:
         szErr = openRoot()
         if 0 < len(szErr):
             return("Config Ubuntu failed:%s" %(szErr))
@@ -355,7 +358,7 @@ def InitEnv(sys_par):
     if 0 < len(szErr):
         return("Config Ubuntu failed:%s" %(szErr))
     #配置SSHD
-    if "ubuntu" == szOSName and "online" == par_dic["work_mod"]:
+    if "ubuntu" == szOSName:
         szErr = configSshd()
         if 0 < len(szErr):
             return("Config Ubuntu failed:%s" %(szErr))
