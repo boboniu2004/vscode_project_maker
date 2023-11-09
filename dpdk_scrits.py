@@ -136,7 +136,7 @@ def isolate_cpu(cpu_lst, page_size):
     grub,err = maker_public.readTxtFile("/etc/default/grub")
     if "" != err:
         return False,err
-    old_md5 = hashlib.md5(grub)
+    old_md5 = hashlib.md5(grub.encode("utf-8"))
     #替换配置文件
     if None != re.search("\nGRUB_CMDLINE_LINUX_DEFAULT.*\nGRUB_CMDLINE_LINUX[ \\t]*=.*",grub):
         grub = re.sub("\nGRUB_CMDLINE_LINUX[ \\t]*=.*", \
@@ -150,7 +150,7 @@ def isolate_cpu(cpu_lst, page_size):
     err = maker_public.writeTxtFile("/etc/default/grub", grub)
     if "" != err:
         return False,err
-    new_md5 = hashlib.md5(grub)
+    new_md5 = hashlib.md5(grub.encode("utf-8"))
     if old_md5 == new_md5:
         return False,""
     #重新生成启动文件
