@@ -327,7 +327,8 @@ def do_binddev(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
         return ""
     #加载内核模块
     for kmod in kmod_list:
-        if "" != maker_public.execCmdAndGetOutput("lsmod | grep "+kmod):
+        if "" != maker_public.execCmdAndGetOutput("lsmod | grep "+kmod) and \
+            ""==maker_public.execCmdAndGetOutput("lsmod | grep "+str(kmod).replace("-","_")):
             continue
         if "uio_pci_generic"==kmod or "vfio-pci"==kmod or "uio_hv_generic"==kmod:
             os.system("modprobe "+kmod)
@@ -342,7 +343,8 @@ def do_binddev(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
                 os.system("modprobe uio")
             os.system(imsmod_cmd)
         if ""!=maker_public.getOSName() and \
-            ""==maker_public.execCmdAndGetOutput("lsmod | grep "+kmod):
+            ""==maker_public.execCmdAndGetOutput("lsmod | grep "+kmod) and \
+            ""==maker_public.execCmdAndGetOutput("lsmod | grep "+str(kmod).replace("-","_")):
             all_err += ("Failed to load %s\n" %kmod)
     if "" != all_err:
         return all_err
