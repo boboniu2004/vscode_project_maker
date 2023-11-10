@@ -342,10 +342,11 @@ def do_binddev(devbind_path, drvctl_path, kmod_path, kmod_list, dev_lst):
             if "" == maker_public.execCmdAndGetOutput("lsmod | grep uio"):
                 os.system("modprobe uio")
             os.system(imsmod_cmd)
-        if ""!=maker_public.getOSName() and \
-            ""==maker_public.execCmdAndGetOutput("lsmod | grep "+kmod) and \
-            ""==maker_public.execCmdAndGetOutput("lsmod | grep "+str(kmod).replace("-","_")):
-            all_err += ("Failed to load %s\n" %kmod)
+        #在有些版本下，加载后的kmod不一定能看到
+        #if ""!=maker_public.getOSName() and \
+        #    ""==maker_public.execCmdAndGetOutput("lsmod | grep "+kmod) and \
+        #    ""==maker_public.execCmdAndGetOutput("lsmod | grep "+str(kmod).replace("-","_")):
+        #    all_err += ("Failed to load %s\n" %kmod)
     if "" != all_err:
         return all_err
     if 0 >= len(kmod_list):
