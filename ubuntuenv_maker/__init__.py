@@ -193,20 +193,24 @@ def configPython(py_host, py_url):
         return "Install  python3-pip failed"
     #获取python版本
     pyver = maker_public.getVer("python")
-    match_lst = re.search("(\\d+\\.\\d+)\\.\\d+", \
+    match_ret = re.search("(\d+)\.(\d+)", pyver)
+    if None == match_ret:
+        return "Bad python version(install)"
+    pyver_int = [int(match_ret.group(1)), int(match_ret.group(2))]
+    match_ret = re.search("(\d+)\.(\d+)\.\d+", \
         maker_public.execCmdAndGetOutput("python3 --version"))
-    if None == match_lst:
-        cur_pyver = ""
+    if None == match_ret:
+        cur_pyver = [0,0]
     else:
-        cur_pyver = match_lst.group(1)
-    if ""==cur_pyver or cur_pyver<pyver:
+        cur_pyver = [int(match_ret.group(1)), int(match_ret.group(2))]
+    if cur_pyver[0]<pyver_int[0] or (cur_pyver[0]==pyver_int[0] and cur_pyver[1]<pyver_int[1]):
         if 0 != os.system("apt-get install -y python%s" %pyver):
             return ("Install python%s failed" %pyver)
     #配置PIP
     szErr = maker_public.configPip("python3", py_host, py_url)
     if 0 < len(szErr):
         return szErr
-    if ""==cur_pyver or cur_pyver<pyver:
+    if cur_pyver[0]<pyver_int[0] or (cur_pyver[0]==pyver_int[0] and cur_pyver[1]<pyver_int[1]):
         szErr = maker_public.configPip("python"+pyver, py_host, py_url)
         if 0 < len(szErr):
             return szErr
@@ -305,17 +309,19 @@ def configInternalNet(szEthEnName, szIpAddr):
     return ""
 
 #configWSLmodules 添加内核模块编译功能；参数：无；返回：错误描述
-def configWSLmodules(work_path):
+def configWSLmodules(work_path, git_proxy):
     szOSName = maker_public.execCmdAndGetOutput("uname -r")
     match_ret = re.match("([\d\\.]+)-", szOSName)
     if None == match_ret:
         return "Can not get WSL kernel version"
+    if ""!=git_proxy and "/"!=git_proxy[len(git_proxy)-1:]:
+        git_proxy = git_proxy+"/"
     #安装依赖包
-    if 0 != os.system("apt-get -y install build-essential flex bison libssl-dev libelf-dev dwarves"):
+    if 0 != os.system("apt-get -y install build-essential flex bison libssl-dev libelf-dev bc dwarves"):
         return "Install build-essential flex bison libssl-dev libelf-dev failed"
     #下载内核，这里不用download_src函数替代的原因是因为库太大，用git下载太慢。
     if False == os.path.isfile(work_path+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
-        if 0 != os.system("wget https://ghproxy.com/github.com/microsoft/"\
+        if 0 != os.system("wget https://"+git_proxy+"github.com/microsoft/"\
             "WSL2-Linux-Kernel/archive/refs/tags/linux-msft-wsl-"+match_ret.group(1)+\
             ".zip -O "+work_path+"/linux-msft-wsl-"+match_ret.group(1)+".zip"):
             os.system("rm -rf "+work_path+"/linux-msft-wsl-"+match_ret.group(1)+".zip")
@@ -396,7 +402,7 @@ def InitEnv(sys_par):
         if 0 < len(szErr):
             return("Config CentOS failed:%s" %(szErr))
     if "ubuntu-wsl2" == szOSName and "online" == par_dic["work_mod"]:
-        szErr = configWSLmodules(work_path)
+        szErr = configWSLmodules(work_path, par_dic["git_proxy"])
         if 0 < len(szErr):
             return("Config Ubuntu failed:%s" %(szErr))
     #
