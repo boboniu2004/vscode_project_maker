@@ -21,7 +21,7 @@ g_verconfig = {
     "prop"              :  "4",
     "libunwind"         :  "1.6.2",
     "gperftools"        :  "2.9.1",
-    "go"                :  "1.18",
+    "go"                :  "1.21",
     "vpp"               :  "20.09",
     "x86_64-hs"         :  "5.4.0",
     "aarch64-hs"        :  "5.3.0.aarch64"
