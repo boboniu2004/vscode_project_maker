@@ -265,7 +265,27 @@ def configSshd():
 #configInternalNet 配置内部网络；参数：内部网卡的名称，szIpAddr本机的IP地址；返回：错误描述
 def configInternalNet(szEthEnName, szIpAddr):
     net_prefx = re.sub("\\.\\d+$", "", szIpAddr)
-    if os.path.isfile("/etc/netplan/01-network-manager-all.yaml"):
+    if os.path.isfile("/etc/netplan/00-installer-config.yaml"):
+        szConfig = \
+            "# This is the network config written by 'subiquity'\n"+\
+            "network:\n"\
+            "  version: 2\n"\
+            "  ethernets:\n"\
+            "    eth0:\n"\
+            "      dhcp4: true\n"\
+            "    "+szEthEnName+":\n"\
+            "      dhcp4: no\n"\
+            "      addresses: ["+szIpAddr+"/24]\n"\
+            "      gateway4: "+net_prefx+".1\n"\
+            "      nameservers:\n"\
+            "        addresses: ["+net_prefx+".1]"
+        #写入配置
+        szErr = maker_public.writeTxtFile("/etc/netplan/00-installer-config.yaml", szConfig)
+        if 0 < len(szErr):
+            return szErr
+        #生效配置
+        os.system("netplan apply")        
+    elif os.path.isfile("/etc/netplan/01-network-manager-all.yaml"):
         szConfig = \
             "# Let NetworkManager manage all devices on this system\n"+\
             "network:\n"\
