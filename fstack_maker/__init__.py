@@ -347,9 +347,8 @@ def export_path(fstack_path, dpdk_path, hs_path):
     mkdat,err = maker_public.readTxtFile("%s/f-stack/makefile" %fstack_path)
     if "" != err:
         return "config export failed"
-    mkdat = re.sub("\ndebug:", ("\ndebug:"\
-        "\n\tFF_PATH:=%s\n\tFF_DPDK := %s\n\tFF_HS := %s"\
-        "\n\texport FF_PATH\n\texport FF_DPDKn\texport FF_HS"\
+    mkdat = re.sub("\nDEBUG_FLAG:", ("\nFF_PATH:=%s\nFF_DPDK := %s\nFF_HS := %s"\
+        "\nexport FF_PATH\nexport FF_DPDK\nexport FF_HS\nDEBUG_FLAG:"\
         %(fstack_path, dpdk_path, hs_path)), mkdat)
     err = maker_public.writeTxtFile(("%s/f-stack/makefile" %fstack_path), mkdat)
     if "" != err:
