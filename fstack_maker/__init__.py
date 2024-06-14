@@ -172,7 +172,7 @@ def create_fstack_properties(fstack_path, dpdk_path, hs_path):
         return "create f-stack project failed"
     properties = re.sub("\n                [^/]/usr/local/dpdk/include", 
         ("\n                \"%s/include\","\
-        "\n                \"%s/include\"," %(dpdk_path, hs_path)),\
+        "\n                \"%s/include\" " %(dpdk_path, hs_path)),\
         properties)
     sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/.vscode/"\
         "c_cpp_properties.json", properties)
