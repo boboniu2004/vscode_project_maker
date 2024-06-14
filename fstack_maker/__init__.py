@@ -172,7 +172,7 @@ def create_fstack_properties(fstack_path, dpdk_path, hs_path):
         return "create f-stack project failed"
     properties = re.sub("\n                [^/]/usr/local/dpdk/include", 
         ("\n                \"%s/include\","\
-        "\n                \"%s/include\"" %(dpdk_path, hs_path)),\
+        "\n                \"%s/include\"," %(dpdk_path, hs_path)),\
         properties)
     sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/.vscode/"\
         "c_cpp_properties.json", properties)
@@ -347,9 +347,11 @@ def export_path(fstack_path, dpdk_path, hs_path):
     mkdat,err = maker_public.readTxtFile("%s/f-stack/makefile" %fstack_path)
     if "" != err:
         return "config export failed"
-    mkdat = re.sub("\nDEBUG_FLAG:", ("\nFF_PATH:=%s\nFF_DPDK := %s\nFF_HS := %s"\
-        "\nexport FF_PATH\nexport FF_DPDK\nexport FF_HS\nDEBUG_FLAG:"\
+    mkdat = re.sub("\nDEBUG_FLAG:", ("\nFF_PATH:=%s\n"\
+        "FF_DPDK := %s\nFF_HS := %s\nDEBUG_FLAG:"\
         %(fstack_path, dpdk_path, hs_path)), mkdat)
+    mkdat = re.sub("\ndebug:", "\nexport FF_PATH\nexport FF_DPDK\n"\
+        "export FF_HS\n\ndebug:", mkdat)
     err = maker_public.writeTxtFile(("%s/f-stack/makefile" %fstack_path), mkdat)
     if "" != err:
         return err
