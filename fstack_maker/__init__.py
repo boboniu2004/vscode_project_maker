@@ -158,25 +158,22 @@ def config_fstack(fstack_ver, fstack_path, work_path, git_proxy):
             "\n\tsed -i \"s/ -g / -g3 /\" ${TOP_DIR}/app/"+os.path.basename(nginx_path)+"/objs/Makefile"\
             "\n\n"\
             "\n.PHONY: debug release clean\n"
-    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/makefile", fstack_make)
+    sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack/makefile", fstack_make)
     if "" != sz_err:
-        return "config f-stack failed"
-    #配置nginx
-    os.system("cd "+fstack_path+"/f-stack/app/"+os.path.basename(nginx_path)+" && ./configure")
-    if 0 != os.system("cd "+fstack_path+"/f-stack && make clean"):
         return "config f-stack failed"
     return ""
 
 
 #功能：制作f-stack工程的c_cpp_properties.json文件；参数：DPDK和hyperscan路径；返回：错误码
-def create_fstack_properties(fstack_path):
+def create_fstack_properties(fstack_path, dpdk_path, hs_path):
     properties,sz_err = maker_public.readTxtFile(fstack_path+"/f-stack"+"/.vscode/"\
         "c_cpp_properties.json")
     if "" != sz_err:
         return "create f-stack project failed"
-    properties = re.sub("\\n                [^/]/usr/local/dpdk/include", 
-        "\n                \"${FF_DPDK}/include\","\
-        "\n                \"${FF_HS}/include", properties)
+    properties = re.sub("\n                [^/]/usr/local/dpdk/include", 
+        ("\n                \"%s/include\","\
+        "\n                \"%s/include\"" %(dpdk_path, hs_path)),\
+        properties)
     sz_err = maker_public.writeTxtFile(fstack_path+"/f-stack"+"/.vscode/"\
         "c_cpp_properties.json", properties)
     if "" != sz_err:
@@ -185,7 +182,7 @@ def create_fstack_properties(fstack_path):
 
 
 #功能：制作f-stack工程；参数：无；返回：错误码
-def create_fstack_project(fstack_path, work_path):
+def create_fstack_project(fstack_path, work_path, dpdk_path, hs_path):
     if 0 != os.system(maker_public.get_python()+" "+work_path+\
         "/__init__.py c app-dpdk /tmp/nginx"):
         os.system("rm -rf /tmp/nginx")
@@ -258,7 +255,7 @@ def create_fstack_project(fstack_path, work_path):
         "tasks.json", tasks)
     if "" != sz_err:
         return "create f-stack project failed"
-    return create_fstack_properties(fstack_path)
+    return create_fstack_properties(fstack_path, dpdk_path, hs_path)
 
 
 #功能：修改ff_host_interface.c文件；参数：fstack安装路径；返回：错误码
@@ -347,32 +344,25 @@ def correct_fstack_code(fstack_path):
 
 #功能：导入路径参数；参数：无；返回：错误码
 def export_path(fstack_path, dpdk_path, hs_path):
-    #读取
-    profile,sz_err = maker_public.readTxtFile(os.environ["HOME"]+"/.bashrc")
-    if "" != sz_err:
-        return sz_err
-    #修改
-    if 0 >= len(re.findall("\\nexport[ \\t]+FF_PATH[ \\t]*=.+", profile)):
-        profile += "\nexport FF_PATH="+fstack_path+"/f-stack"
-    else:
-        profile = re.sub("\\nexport[ \\t]+FF_PATH[ \\t]*=.+", 
-            "\nexport FF_PATH="+fstack_path+"/f-stack", profile)
-    if 0 >= len(re.findall("\\nexport[ \\t]+FF_DPDK[ \\t]*=.+", profile)):
-        profile += "\nexport FF_DPDK="+dpdk_path
-    else:
-        profile = re.sub("\\nexport[ \\t]+FF_DPDK[ \\t]*=.+", 
-            "\nexport FF_DPDK="+dpdk_path, profile)
-    if "" != hs_path:
-        if 0 >= len(re.findall("\\nexport[ \\t]+FF_HS[ \\t]*=.+", profile)):
-            profile += "\nexport FF_HS="+hs_path
-        else:
-            profile = re.sub("\\nexport[ \\t]+FF_HS[ \\t]*=.+", 
-                "\nexport FF_HS="+hs_path, profile)
-    else:
-            profile = re.sub("\\nexport[ \\t]+FF_HS[ \\t]*=.+", "", profile)        
-    #写入
-    sz_err = maker_public.writeTxtFile(os.environ["HOME"]+"/.bashrc", profile)
-    return sz_err
+    mkdat,err = maker_public.readTxtFile("%s/f-stack/makefile" %fstack_path)
+    if "" != err:
+        return "config export failed"
+    mkdat = re.sub("\ndebug:", ("\ndebug:"\
+        "\n\tFF_PATH:=%s\n\tFF_DPDK := %s\n\tFF_HS := %s"\
+        "\n\texport FF_PATH\n\texport FF_DPDKn\texport FF_HS"\
+        %(fstack_path, dpdk_path, hs_path)), mkdat)
+    err = maker_public.writeTxtFile(("%s/f-stack/makefile" %fstack_path), mkdat)
+    if "" != err:
+        return err
+    #配置nginx
+    nginx_path = maker_public.execCmdAndGetOutput(\
+        "cd %s/f-stack/app/nginx-* && pwd" %fstack_path).replace("\n", "")
+    if "" == nginx_path:
+        return "config export failed"
+    os.system("cd %s && ./configure" %nginx_path)
+    if 0 != os.system("cd %s/f-stack && make clean" %fstack_path):
+        return "config export failed"
+    return ""
 
 
 #功能：主函数；参数：无；返回：错误描述
@@ -392,7 +382,7 @@ def makeropensrc(work_path, ins_path, dpdk_path, hs_path, git_proxy):
         if "" != szErr:
             return szErr
         print("config f-stack sucess!")
-        szErr = create_fstack_project(ins_path, work_path)
+        szErr = create_fstack_project(ins_path, work_path, dpdk_path, hs_path)
         if "" != szErr:
             return szErr
         print("create f-stack project sucess!")
