@@ -343,25 +343,25 @@ def correct_fstack_code(fstack_path):
 
 
 #功能：导入路径参数；参数：无；返回：错误码
-def export_path(fstack_path, dpdk_path, hs_path):
-    mkdat,err = maker_public.readTxtFile("%s/f-stack/makefile" %fstack_path)
+def export_path(inst_path, dpdk_path, hs_path):
+    mkdat,err = maker_public.readTxtFile("%s/f-stack/makefile" %inst_path)
     if "" != err:
         return "config export failed"
-    mkdat = re.sub("\nDEBUG_FLAG:", ("\nFF_PATH:=%s\n"\
+    mkdat = re.sub("\nDEBUG_FLAG:", ("\nFF_PATH:=%s/f-stack\n"\
         "FF_DPDK := %s\nFF_HS := %s\nDEBUG_FLAG:"\
-        %(fstack_path, dpdk_path, hs_path)), mkdat)
+        %(inst_path, dpdk_path, hs_path)), mkdat)
     mkdat = re.sub("\ndebug:", "\nexport FF_PATH\nexport FF_DPDK\n"\
         "export FF_HS\n\ndebug:", mkdat)
-    err = maker_public.writeTxtFile(("%s/f-stack/makefile" %fstack_path), mkdat)
+    err = maker_public.writeTxtFile(("%s/f-stack/makefile" %inst_path), mkdat)
     if "" != err:
         return err
     #配置nginx
     nginx_path = maker_public.execCmdAndGetOutput(\
-        "cd %s/f-stack/app/nginx-* && pwd" %fstack_path).replace("\n", "")
+        "cd %s/f-stack/app/nginx-* && pwd" %inst_path).replace("\n", "")
     if "" == nginx_path:
         return "config export failed"
     os.system("cd %s && ./configure" %nginx_path)
-    if 0 != os.system("cd %s/f-stack && make clean" %fstack_path):
+    if 0 != os.system("cd %s/f-stack && make clean" %inst_path):
         return "config export failed"
     return ""
 
