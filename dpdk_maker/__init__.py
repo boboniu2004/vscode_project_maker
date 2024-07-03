@@ -20,6 +20,10 @@ def install_normal_dpdk(ins_path, fstack_ver):
                 "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_PCAP[ \\t]*=.*",
                 "\nCONFIG_RTE_LIBRTE_PMD_PCAP=y",
             ],
+            [
+                "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_AF_XDP[ \\t]*=.*",
+                "\nCONFIG_RTE_LIBRTE_PMD_AF_XDP=y",
+            ],
         ])
     #关闭IGB_UIO
     sz_err = maker_public.replace_content("/tmp/f-stack-"+fstack_ver+\
@@ -65,6 +69,10 @@ def install_meson_dpdk(ins_path, fstack_ver):
             [
                 "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_PCAP[ \\t]*=.*",
                 "\nCONFIG_RTE_LIBRTE_PMD_PCAP=y",
+            ],
+            [
+                "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_AF_XDP[ \\t]*=.*",
+                "\nCONFIG_RTE_LIBRTE_PMD_AF_XDP=y",
             ]
         ])
     if "" != sz_err:
@@ -128,7 +136,7 @@ def install_ubuntu_dep():
         return "Install libpcre3-dev failed"
     #安装zlib
     if 0 != os.system("apt-get -y install zlib1g-dev"):
-        return "Install libpcre3-dev failed"
+        return "Install zlib1g-dev failed"
     ubuntu_ver,sz_err = maker_public.getUbuntuVer()
     if "" != sz_err:
         return sz_err
@@ -138,6 +146,9 @@ def install_ubuntu_dep():
     else:
         if 0 != os.system("apt-get -y install libpcap-dev"):
             return "Install libpcap failed"
+    #安装libbpf
+    if 0 != os.system("apt-get -y install libbpf-dev"):
+        return "Install libbpf-dev failed"
     #安装ninja
     if 0 != os.system("python3 -m pip install ninja"):
         return "Install ninja failed"
@@ -164,6 +175,9 @@ def install_centos_dep():
     #安装pcap
     if 0 != os.system("dnf --enablerepo=PowerTools install -y libpcap-devel"):
         return "Can not install libpcap-devel"
+    #安装bpf
+    if 0 != os.system("dnf --enablerepo=PowerTools install -y libbpf-devel"):
+        return "Can not install libbpf-devel"
     #安装ninja
     if 0 != os.system("python3 -m pip install ninja"):
         return "Install ninja failed"
