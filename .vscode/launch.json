@@ -6,11 +6,14 @@
     "configurations": [
         {
             "name": "Python: Current File",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/osenv_maker.py",
+            "program": "${workspaceFolder}/opensrc_maker.py",
             "args": [
-                "--work_mod","offline",
+                "--ins_path","/root/sslo-git/nginx-extend",
+                "--fstack",
+                "/root/sslo-git/nginx-extend/dpdk",
+                "/root/sslo-git/nginx-extend/hyperscan"
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"

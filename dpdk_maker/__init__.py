@@ -19,7 +19,7 @@ def install_normal_dpdk(ins_path, fstack_ver):
             [
                 "\\n[ \\t]*CONFIG_RTE_LIBRTE_PMD_PCAP[ \\t]*=.*",
                 "\nCONFIG_RTE_LIBRTE_PMD_PCAP=y",
-            ],
+            ]
         ])
     #关闭IGB_UIO
     sz_err = maker_public.replace_content("/tmp/f-stack-"+fstack_ver+\
@@ -128,7 +128,7 @@ def install_ubuntu_dep():
         return "Install libpcre3-dev failed"
     #安装zlib
     if 0 != os.system("apt-get -y install zlib1g-dev"):
-        return "Install libpcre3-dev failed"
+        return "Install zlib1g-dev failed"
     ubuntu_ver,sz_err = maker_public.getUbuntuVer()
     if "" != sz_err:
         return sz_err

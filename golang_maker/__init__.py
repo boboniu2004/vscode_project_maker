@@ -108,6 +108,26 @@ def makeBuildfile(szProjPath):
         "                \"kind\": \"build\",\n"\
         "                \"isDefault\": true\n"\
         "            }\n"\
+        "        },\n"\
+        "        {\n"\
+        "            \"type\": \"shell\",\n"\
+        "            \"label\": \"go tidy active file\",\n"\
+        "            \"command\": \"/usr/bin/make\",\n"\
+        "            \"args\": [\n"\
+        "                \"-f\",\n"\
+        "                \"${workspaceFolder}/makefile\",\n"\
+        "                \"tidy\"\n"\
+        "            ],\n"\
+        "            \"options\": {\n"\
+        "                \"cwd\": \"${workspaceFolder}\"\n"\
+        "            },\n"\
+        "            \"problemMatcher\": [\n"\
+        "                \"$gcc\"\n"\
+        "            ],\n"\
+        "            \"group\": {\n"\
+        "                \"kind\": \"build\",\n"\
+        "                \"isDefault\": true\n"\
+        "            }\n"\
         "        }\n"\
         "    ]\n"\
         "}\n"
